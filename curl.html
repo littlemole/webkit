@@ -1,0 +1,70 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+
+ <form name="theForm" action="#" onSubmit="return onSubmit(this);">
+
+  <table>
+   <tr>
+    <td>
+     host <input type="text" name="host" value="www.amazon.de" method="GET">
+     port <input type="text" name="port" value="80" size="4">
+     <input type="submit" name="submit" value="go">
+    </td>
+   </tr>
+   <tr>
+    <td>
+     request ( body size: <span id="bodySize"></span>)
+     <textarea name="request" rows="7" cols="60" onkeyup="dokeyup(this)">GET / HTTP/1.0
+host: www.amazon.de
+User-Agent:mymyselfandi
+content-length: 0
+
+</textarea>
+    </td>
+   </tr>
+   <tr>
+    <td>
+     response:
+     <textarea name="response" rows="4" cols="60"></textarea>
+    </td>
+   </tr>
+  </table> 
+
+ </form>
+
+<script type="text/javascript">
+
+function onResponse(response)
+{
+    document.theForm.response.value = String(response);
+    return false;
+}
+
+function onSubmit(form)
+{
+    var request = {
+        host    : form.host.value,
+        port    : form.port.value,
+        payload : form.request.value
+    };
+    form.response.value = "";
+    Python.controller.submit(request,onResponse);
+    return false;
+}
+
+function dokeyup(txt)
+{
+    var a = txt.value.split(/\n\n/,2);
+    if ( a.length < 2 )
+        return;
+    var len = a[1].length;
+    document.getElementById("bodySize").innerHTML = len;
+}
+
+</script>
+</body>
+</html>
+
