@@ -209,6 +209,23 @@ private:
     double value_;
 };
 
+class jbool
+{
+public:
+    jbool(JSContextRef context,JSValueRef value)
+    {
+        value_ = JSValueToBoolean(context, value);           
+    }
+
+    bool boolean()
+    {
+        return value_;
+    }
+
+private:
+    bool value_ = false;
+};
+
 /*
  * deal with custom Javascript Classes. there are three ways to construct a 
  *

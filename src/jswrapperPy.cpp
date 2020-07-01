@@ -2,7 +2,6 @@
 #include <structmember.h>
 #include <JavaScriptCore/JSContextRef.h>
 
-
 /*
  * jswrapper custom python object wrapping a wekbit javascriptcore object
  *
@@ -17,7 +16,7 @@ static int jswrapper_python_object_init(jswrapper_python_object *self, PyObject 
 
 static void jswrapper_python_object_dealloc(jswrapper_python_object* self)
 {
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 static PyObject * jswrapper_python_object_getattr(jswrapper_python_object* self, char* name)
@@ -64,12 +63,14 @@ static PyObject* jswrapper_python_object_call(PyObject* self, PyObject* args, Py
                             &arguments[0], 
                             &ex
                         );
-    return PJSMarshal::get_js_arg(wrapper->context, result, wrapper->that);
+
+    PyObject* ret = PJSMarshal::get_js_arg(wrapper->context, result, wrapper->that);
+
+    return ret;
 }
 
 PyTypeObject jswrapper_python_objectType = {
-    PyObject_HEAD_INIT(NULL)
-    0,                         /*ob_size*/
+    PyVarObject_HEAD_INIT(NULL,0)
     "jswrapper.Object",        /*tp_name*/
     sizeof(jswrapper_python_object), /*tp_basicsize*/
     0,                         /*tp_itemsize*/
@@ -135,6 +136,15 @@ extern "C" PyObject* new_js_wrapper_python_object(JSContextRef context, JSObject
  *   of the webkit widget )
  */
 
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "jswrapper",
+    "Javascript Function Python wrapper object",
+    -1,
+    jswrapper_python_object_methods,
+    NULL,NULL,NULL,NULL
+};
+
 extern "C" void declare_jswrapper_python_object()
 {
     if(!Py_IsInitialized())
@@ -148,8 +158,7 @@ extern "C" void declare_jswrapper_python_object()
     if (PyType_Ready(&jswrapper_python_objectType) < 0)
         return;
 
-    m = Py_InitModule3("jswrapper", jswrapper_python_object_methods,
-                       "Javascript Function Python wrapper object");
+    m = PyModule_Create(&moduledef);
 
     Py_INCREF(&jswrapper_python_objectType);
     PyModule_AddObject(m, "Object", (PyObject *)&jswrapper_python_objectType);

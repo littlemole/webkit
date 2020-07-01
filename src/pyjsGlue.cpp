@@ -20,7 +20,7 @@ void PJSMarshal::eval(const char* s)
     PyObject* global_dict = PyModule_GetDict(main_module);
     PyObjectRef local_dict = PyDict_New();
 
-    PyObjectRef obj = PyEval_EvalCode((PyCodeObject*)(PyObject*)code, global_dict, local_dict);
+    PyObjectRef obj = PyEval_EvalCode((PyObject*)code, global_dict, local_dict);
 }
 
 JSValueRef PJSMarshal::call(PyObject* that, JSContextRef context, size_t argumentCount, const JSValueRef arguments[])
@@ -117,15 +117,21 @@ PyObject* PJSMarshal::get_js_arg(JSContextRef context, JSValueRef argument, JSVa
     size_t len;
     char *cstr;
     JSType jt = JSValueGetType(context, argument);
+
     if ( jt ==  kJSTypeString )
     {
         std::string str = get_js_string(context,argument);
-        return PyString_FromString(str.c_str());
+        return PyUnicode_FromString(str.c_str());
     }
     else if ( jt == kJSTypeNumber )
     {
         double num = jnum(context,argument).number();
         return PyFloat_FromDouble(num);
+    }
+    else if ( jt == kJSTypeBoolean )
+    {
+        bool b = jbool(context,argument).boolean();
+        return PyBool_FromLong((long)b);
     }
     else if ( jt == kJSTypeObject )
     {
@@ -156,7 +162,7 @@ PyObject* PJSMarshal::get_js_arg(JSContextRef context, JSValueRef argument, JSVa
             return new_js_wrapper_python_object(context,obj,NULL);
         }
     }
-    
+
     return Py_BuildValue("");
 }
 
@@ -195,29 +201,25 @@ JSValueRef PJSMarshal::make_js_value(JSContextRef context, PyObject* pyObj)
     JSValueRef ex = 0;
 
     if (!pyObj)
+    {
         return JSValueMakeUndefined(context);
+    }
 
     if( PyObject_TypeCheck(pyObj, &jswrapper_python_objectType) )
     {
         jswrapper_python_object* object = (jswrapper_python_object*)pyObj;
         return object->that;
     }
-    else if ( PyString_Check(pyObj) ) 
+    else if ( PyUnicode_Check(pyObj) ) 
     {
-        char* c = PyString_AsString(pyObj);
-
-        PyObjectRef uni = PyUnicode_Decode(c, strlen(c), "ISO-8859-1", "");
-        PyObjectRef utf8 = PyUnicode_AsUTF8String(uni);
-
-        c = PyString_AsString(utf8);
+        char* c = PyUnicode_AsUTF8(pyObj);
         jstr str(c);
 
         return JSValueMakeString(context, str.ref());
     }
-    else if ( PyUnicode_Check(pyObj) )
+    else if ( PyByteArray_Check(pyObj) )
     {
-        PyObjectRef utf8 = PyUnicode_AsUTF8String(pyObj);
-        char* c = PyString_AsString(utf8);
+        char* c = PyByteArray_AsString(pyObj);
         jstr str(c);
         return JSValueMakeString(context, str.ref());
 
@@ -231,9 +233,9 @@ JSValueRef PJSMarshal::make_js_value(JSContextRef context, PyObject* pyObj)
         bool b = pyObj == Py_True;
         return JSValueMakeBoolean(context, b);
     }
-    else if (PyInt_Check(pyObj) ) 
+    else if (PyLong_Check(pyObj) ) 
     {
-        long l = PyInt_AsLong(pyObj);
+        long l = PyLong_AsLong(pyObj);
         return JSValueMakeNumber(context,(double)l);
     }
     else if (PyFloat_Check(pyObj) ) 
@@ -273,7 +275,7 @@ JSValueRef PJSMarshal::make_js_value(JSContextRef context, PyObject* pyObj)
         for(Py_ssize_t i = 0; i < len; i++)
         {
             PyObjectRef key = PySequence_GetItem(keys,i);
-            char* k = PyString_AsString(key);
+            char* k = PyUnicode_AsUTF8(key);
             PyObjectRef value = PyMapping_GetItemString(pyObj, k);
             JSValueRef val = make_js_value(context,value);
             jstr str(k);
@@ -281,10 +283,13 @@ JSValueRef PJSMarshal::make_js_value(JSContextRef context, PyObject* pyObj)
         }  
         return ret;      
     }
+
+#define PyClass_Check(obj) PyObject_IsInstance(obj, (PyObject *)&PyType_Type)
+
     else if (  PyObject_TypeCheck(pyObj, &PyMethod_Type) 
              || PyObject_TypeCheck(pyObj, &PyFunction_Type)
              || PyObject_TypeCheck(pyObj, &PyBaseObject_Type)
-             || PyInstance_Check(pyObj)
+  //           || PyInstance_Check(pyObj)
              || PyClass_Check(pyObj)
              || PyType_Check(pyObj)
              )

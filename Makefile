@@ -7,11 +7,11 @@ SRC = ./src
 BUILD = ./build
 
 # includes
-C_INCLUDES= -I $(INC) `pkg-config --cflags gobject-2.0 webkitgtk-3.0 gobject-introspection-1.0 python-2.7`
+C_INCLUDES= -I $(INC) `pkg-config --cflags gobject-2.0 webkitgtk-3.0 gobject-introspection-1.0 python-3.6`
 CFLAGS=$(C_INCLUDES) -g -std=c++0x
 
 # link dependencies
-LIBS=`pkg-config --libs gobject-2.0 webkitgtk-3.0 gobject-introspection-1.0 python-2.7`
+LIBS=`pkg-config --libs gobject-2.0 webkitgtk-3.0 gobject-introspection-1.0 python-3.6`
 LIBDIR=/usr/local/lib
 
 # source files and objects to be build

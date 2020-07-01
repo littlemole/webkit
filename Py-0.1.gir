@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<!-- This file was automatically generated from C sources - DO NOT EDIT!
+To affect the contents of this file, edit the original C definitions,
+and/or use gtk-doc annotations.  -->
+<repository version="1.2"
+            xmlns="http://www.gtk.org/introspection/core/1.0"
+            xmlns:c="http://www.gtk.org/introspection/c/1.0"
+            xmlns:glib="http://www.gtk.org/introspection/glib/1.0">
+  <include name="GObject" version="2.0"/>
+  <include name="WebKit" version="3.0"/>
+  <namespace name="Py"
+             version="0.1"
+             shared-library="libpywebkit.so.0"
+             c:identifier-prefixes="Py"
+             c:symbol-prefixes="py">
+    <class name="WebKit"
+           c:symbol-prefix="webkit"
+           c:type="PyWebKit"
+           parent="WebKit.WebView"
+           glib:type-name="PyWebKit"
+           glib:get-type="py_webkit_get_type"
+           glib:type-struct="WebKitClass">
+      <doc xml:space="preserve">The #PyWebKit is a Webkit widget derivate enabling JS - Python bridge.</doc>
+      <implements name="Atk.ImplementorIface"/>
+      <implements name="Gtk.Buildable"/>
+      <implements name="Gtk.Scrollable"/>
+      <constructor name="new" c:identifier="py_webkit_new">
+        <doc xml:space="preserve">Allocates a new #PyWebKit.</doc>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve">a new #PyWebKit.</doc>
+          <type name="WebKit" c:type="PyWebKit*"/>
+        </return-value>
+      </constructor>
+      <field name="parent">
+        <type name="WebKit.WebView" c:type="WebKitWebView"/>
+      </field>
+    </class>
+    <record name="WebKitClass"
+            c:type="PyWebKitClass"
+            glib:is-gtype-struct-for="WebKit">
+      <field name="parent">
+        <type name="WebKit.WebViewClass" c:type="WebKitWebViewClass"/>
+      </field>
+    </record>
+  </namespace>
+</repository>

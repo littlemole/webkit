@@ -38,7 +38,7 @@ static JSValueRef Python_getPropertyCallback(JSContextRef context, JSObjectRef o
     PyGlobalInterpreterLock pyGuard;
 
     PyObject*   module = PyImport_AddModule("__main__");
-    PyObjectRef name   = PyString_FromString(str.str());
+    PyObjectRef name   = PyUnicode_FromString(str.str());
     PyObjectRef obj    = PyObject_GetAttr(module,name);
 
     return PJSMarshal::make_js_value(context,obj);

@@ -1,3 +1,9 @@
+import gi
+gi.require_versions({
+    'Gtk':  '3.0',
+    'Py': '0.1'
+})
+
 from gi.repository import Gtk, GObject, Py
 
 import os
@@ -36,11 +42,11 @@ class Worker(threading.Thread):
 
     def recv_response(self):
 
-        response = ''
-        recv = 0
+        response = bytearray() 
+        recv = bytearray()
         while True:
             recv = self.sock.recv(4096)
-            if recv == "" :
+            if len(recv) == 0 :
                 break;
             response = response + recv
 
@@ -66,6 +72,7 @@ class Controller(object):
         # payload
         msg = msg.replace("\r","")
         msg = msg.replace("\n","\r\n")
+        msg = msg.encode()
         size = len(msg)
        
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
