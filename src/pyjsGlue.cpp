@@ -212,7 +212,7 @@ JSValueRef PJSMarshal::make_js_value(JSContextRef context, PyObject* pyObj)
     }
     else if ( PyUnicode_Check(pyObj) ) 
     {
-        char* c = PyUnicode_AsUTF8(pyObj);
+        const char* c = PyUnicode_AsUTF8(pyObj);
         jstr str(c);
 
         return JSValueMakeString(context, str.ref());
@@ -275,7 +275,7 @@ JSValueRef PJSMarshal::make_js_value(JSContextRef context, PyObject* pyObj)
         for(Py_ssize_t i = 0; i < len; i++)
         {
             PyObjectRef key = PySequence_GetItem(keys,i);
-            char* k = PyUnicode_AsUTF8(key);
+            const char* k = PyUnicode_AsUTF8(key);
             PyObjectRef value = PyMapping_GetItemString(pyObj, k);
             JSValueRef val = make_js_value(context,value);
             jstr str(k);

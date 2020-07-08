@@ -51,7 +51,9 @@ function onSubmit(form)
         payload : form.request.value
     };
     form.response.value = "";
-    Python.controller.submit(request,onResponse);
+   // Python.controller.submit(request,onResponse);
+   //alert(""+window.send_signal);
+    window.send_signal("HelloSignal","ragnaröck");
     return false;
 }
 
@@ -63,6 +65,12 @@ function dokeyup(txt)
     var len = a[1].length;
     document.getElementById("bodySize").innerHTML = len;
 }
+
+window.on_signal("HelloSignal", function(data) 
+{
+    let s = JSON.stringify(data);
+    alert(""+s);
+})
 
 </script>
 </body>

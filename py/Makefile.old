@@ -1,0 +1,12 @@
+
+INC = $(shell pkg-config --cflags gobject-2.0 webkit2gtk-4.0 gobject-introspection-1.0 python3-embed) -fPIC
+LIBS = $(shell pkg-config --cflags gobject-2.0 webkit2gtk-4.0 gobject-introspection-1.0 python3-embed` -shared pydbus.o `pkg-config --libs gobject-2.0 webkit2gtk-4.0 gobject-introspection-1.0 python3-embed)
+
+all: clean
+	g++ $(INC) -fPIC -shared -c pywebkit.cpp
+	g++ $(INC) -shared pywebkit.o  $(LIBS) -o pywebkit.so
+
+
+clean:
+	-rm pywebkit.so
+	-rm pywebkit.o

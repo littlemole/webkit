@@ -1,0 +1,59 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+
+ <form name="theForm" action="#" onSubmit="return onSubmit(this);">
+
+  <table>
+   <tr>
+    <td>
+     <input type="submit" name="submit" value="go">
+    </td>
+   </tr>
+   <tr>
+    <td>
+     send_signal
+     <textarea name="send_signal" rows="7" cols="60" >{"key":"value"}</textarea>
+    </td>
+   </tr>
+   <tr>
+    <td>
+     on_signal
+     <textarea name="on_signal" rows="4" cols="60" disabled></textarea>
+    </td>
+   </tr>
+  </table> 
+
+ </form>
+
+<script type="text/javascript">
+
+
+function onSubmit(form)
+{
+    let msg = document.theForm.send_signal.value;
+//    alert(msg);
+    let json = JSON.parse(msg);
+    form.on_signal.value = "";
+    window.send_signal("sendData",json);
+    return false;
+}
+
+window.on_signal("recvData", function(json) 
+{
+    //alert("recvData!!!");
+    let msg = JSON.stringify(json);
+    //alert(msg);
+    document.theForm.on_signal.value = msg;
+});
+
+window.onerror=function(e) {
+  alert(e);
+}
+
+</script>
+</body>
+</html>
+
