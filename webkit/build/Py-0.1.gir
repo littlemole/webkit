@@ -72,12 +72,12 @@ and/or use gtk-doc annotations.  -->
       <constructor name="new" c:identifier="py_webkit_new">
         <doc xml:space="preserve"
              filename="pywebkit.cpp"
-             line="56">Allocates a new #PyWebKit.</doc>
+             line="82">Allocates a new #PyWebKit.</doc>
         <source-position filename="pywebkit.h" line="43"/>
         <return-value transfer-ownership="none">
           <doc xml:space="preserve"
                filename="pywebkit.cpp"
-               line="61">a new #PyWebKit.</doc>
+               line="87">a new #PyWebKit.</doc>
           <type name="WebKit" c:type="PyWebKit*"/>
         </return-value>
       </constructor>

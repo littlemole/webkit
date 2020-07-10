@@ -30,6 +30,15 @@
 
 <script type="text/javascript">
 
+let View = {
+
+    recvData : function(json) {
+
+        let msg = JSON.stringify(json);
+        document.theForm.on_signal.value = msg;
+    }
+};
+
 
 function onSubmit(form)
 {
@@ -37,18 +46,22 @@ function onSubmit(form)
 //    alert(msg);
     let json = JSON.parse(msg);
     form.on_signal.value = "";
-    window.send_signal("sendData",json);
+   // Model.send_signal("sendData",json);
+    WebKitDBus.Controller.sendData(json);
     return false;
 }
 
-window.on_signal("recvData", function(json) 
+WebKitDBus.bind(View);
+
+/*
+Model.on_signal("recvData", function(json) 
 {
     //alert("recvData!!!");
     let msg = JSON.stringify(json);
     //alert(msg);
     document.theForm.on_signal.value = msg;
 });
-
+*/
 window.onerror=function(e) {
   alert(e);
 }

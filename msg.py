@@ -13,7 +13,7 @@ import pprint
 import sys
 #import dbus
 #import dbus.mainloop.glib
-import pywebkit
+import WebKitDBus
 import json
 
 #def onSendData(data):
@@ -32,18 +32,23 @@ def catchall_signal_handler(*args, **kwargs):
 
 class Controller(object):
 
-    def onSendData(self,data):
+    def sendData(self,data):
         txt = json.dumps(data)
         print(txt)
         msg = json.loads(txt)
-        pywebkit.send_signal("recvData", msg)
+        #pywebkit.send_signal("recvData", msg)
+        WebKitDBus.View.recvData(msg)
+        return None
 
 #dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 #bus = dbus.SessionBus()
 
 # global main.controller accessed from javascript
 controller = Controller()        
-print(dir(controller))
+#print(dir(controller))
+print(WebKitDBus.uid)
+
+WebKitDBus.bind(controller)
 
 #bus.add_signal_receiver(controller.onSendData, dbus_interface = "com.example.TestService", signal_name = "sendData")
 #bus.add_signal_receiver(catchall_signal_handler, dbus_interface = "com.example.TestService", member_keyword="signal_name")
@@ -52,6 +57,7 @@ print(dir(controller))
 web = Py.WebKit() #WebKit2.WebView()#Py.WebKit() 
 url = "file://" + os.path.dirname(os.path.realpath(__file__)) + "/signal.html"
 web.load_uri(url)
+print(web.uid)
 
 # make resizable
 scrolledwindow = Gtk.ScrolledWindow()
@@ -64,7 +70,7 @@ win.add(scrolledwindow)
 win.connect("delete-event", Gtk.main_quit)
 win.show_all()
 
-pywebkit.on_signal("sendData",controller.onSendData)
+#pywebkit.on_signal(controller)#"sendData",controller.onSendData)
 
 # start the GUI event main loop
 GObject.threads_init()

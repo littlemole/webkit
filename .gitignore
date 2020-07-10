@@ -6,3 +6,7 @@ DEADJOE
 *.la
 *.lo
 *.o
+*.a
+*.so
+*.lib
+*.out

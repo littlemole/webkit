@@ -40,6 +40,13 @@ public:
         : ref_(ref)
     {}
 
+    PyObjectRef(const PyObjectRef& ref)
+        : ref_(ref.ref_)
+    {
+        if(ref_)
+            Py_DECREF(ref_);
+    }
+
     ~PyObjectRef()
     {
         if(ref_)
@@ -62,6 +69,17 @@ public:
             Py_DECREF(ref_);
         ref_ = rhs.ref_;
         Py_INCREF(ref_);
+        return *this;
+    }
+
+    PyObjectRef& operator=( PyObject* rhs)
+    {
+        if ( this->ref_ == rhs )
+            return *this;
+
+        if(ref_)
+            Py_DECREF(ref_);
+        ref_ = rhs;
         return *this;
     }
 
