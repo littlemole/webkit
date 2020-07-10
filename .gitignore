@@ -10,3 +10,4 @@ DEADJOE
 *.so
 *.lib
 *.out
+*.so.0

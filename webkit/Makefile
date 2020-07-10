@@ -22,7 +22,7 @@ CPPFLAGS = -Wall  $(DEBUG) $(INCLUDE) $(OPTIONS) $(PKG_INC)
 #################################################
 
 # the shared lib
-NAME = libpywebkit.so
+NAME = libwebview.so
 LIB = ./build/$(NAME)
 release : override LIB = ./build/$(NAME)
 
@@ -36,7 +36,7 @@ LIB_SRCFILES =  $(notdir $(LIB_SRCFILESABS))
 LIB_OBJFILES = $(LIB_SRCFILES:%.cpp=$(LIB_BUILD)/%.o)
 
 # output targets
-NAMESPACE=Py
+NAMESPACE=Pywebkit
 NSVERSION=0.1
 GIR_FILE=$(NAMESPACE)-$(NSVERSION).gir
 TYPELIB_FILE=$(NAMESPACE)-$(NSVERSION).typelib
@@ -77,7 +77,7 @@ $(LIB_BUILD)/%.o: $(LIB_SRC)/%.cpp
 
 $(LIB): $(LIB_OBJFILES) 
 	$(CXX)  -o $(LIB) $(LIB_OBJFILES)  $(CPPFLAGS) $(PKG_LIB)
-	cd build && ln -s $(NAME) $(NAME).0
+	-bash -c "cd build && ln -s $(NAME) $(NAME).0"
 
 
 $(LIB_BUILD)/$(TYPELIB_FILE): $(LIB_BUILD)/$(GIR_FILE)
@@ -85,7 +85,7 @@ $(LIB_BUILD)/$(TYPELIB_FILE): $(LIB_BUILD)/$(GIR_FILE)
 
 
 $(LIB_BUILD)/$(GIR_FILE): pywebkit.h pywebkit.cpp
-	libtool exec g-ir-scanner $^ -L $(LIB_BUILD) --library=pywebkit $(C_INCLUDES) --include=WebKit2-4.0 --include=GObject-2.0 --namespace=$(NAMESPACE) --nsversion=$(NSVERSION) --output=$@
+	libtool exec g-ir-scanner $^ -L $(LIB_BUILD) --library=webview $(C_INCLUDES) --include=WebKit2-4.0 --include=GObject-2.0 --namespace=$(NAMESPACE) --nsversion=$(NSVERSION) --output=$@
 		
 #################################################
 # make clean
@@ -98,4 +98,5 @@ clean:
 	-rm -f $(LIB_BUILD)/*.gir
 	-rm -f $(LIB_BUILD)/*.typelib
 	-rm -f $(LIB_BUILD)/*.so.0
-	
+	-rm -rf tmp-*
+

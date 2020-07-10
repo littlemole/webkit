@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<!-- This file was automatically generated from C sources - DO NOT EDIT!
+To affect the contents of this file, edit the original C definitions,
+and/or use gtk-doc annotations.  -->
+<repository version="1.2"
+            xmlns="http://www.gtk.org/introspection/core/1.0"
+            xmlns:c="http://www.gtk.org/introspection/c/1.0"
+            xmlns:glib="http://www.gtk.org/introspection/glib/1.0">
+  <include name="GObject" version="2.0"/>
+  <include name="WebKit2" version="4.0"/>
+  <namespace name="Pywebkit"
+             version="0.1"
+             shared-library="libwebview.so"
+             c:identifier-prefixes="Pywebkit"
+             c:symbol-prefixes="pywebkit">
+    <class name="Webview"
+           c:symbol-prefix="webview"
+           c:type="PywebkitWebview"
+           parent="WebKit2.WebView"
+           glib:type-name="PywebkitWebview"
+           glib:get-type="pywebkit_webview_get_type"
+           glib:type-struct="WebviewClass">
+      <source-position filename="pywebkit.h" line="39"/>
+      <implements name="Atk.ImplementorIface"/>
+      <implements name="Gtk.Buildable"/>
+      <constructor name="new" c:identifier="pywebkit_webview_new">
+        <source-position filename="pywebkit.h" line="43"/>
+        <return-value transfer-ownership="none">
+          <type name="Webview" c:type="PywebkitWebview*"/>
+        </return-value>
+      </constructor>
+      <field name="parent">
+        <type name="WebKit2.WebView" c:type="WebKitWebView"/>
+      </field>
+      <field name="uid">
+        <type name="utf8" c:type="gchar*"/>
+      </field>
+    </class>
+    <record name="WebviewClass"
+            c:type="PywebkitWebviewClass"
+            glib:is-gtype-struct-for="Webview">
+      <source-position filename="pywebkit.h" line="39"/>
+      <field name="parent">
+        <type name="WebKit2.WebViewClass" c:type="WebKitWebViewClass"/>
+      </field>
+    </record>
+  </namespace>
+</repository>

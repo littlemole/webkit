@@ -1,10 +1,10 @@
 import gi
 gi.require_versions({
     'Gtk':  '3.0',
-    'Py': '0.1'
+    'Pywebkit': '0.1'
 })
 
-from gi.repository import Gtk, GObject, Py, WebKit2, GLib
+from gi.repository import Gtk, GObject, Pywebkit, WebKit2, GLib
 
 import os
 import socket
@@ -54,7 +54,7 @@ WebKitDBus.bind(controller)
 #bus.add_signal_receiver(catchall_signal_handler, dbus_interface = "com.example.TestService", member_keyword="signal_name")
 
 # create html widget
-web = Py.WebKit() #WebKit2.WebView()#Py.WebKit() 
+web = Pywebkit.Webview() #WebKit2.WebView()#Py.WebKit() 
 url = "file://" + os.path.dirname(os.path.realpath(__file__)) + "/signal.html"
 web.load_uri(url)
 print(web.uid)

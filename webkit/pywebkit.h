@@ -8,7 +8,7 @@
 #include <gio/gio.h>
 
 #define PY_WEBKIT_TYPE		\
-    (py_webkit_get_type())
+    (pywebkit_webview_get_type())
 #define PY_WEBKIT(o)			\
     (G_TYPE_CHECK_INSTANCE_CAST ((o), PY_WEBKIT_TYPE, PyWebKit))
 #define PY_WEBKIT_CLASS(c)		\
@@ -25,22 +25,22 @@ extern "C"
 {
 #endif
 
-typedef struct _PyWebKit		    PyWebKit;
-typedef struct _PyWebKitClass		PyWebKitClass;
+typedef struct _PywebkitWebview		    PywebkitWebview;
+typedef struct _PywebkitWebviewClass	PywebkitWebviewClass;
 
-struct _PyWebKit {
+struct _PywebkitWebview {
 /*< public >*/
     WebKitWebView parent;
     gchar* uid;
 };
 
-struct _PyWebKitClass {
+struct _PywebkitWebviewClass {
     WebKitWebViewClass parent;
 };
 
-GType		py_webkit_get_type	() G_GNUC_CONST;
+GType		pywebkit_webview_get_type	() G_GNUC_CONST;
 
-PyWebKit*	py_webkit_new		();
+PywebkitWebview*	pywebkit_webview_new		();
 
 #ifdef __cplusplus
 }
