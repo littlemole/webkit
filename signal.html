@@ -26,6 +26,8 @@
    </tr>
   </table> 
 
+  <button name="open" onclick="return onOpen(this);">Open</button>
+
  </form>
 
 <script type="text/javascript">
@@ -36,9 +38,17 @@ let View = {
 
         let msg = JSON.stringify(json);
         document.theForm.on_signal.value = msg;
+    },
+
+    recvFilename : function(fn) {
+        document.theForm.on_signal.value = fn;
     }
 };
 
+function onOpen(b) {
+    WebKit.Controller.openFile();
+    return false;
+}
 
 function onSubmit(form)
 {
@@ -47,11 +57,11 @@ function onSubmit(form)
     let json = JSON.parse(msg);
     form.on_signal.value = "";
    // Model.send_signal("sendData",json);
-    WebKitDBus.Controller.sendData(json);
+    WebKit.Controller.sendData(json);
     return false;
 }
 
-WebKitDBus.bind(View);
+WebKit.bind(View);
 
 /*
 Model.on_signal("recvData", function(json) 

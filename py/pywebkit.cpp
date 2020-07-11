@@ -27,20 +27,14 @@ static std::string sid;
 static PyObjectRef cb;
 
 /////////////////////////////////////////////
+// forwards
 
-
-struct SendSignalData
-{
-    std::string signal_name;
-    GVariant *parameters;
-};
-
-/////////////////////////////////////////////
-
-int  main_thread_send_signal(void* data );
+static void send_dbus_signal( GDBusConnection* dbus, std::string s, GVariant*  params);
 
 
 /////////////////////////////////////////////
+// signal object - function object that 
+// emits signal when invoked
 
 typedef struct {
     PyObject_HEAD
@@ -75,12 +69,8 @@ static PyObject* signal_object_call(PyObject* self, PyObject* args, PyObject* ka
     }
 
     GVariant* params = g_variant_builder_end(builder);
-
-    SendSignalData* ssd = new SendSignalData;
-    ssd->signal_name = that->signal_name;
-    ssd->parameters = params;
-
-    gdk_threads_add_idle ( &main_thread_send_signal, ssd);
+ 
+    send_dbus_signal(dbus,that->signal_name,params);
 
     Py_RETURN_NONE;
 }
@@ -126,6 +116,7 @@ PyTypeObject signal_objectType = {
     PyType_GenericNew                         /* tp_new */
 };
 
+
 extern "C" PyObject* new_signal_object(const char* name)
 {
     signal_object* self = (signal_object *)(&signal_objectType)->tp_alloc(&signal_objectType, 0);
@@ -133,7 +124,9 @@ extern "C" PyObject* new_signal_object(const char* name)
 
     return (PyObject*)self;
 }
+
 /////////////////////
+// signals object is a helper to invoke signals
 
 typedef struct {
     PyObject_HEAD
@@ -154,8 +147,6 @@ static PyObject * signals_object_getattr(signals_object* self, char* name)
     return new_signal_object(name);
 }
  
-
-
 
 PyTypeObject signals_objectType = {
     PyVarObject_HEAD_INIT(NULL,0)
@@ -204,6 +195,7 @@ extern "C" PyObject* new_signals_object()
 
     return (PyObject*)self;
 }
+
 ///////////////////////////////////
 
 static void signal_handler(GDBusConnection *connection,
@@ -264,10 +256,8 @@ static void got_dbus (GObject *source_object, GAsyncResult *res, gpointer user_d
     sid = g_dbus_connection_signal_subscribe (
         dbus, 
         /*sender*/ NULL, 
-        //"com.example.TestService",
          dbus_interface.c_str(),
         /*const gchar *member*/ NULL,
-        //"/com/example/TestService/object",
         dbus_object_path_recv_path.c_str(),
         NULL,
         G_DBUS_SIGNAL_FLAGS_NONE,
@@ -285,23 +275,10 @@ static void send_dbus_signal( GDBusConnection* dbus, std::string s, GVariant*  p
         NULL,
         dbus_object_path_send_path.c_str(),
         dbus_interface.c_str(),
-       // "/com/example/TestService/view",
-       // "com.example.TestService",
         s.c_str(),
         params,
         NULL
     );
-}
-
-int  main_thread_send_signal(void* data )
-{
-    SendSignalData* ssd = (SendSignalData*)data;
-
-    send_dbus_signal(dbus,ssd->signal_name,ssd->parameters);
-
-    delete ssd;
-
-    return 0;
 }
 
 static PyObject* pywebkit_send_signal(PyObject* self, PyObject* args)
@@ -314,7 +291,6 @@ static PyObject* pywebkit_send_signal(PyObject* self, PyObject* args)
         return NULL;
     }
     
-
     PyObjectRef signal = PySequence_GetItem(args,0);
     PyObjectRef msg = PySequence_GetItem(args,1);
     const char* c = PyUnicode_AsUTF8(signal);
@@ -326,12 +302,8 @@ static PyObject* pywebkit_send_signal(PyObject* self, PyObject* args)
     g_variant_builder_add(builder,"v",make_variant(msg));
 
     GVariant* params = g_variant_builder_end(builder);
-
-    SendSignalData* ssd = new SendSignalData;
-    ssd->signal_name = c;
-    ssd->parameters = params;
-
-    gdk_threads_add_idle ( &main_thread_send_signal, ssd);
+   
+    send_dbus_signal(dbus,c,params);
 
     Py_RETURN_NONE;
 }
@@ -361,12 +333,6 @@ static PyMethodDef pywebkit_module_methods[] = {
 
 
 
-/*
- * external interface to make the jswrapper object avail from Python code.
- * ( in this example will be called once in the class initialization 
- *   of the webkit widget )
- */
-
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
     "WebKitDBus",
@@ -382,7 +348,6 @@ PyMODINIT_FUNC PyInit_WebKitDBus(void) {
 
     m = PyModule_Create(&moduledef);
 
-//    jswrapper_python_objectType.tp_new = PyType_GenericNew;
     if (PyType_Ready(&signal_objectType) < 0)
         return 0;    
 

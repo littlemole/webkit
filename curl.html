@@ -37,11 +37,14 @@ content-length: 0
 
 <script type="text/javascript">
 
-function onResponse(response)
-{
-    document.theForm.response.value = String(response);
-    return false;
-}
+
+let View = {
+
+    recvResponse : function(response) {
+
+        document.theForm.response.value = String(response);
+    }
+};
 
 function onSubmit(form)
 {
@@ -51,9 +54,8 @@ function onSubmit(form)
         payload : form.request.value
     };
     form.response.value = "";
-   // Python.controller.submit(request,onResponse);
-   //alert(""+window.send_signal);
-    window.send_signal("HelloSignal","ragnaröck");
+    //window.send_signal("HelloSignal","ragnaröck");
+    WebKit.Controller.sendRequest(request);
     return false;
 }
 
@@ -66,11 +68,8 @@ function dokeyup(txt)
     document.getElementById("bodySize").innerHTML = len;
 }
 
-window.on_signal("HelloSignal", function(data) 
-{
-    let s = JSON.stringify(data);
-    alert(""+s);
-})
+WebKit.bind(View);
+
 
 </script>
 </body>

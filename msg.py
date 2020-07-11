@@ -4,61 +4,60 @@ gi.require_versions({
     'Pywebkit': '0.1'
 })
 
-from gi.repository import Gtk, GObject, Pywebkit, WebKit2, GLib
+from gi.repository import Gtk, Pywebkit
 
 import os
 import socket
 import threading
 import pprint
 import sys
-#import dbus
-#import dbus.mainloop.glib
-import WebKitDBus
 import json
 
-#def onSendData(data):
-#    pywebkit.send_signal("recvData", data)
+import WebKitDBus
 
-def catchall_signal_handler(*args, **kwargs):
-
-    print("-----------------------------------------")
-    for arg in args:
-        pprint.pprint(arg)
-    for key in kwargs:
-        print("   %s: %s" % (key, kwargs[key]))
-    print("-----------------------------------------")
-
-
-
+# controller gets signals from webview
 class Controller(object):
 
     def sendData(self,data):
         txt = json.dumps(data)
         print(txt)
         msg = json.loads(txt)
-        #pywebkit.send_signal("recvData", msg)
         WebKitDBus.View.recvData(msg)
-        return None
 
-#dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-#bus = dbus.SessionBus()
+    def openFile(self):
+        print("OPEN")
+#        print(dir(Gtk.FileChooserDialog))
+        #dlg = Gtk.FileChooserDialog("Open..", None, Gtk.FILE_CHOOSER_ACTION_OPEN,(Gtk.STOCK_CANCEL, Gtk.RESPONSE_CANCEL, Gtk.STOCK_OPEN, Gtk.RESPONSE_OK))
+        dlg = Gtk.FileChooserDialog(
+            "Please choose a file",
+            win,
+            Gtk.FileChooserAction.OPEN,
+            (
+                Gtk.STOCK_CANCEL,
+                Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OPEN,
+                Gtk.ResponseType.OK,
+            ),
+        )
 
-# global main.controller accessed from javascript
+        print(dir(dlg))
+        response = dlg.run()
+        #self.text.set_text(dlg.get_filename())
+        WebKitDBus.View.recvFilename(dlg.get_filename())
+        dlg.destroy()
+
+# instantiate controller and bind signals
 controller = Controller()        
-#print(dir(controller))
-print(WebKitDBus.uid)
-
 WebKitDBus.bind(controller)
 
-#bus.add_signal_receiver(controller.onSendData, dbus_interface = "com.example.TestService", signal_name = "sendData")
-#bus.add_signal_receiver(catchall_signal_handler, dbus_interface = "com.example.TestService", member_keyword="signal_name")
-
 # create html widget
-web = Pywebkit.Webview() #WebKit2.WebView()#Py.WebKit() 
+# this is the same as Gtk.WebView
+web = Pywebkit.Webview() 
 url = "file://" + os.path.dirname(os.path.realpath(__file__)) + "/signal.html"
 web.load_uri(url)
 print(web.uid)
 
+# form here on just standard python gtk
 # make resizable
 scrolledwindow = Gtk.ScrolledWindow()
 scrolledwindow.add(web)
@@ -70,10 +69,7 @@ win.add(scrolledwindow)
 win.connect("delete-event", Gtk.main_quit)
 win.show_all()
 
-#pywebkit.on_signal(controller)#"sendData",controller.onSendData)
-
 # start the GUI event main loop
-GObject.threads_init()
 Gtk.main()
 
         

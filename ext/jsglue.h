@@ -176,6 +176,327 @@ inline bool is_js_array(JSContextRef context,JSValueRef jsObject)
     return ret;
 }
 
+class jsobj;
+
+class jsval 
+{
+public:
+
+    jsval(JSContextRef context,JSValueRef value)
+        : context_(context), value_(value)
+    {}
+
+    jsval( const jsval& rhs)
+        : context_(rhs.context_), value_(rhs.value_)
+    {
+    }
+
+
+    bool isValid()
+    {
+        return value_ != 0;
+    }
+
+    void protect()
+    {
+         JSValueProtect(context_,value_);
+    }
+
+    void unprotect()
+    {
+         JSValueUnprotect(context_,value_);
+    }
+
+    bool isUndefined() 
+    {
+        return JSValueIsUndefined(context_,value_);
+    }
+
+    bool isNull() 
+    {
+        return JSValueIsNull(context_,value_);
+    }
+
+    bool isBoolean()
+    {
+        return JSValueIsBoolean(context_,value_);
+    }
+
+    bool isNumber()
+    {
+        return JSValueIsNumber(context_,value_);
+    }
+
+    bool isString()
+    {
+        return JSValueIsString(context_,value_);
+    }
+
+    bool isObject()
+    {
+        return JSValueIsObject(context_,value_);
+    }
+
+    bool isArray()
+    {
+        return JSValueIsArray(context_,value_);
+    }
+
+    jsobj obj();
+
+    JSType type()
+    {
+        return JSValueGetType(context_,value_);
+    }
+
+    JSValueRef ref()
+    {
+        return value_;
+    }
+
+    JSContextRef ctx()
+    {
+        return context_;
+    }
+
+private:
+    JSContextRef context_;
+    JSValueRef value_;
+};
+
+class jskeys
+{
+public:
+
+    jskeys(JSContextRef context,JSObjectRef obj)
+    {
+        keys_ = JSObjectCopyPropertyNames(context, obj);        
+    }
+
+    jskeys(const jskeys& rhs)
+        : keys_(rhs.keys_)
+    {
+        JSPropertyNameArrayRetain(keys_);
+    }
+
+    ~jskeys()
+    {
+        JSPropertyNameArrayRelease(keys_);
+    }
+
+    JSStringRef item(int index)
+    {
+        return JSPropertyNameArrayGetNameAtIndex(keys_,index);
+    }
+
+    int length()
+    {
+        return JSPropertyNameArrayGetCount(keys_);
+    }
+
+private:
+    JSPropertyNameArrayRef keys_;
+};
+
+
+class jsobj 
+{
+public:
+
+    jsobj()
+        : context_(0), value_(0)
+    {}
+
+    jsobj(JSContextRef context,JSObjectRef value)
+        : context_(context), value_(value)
+    {}
+
+    jsobj( const jsobj& rhs)
+        : context_(rhs.context_), value_(rhs.value_)
+    {}
+
+    bool isValid()
+    {
+        return value_ != 0;
+    }
+
+    void protect()
+    {
+         JSValueProtect(context_,value_);
+    }
+
+    void unprotect()
+    {
+         JSValueUnprotect(context_,value_);
+    }    
+
+    jsval member(const std::string& name)
+    {
+        JSValueRef ex = 0;
+        jstr s(name.c_str());
+
+        return jsval(context_,JSObjectGetProperty(context_, value_,s.ref(),&ex));
+    }
+
+    bool hasMember(const std::string& name)
+    {
+        jstr s(name.c_str());
+
+        return JSObjectHasProperty(context_, value_,s.ref());
+    }
+
+    jsobj& set(const std::string& name, JSValueRef value,JSPropertyAttributes attributes = kJSPropertyAttributeNone)
+    {
+        JSValueRef ex = 0;
+        jstr s(name.c_str());
+        JSObjectSetProperty(context_, value_,s.ref(),value,attributes,&ex);
+        return *this;
+    }
+
+    jsobj& set(JSStringRef name, JSValueRef value,JSPropertyAttributes attributes = kJSPropertyAttributeNone)
+    {
+        JSValueRef ex = 0;
+        JSObjectSetProperty(context_, value_,name,value,attributes,&ex);
+        return *this;
+    }
+
+    bool isFunction()
+    {
+        return JSObjectIsFunction(context_,value_);
+    }
+
+    jsval invoke(std::vector<JSValueRef>& arguments, JSObjectRef that = NULL)
+    {
+        JSValueRef ex = 0;
+        JSValueRef result = JSObjectCallAsFunction(
+            context_,
+            value_,
+            that,  
+            arguments.size(), 
+            &arguments[0], 
+            &ex
+        );
+        return jsval(context_,result);
+    }
+
+    void* private_data() 
+    {
+        return JSObjectGetPrivate(value_);
+    }
+
+    int length()
+    {
+        JSValueRef ex = 0;
+        jstr lengthPropertyName("length");
+        JSValueRef length = JSObjectGetProperty(context_, value_, lengthPropertyName.ref(), &ex);
+
+        int len = jnum(context_,length).integer();
+        return len;
+    }
+
+    jsval item(int index)
+    {
+        JSValueRef ex = 0;
+        return jsval(context_,JSObjectGetPropertyAtIndex(context_, value_, index, &ex));
+    }
+
+    JSContextRef ctx()
+    {
+        return context_;
+    }
+
+    JSValueRef ref()
+    {
+        return value_;
+    }
+
+private:
+    JSContextRef context_;
+    JSObjectRef value_;
+};
+
+
+inline jsobj jsval::obj()
+{
+    JSValueRef ex = 0;
+    return jsobj(context_, JSValueToObject(context_,value_,&ex));
+}
+
+class jsctx
+{
+public:
+
+    jsctx(JSContextRef context)
+        : context_(context)
+    {}
+
+    jsobj globalObject()
+    {
+        return jsobj(context_,JSContextGetGlobalObject(context_));
+    }
+
+    template<class F>
+    jsobj make_function(const std::string& name, F fun)
+    {
+        jstr functionName(name.c_str());
+        return make_function(functionName.ref(),fun);
+    }
+
+
+    template<class F>
+    jsobj make_function(JSStringRef name, F fun)
+    {
+        JSObjectRef result = JSObjectMakeFunctionWithCallback(context_, name, fun);
+        return jsobj(context_,result);
+    }
+
+    JSValueRef undefined()
+    {
+        return JSValueMakeUndefined(context_);
+    }
+
+    jsobj array(std::vector<JSValueRef>& v)
+    {
+        JSValueRef ex = 0;
+        return jsobj(context_,JSObjectMakeArray(context_, v.size(), &v[0], &ex));        
+    }
+
+    jsobj object()
+    {
+        return jsobj(context_, JSObjectMake(context_,0,NULL));
+    }
+
+    jsobj object(const JSClassDefinition& clazz, void* user_data = NULL )
+    {
+        return jsobj(context_,jclass(&clazz).create(context_,user_data));
+    }
+
+    JSValueRef string(const std::string& s)
+    {
+        jstr str(s);
+        return JSValueMakeString(context_, str.ref());
+    }
+
+    JSValueRef boolean(bool b)
+    {
+        return JSValueMakeBoolean(context_, b);
+    }
+
+    template<class T>
+    JSValueRef number(T t)
+    {
+        return JSValueMakeNumber(context_,(double)t));
+    }
+
+    JSContextRef ctx()
+    {
+        return context_;
+    }
+
+private:
+    JSContextRef context_;
+};
+
 
 #endif
 

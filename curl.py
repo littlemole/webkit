@@ -1,27 +1,27 @@
 import gi
 gi.require_versions({
     'Gtk':  '3.0',
-    'Py': '0.1'
+    'Pywebkit': '0.1'
 })
 
-from gi.repository import Gtk, GObject, Py, WebKit2, GLib
+from gi.repository import Gtk, GObject, Pywebkit, WebKit2, GLib
 
 import os
 import socket
 import threading
 import pprint
 import sys
-import dbus
-import dbus.mainloop.glib
-import pywebkit
+#import dbus
+#import dbus.mainloop.glib
+import WebKitDBus
+
 class Worker(threading.Thread):
 
-    def __init__(self,sock,msg,size,onResponse):
+    def __init__(self,sock,msg,size):
         threading.Thread.__init__(self) 
         self.sock = sock
         self.msg  = msg
         self.size = size
-        self.cb   = onResponse
 
 
     def run(self):
@@ -30,7 +30,9 @@ class Worker(threading.Thread):
         response = self.recv_response()
 
         # call back into javascript on the main thread
-        GObject.idle_add(self.cb,response)
+        #GObject.idle_add(self.cb,response)
+
+        WebKitDBus.View.recvResponse(response)
 
 
     def send_request(self):
@@ -62,23 +64,12 @@ class Worker(threading.Thread):
         return response
 
 
-
-def catchall_signal_handler(*args, **kwargs):
-    for arg in args:
-        pprint.pprint(arg)
-#        print ("        " + str(arg))
-    for key in kwargs:
-        print("   %s: %s" % (key, kwargs[key]))
-
-    #Py.send_signal("on_create", "dummy value")
-
-
 class Controller(object):
 
 
-    def submit(self,req,onResponse):
+    def sendRequest(self,req):
 
-        msg = req.payload
+        msg = req["payload"]
         # unix2dos for dummies. this is a hack to support proper http
         # headers when using a webkit html textarea to assemble the
         # payload
@@ -88,47 +79,20 @@ class Controller(object):
         size = len(msg)
        
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((req.host,int(req.port)))
+        sock.connect((req["host"],int(req["port"])))
 
-        self.worker = Worker(sock,msg,size,onResponse)
+        self.worker = Worker(sock,msg,size)
         self.worker.start()
 
-def on_create(w):
-    #pass
-    #import pywebkit
-   # from pywebkit import pywebkit.PyDBUSObject 
-   # print(dir(__main__))
-    pywebkit.send_signal("on_create", "dummy value")
-   # obj = pywebkit.PyDBUSObject()
-   # obj("HelloSignal",{"key":"HELLO","values":[47,11]})
-    # pprint.pprint(pywebkit)
-    #web.webkit_send_signal("HelloSignal",GLib.Variant("s","World"))
-
-def on_ext():
-    print("init extensions!")
-
-def on_show(x,y):
-    print("on show")
-
-dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-bus = dbus.SessionBus()
-bus.add_signal_receiver(catchall_signal_handler, dbus_interface = "com.example.TestService", signal_name = "HelloSignal" ,member_keyword="signal_name")
-bus.add_signal_receiver(catchall_signal_handler, dbus_interface = "com.example.TestService", signal_name = "on_create", member_keyword="signal_name")
 
 # global main.controller accessed from javascript
 controller = Controller()        
+WebKitDBus.bind(controller)
 
 # create html widget
-web = Py.WebKit() #WebKit2.WebView()#Py.WebKit() 
-#import pywebkit
-#import pywebkit
-
-#pprint.pprint(pywebkit.DBus)
-
+web = Pywebkit.Webview() 
 url = "file://" + os.path.dirname(os.path.realpath(__file__)) + "/curl.html"
 web.load_uri(url)
-print(web.uid)
-print(pywebkit.uid)
 
 # make resizable
 scrolledwindow = Gtk.ScrolledWindow()
@@ -139,14 +103,10 @@ win = Gtk.Window()
 win.set_default_size(550, 350)   
 win.add(scrolledwindow)
 win.connect("delete-event", Gtk.main_quit)
-win.connect("realize", on_create)
-#web.connect("initialize-web-extensions", on_ext)
-
-web.connect("load-changed",on_show)
 win.show_all()
 
 # start the GUI event main loop
-GObject.threads_init()
+#GObject.threads_init()
 Gtk.main()
 
         
