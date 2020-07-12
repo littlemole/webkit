@@ -9,9 +9,10 @@
 #include <map>
 #include <gio/gio.h>
 #include <glib.h>
+#include "gvglue.h"
+#include "pyglue.h"
 
-
-GVariant* make_variant(PyObject* pyObj);
+GVariant* make_variant(PyObjectRef& pyObj);
 
 PyObject* gvariant_to_py_value(GVariant* parameters);
 

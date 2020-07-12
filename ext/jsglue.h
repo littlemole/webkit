@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
-
+#include <functional>
 
 /*
  * deal with Javascript Strings. there are three ways to construct a 
@@ -63,6 +63,11 @@ public:
         return ref_;
     }
 
+    JSValueRef value()
+    {
+        return value_;
+    }
+
 private:
 
     void get_str()
@@ -77,11 +82,6 @@ private:
     gchar* str_;
 };
 
-
-/*
- * deal with custom Javascript Numbers.
- *
- */
 
 class jnum
 {
@@ -259,6 +259,23 @@ public:
         return context_;
     }
 
+    std::string str()
+    {
+         //return g_variant_new_string(jstr(context,argument).str());      
+        return jstr(context_,value_).str();
+    }
+
+    double number()
+    {
+        return jnum(context_,value_).number();
+    }
+
+    bool boolean()
+    {
+        return jbool(context_,value_).boolean();
+    }
+
+
 private:
     JSContextRef context_;
     JSValueRef value_;
@@ -272,6 +289,8 @@ public:
     {
         keys_ = JSObjectCopyPropertyNames(context, obj);        
     }
+
+    jskeys(jsobj& obj);
 
     jskeys(const jskeys& rhs)
         : keys_(rhs.keys_)
@@ -338,11 +357,22 @@ public:
         return jsval(context_,JSObjectGetProperty(context_, value_,s.ref(),&ex));
     }
 
+    jsval member(JSStringRef name)
+    {
+        JSValueRef ex = 0;
+        return jsval(context_,JSObjectGetProperty(context_, value_,name,&ex));
+    }
+
     bool hasMember(const std::string& name)
     {
         jstr s(name.c_str());
 
         return JSObjectHasProperty(context_, value_,s.ref());
+    }
+
+    bool hasMember(JSStringRef name)
+    {
+        return JSObjectHasProperty(context_, value_,name);
     }
 
     jsobj& set(const std::string& name, JSValueRef value,JSPropertyAttributes attributes = kJSPropertyAttributeNone)
@@ -405,9 +435,37 @@ public:
         return context_;
     }
 
-    JSValueRef ref()
+    JSObjectRef ref()
     {
         return value_;
+    }
+
+    bool isArray()
+    {
+        return JSValueIsArray(context_,value_);
+    }
+
+    void for_each( std::function<void(int index, jsval&)> fun)
+    {
+        int len = length();
+        for ( int i = 0; i < len; i++) 
+        {
+            jsval val = item(i);
+            fun(i,val);
+        }
+    }
+
+    void for_each( std::function<void(const char*, jsval&)> fun)
+    {
+        jskeys keys(context_,value_);
+
+        int len = keys.length();
+        for ( int i = 0; i < len; i++ )
+        {
+            jstr key = keys.item(i);
+            jsval value = member(key.ref());
+            fun(key.str(),value);
+        }        
     }
 
 private:
@@ -421,6 +479,12 @@ inline jsobj jsval::obj()
     JSValueRef ex = 0;
     return jsobj(context_, JSValueToObject(context_,value_,&ex));
 }
+
+inline jskeys::jskeys(jsobj& obj)
+{
+    keys_ = JSObjectCopyPropertyNames(obj.ctx(), obj.ref());        
+}
+
 
 class jsctx
 {
@@ -473,7 +537,7 @@ public:
 
     JSValueRef string(const std::string& s)
     {
-        jstr str(s);
+        jstr str(s.c_str());
         return JSValueMakeString(context_, str.ref());
     }
 
@@ -485,7 +549,7 @@ public:
     template<class T>
     JSValueRef number(T t)
     {
-        return JSValueMakeNumber(context_,(double)t));
+        return JSValueMakeNumber(context_,(double)t);
     }
 
     JSContextRef ctx()

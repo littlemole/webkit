@@ -1,256 +1,187 @@
 #include "marshal.h"
+#include "gvglue.h"
 
 #define PROG "[web_extension.so]"
 
-bool gvariant_is_number(GVariant* parameter)
-{
-    const GVariantType * t = g_variant_get_type(parameter);      
-
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_BYTE)    ) return true;
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_INT16)   ) return true;
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_UINT16)  ) return true;
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_INT32)   ) return true;
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_UINT32)  ) return true;
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_INT64)   ) return true;
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_UINT64)  ) return true;
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_DOUBLE)  ) return true;
-
-    return false;
-}
-
-double gvariant_get_number(GVariant* parameter)
-{
-    const GVariantType * t = g_variant_get_type(parameter);      
-
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_BYTE)    ) return g_variant_get_byte(parameter);
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_INT16)   ) return g_variant_get_int16(parameter);
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_UINT16)  ) return g_variant_get_uint16(parameter);
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_INT32)   ) return g_variant_get_int32(parameter);
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_UINT32)  ) return g_variant_get_uint32(parameter);
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_INT64)   ) return g_variant_get_int64(parameter);
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_UINT64)  ) return g_variant_get_uint64(parameter);
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_DOUBLE)  ) return g_variant_get_double(parameter);
-
-    return 0;
-}
+GVariant* js_object_to_gvariant(JSContextRef context, JSValueRef arg);
+GVariant* js_array_to_gvariant(JSContextRef context, JSValueRef arg);
 
 
 JSValueRef gvariant_to_js_value(JSContextRef context, GVariant* parameter)
 {
-    JSValueRef ex = 0;
+    jsctx js(context);
 
     if (!parameter)
     {
-        return JSValueMakeUndefined(context);
+        return js.undefined();
     }
 
-    const GVariantType * t = g_variant_get_type(parameter);      
+    gvar param(parameter);
 
     // g_print (PROG " gvariant_to_js_value: %s \n", g_variant_get_type_string(parameter));
 
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_STRING)  ) 
+    if( param.isString())
     {
-        const char* c = g_variant_get_string (parameter,NULL);
-        jstr str(c);
-
-        return JSValueMakeString(context, str.ref());
+        const char* c = param.str();
+        return js.string(c);
     }
-    else if ( g_variant_type_equal (t,G_VARIANT_TYPE_VARIANT) )
+    else if ( param.isVariant())
     {
-        GVariant* v = g_variant_get_variant(parameter);
-        return gvariant_to_js_value(context,v);
-
+        return gvariant_to_js_value(context,param.variant());
     }
-    else if ( g_variant_type_is_tuple (t) )
+    else if ( param.isTuple() )
     {
         std::vector<JSValueRef> ret;
 
-        gsize s = g_variant_n_children (parameter);
-        for( gsize i = 0; i < s; i++)
+        param.for_each( [&ret,&context](int index, GVariant* item)
         {
-            GVariant* v = g_variant_get_child_value (parameter,i);
-            JSValueRef jsval = gvariant_to_js_value(context,v);
+            JSValueRef jsval = gvariant_to_js_value(context,item);
             ret.push_back(jsval);
-            g_variant_unref(v);
-        }
-        return JSObjectMakeArray(context, s, &ret[0], &ex);
+        });
+
+        return js.array(ret).ref();
     }
-    else if ( g_variant_type_equal (t,G_VARIANT_TYPE_MAYBE) )
+    else if( param.isMaybe() )
     {
-        GVariant* v = g_variant_get_maybe(parameter);
+        GVariant* v = param.maybe();
         if(!v)
         {
-            return JSValueMakeUndefined(context);
+            return js.undefined();
         }
         else
         {
-            auto ret = gvariant_to_js_value(context,v);
+            JSValueRef ret = gvariant_to_js_value(context,v);
             g_variant_unref(v);
             return ret;
         }
     }
-    else if ( g_variant_type_equal (t,G_VARIANT_TYPE_BOOLEAN) )
+    else if ( param.isBoolean())
     {
-       return JSValueMakeBoolean(context, g_variant_get_boolean(parameter));
+       return js.boolean(param.boolean());
     }    
-    else if (gvariant_is_number(parameter) ) 
+    else if (param.isNumber())
     {
-        return JSValueMakeNumber(context,gvariant_get_number(parameter));
+        return js.number(param.number());
     }
-    else if (g_variant_type_equal (t,G_VARIANT_TYPE_VARDICT)) 
+    else if ( param.isDict())
     {
-        JSObjectRef ret = JSObjectMake(context,0,NULL);
+        jsobj ret = js.object();
 
-        GVariantIter iter;
-        GVariant *value;
-        gchar *key;
-
-        g_variant_iter_init (&iter, parameter);
-        while (g_variant_iter_next (&iter, "{sv}", &key, &value))
+        param.for_each( [&ret,&context] (gchar* key, GVariant* value)
         {
             JSValueRef val = gvariant_to_js_value(context,value);
-            jstr str(key);
-            JSObjectSetProperty(context, ret, str.ref(), val, kJSPropertyAttributeNone, &ex);            
-
-            /* must free data for ourselves */
-            g_variant_unref (value);
-            g_free (key);
-        }
-        return ret;      
+            ret.set(key,val);
+        });
+        return ret.ref();      
     }
-    else if ( g_variant_type_equal (t,G_VARIANT_TYPE_ARRAY) )
+    else if ( param.isArray())
     {
         std::vector<JSValueRef> ret;
-        gsize s = g_variant_n_children (parameter);
-        for( gsize i = 0; i < s; i++)
-        {
-            GVariant* v = g_variant_get_child_value (parameter,i);
-            JSValueRef jsval = gvariant_to_js_value(context,v);
-            ret.push_back(jsval);
-            g_variant_unref(v);
-        }
 
-        return JSObjectMakeArray(context, s, &ret[0], &ex);
+        param.for_each( [&ret,&context](int index, GVariant* item)
+        {
+            JSValueRef jsval = gvariant_to_js_value(context,item);
+            ret.push_back(jsval);
+        });
+       return js.array(ret).ref();
     }    
 
-    return JSValueMakeUndefined(context);
+    return js.undefined();
 }
 
 std::vector<JSValueRef> gvariant_to_js_values(JSContextRef context, GVariant* parameters)
 {
     std::vector<JSValueRef> ret;
-    const GVariantType * t = g_variant_get_type(parameters);     
+
+    gvar params(parameters);
 
     //g_print (PROG " gvariant_to_js_values %s \n", g_variant_get_type_string (parameters));
 
-    if( !g_variant_type_is_tuple (t) )
+    if(!params.isTuple())
     {
         g_print (PROG " not a tuple \n");
         return ret;
     }
 
-    gsize s = g_variant_n_children (parameters);
-    for( gsize i = 0; i < s; i++)
+    params.for_each( [&ret,&context] (int index, GVariant* v)
     {
-        GVariant* v = g_variant_get_child_value (parameters,i);
         JSValueRef jsval = gvariant_to_js_value(context,v);
         ret.push_back(jsval);
-    }
+    });
+
     return ret;
 }
 
-GVariant* js_object_to_gvariant(JSContextRef context, JSValueRef arg)
+////////////////////////////////////////////////////////////////////////////////////
+
+GVariant* js_object_to_gvariant(jsobj& obj)
 {
-    JSValueRef ex = 0;
-    JSObjectRef obj = JSValueToObject(context, arg, &ex);
-    JSPropertyNameArrayRef names = JSObjectCopyPropertyNames(context, obj);
+    gvar_builder builder = garray();
 
-    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE_ARRAY);
-    size_t len = JSPropertyNameArrayGetCount(names);
-    for ( size_t i = 0; i < len; i++ )
+    obj.for_each( [&builder] ( const char* key, jsval& value )
     {
-        jstr key = JSPropertyNameArrayGetNameAtIndex(names,i);
-        JSValueRef  val = JSObjectGetProperty(context, obj, key.ref(), &ex);
-
-        GVariant* v = make_variant(context,val);
-
-        GVariant* dict = g_variant_new("{sv}", key.str(),v);
-        g_variant_builder_add_value(builder,dict);
-    }  
-    return g_variant_builder_end(builder);
+        GVariant* v = make_variant(value);
+        builder.add(key,v);
+    });
+ 
+    return builder.build();
 }
 
-GVariant* js_array_to_gvariant(JSContextRef context, JSValueRef arg)
+GVariant* js_array_to_gvariant(jsobj& arr)
 {
-    JSValueRef ex = 0;
-    JSObjectRef obj = JSValueToObject(context, arg, &ex);
-    
-    jstr lengthPropertyName("length");
-    JSValueRef length = JSObjectGetProperty(context, obj, lengthPropertyName.ref(), &ex);
+    gvar_builder builder = gtuple();
 
-    int len = jnum(context,length).integer();
-
-    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE_TUPLE);
-
-    for ( int i = 0; i < len; i++ )
+    arr.for_each( [&builder] (int index, jsval& item)
     {
-        JSValueRef  val = JSObjectGetPropertyAtIndex(context, obj, i, &ex);
+        builder.add(make_variant(item));
+    });
 
-        g_variant_builder_add(builder, "v", make_variant(context,val));
-    }
-    
-    return g_variant_builder_end(builder);
+    return builder.build();
 }
 
-GVariant* make_variant(JSContextRef context, JSValueRef argument)
+GVariant* make_variant(jsval& arg)
 {    
-    JSType jt = JSValueGetType(context, argument);
-    if ( jt == kJSTypeUndefined )
+    if(arg.isUndefined())
     {
-        return g_variant_new_maybe (G_VARIANT_TYPE_VARIANT,NULL);
+        return gnull();
     }
-    else if ( jt == kJSTypeNull )
+    else if (arg.isNull()) 
     {
-        return g_variant_new_maybe (G_VARIANT_TYPE_VARIANT,NULL);
+        return gnull();
     }
-    else if ( jt ==  kJSTypeString )
+    else if ( arg.isString())
     {
-        return g_variant_new("s",jstr(context,argument).str());      
+        return g_variant_new_string(arg.str().c_str());      
     }
-    else if ( jt == kJSTypeNumber )
+    else if ( arg.isNumber())
     {
-        double num = jnum(context,argument).number();
-        return g_variant_new_double(num);
+        return g_variant_new_double(arg.number());
     }
-    else if ( jt == kJSTypeBoolean )
+    else if (arg.isBoolean())
     {
-        bool b = jbool(context,argument).boolean();
-        return g_variant_new_boolean(b);    
+        return g_variant_new_boolean(arg.boolean());    
     }
-    else if ( jt == kJSTypeObject )
+    else if (arg.isObject())
     {
-        JSValueRef   ex = 0;
-        JSObjectRef obj = JSValueToObject(context, argument, &ex);
-        //JSObjectRef   t = that ? JSValueToObject(context, that, &ex) : NULL;
+        jsobj obj = arg.obj();
 
-        bool isFunction = JSObjectIsFunction(context, obj);
+        bool isFunction = obj.isFunction();
         if(isFunction)
         {
-            //return new_js_wrapper_python_object(context,t,obj);
-            return g_variant_new_maybe (G_VARIANT_TYPE_VARIANT,NULL);
+            return gnull();
         }
 
-        bool isArray = is_js_array(context,argument);
+        bool isArray = obj.isArray();
         if ( isArray )
         {
-            return  js_array_to_gvariant(context,argument);
+            return  js_array_to_gvariant(obj);
         }
         else 
         {
-            return js_object_to_gvariant(context,argument);
+            return js_object_to_gvariant(obj);
         }
     }
 
-    return g_variant_new_maybe (G_VARIANT_TYPE_VARIANT,NULL);
+    return gnull();
 }
 

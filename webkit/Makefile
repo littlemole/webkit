@@ -14,8 +14,7 @@ PKG_LIB=$(shell pkg-config gobject-2.0 webkit2gtk-4.0 gobject-introspection-1.0 
 OPTIONS = -fpic -Wno-write-strings -pthread -D_REENTRANT $(DEFAULT_OPTS)
 
 # compile flags
-CPPFLAGS = -Wall  $(DEBUG) $(INCLUDE) $(OPTIONS) $(PKG_INC)
-#-I../include
+CPPFLAGS = -Wall -I ../include $(DEBUG) $(INCLUDE) $(OPTIONS) $(PKG_INC)
 
 #################################################
 # source and build path information

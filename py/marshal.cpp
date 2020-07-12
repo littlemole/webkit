@@ -1,119 +1,60 @@
 #include "marshal.h"
 #include "pyglue.h"
 
-bool gvariant_is_number(GVariant* parameter)
-{
-    const GVariantType * t = g_variant_get_type(parameter);      
-
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_BYTE)    ) return true;
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_INT16)   ) return true;
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_UINT16)  ) return true;
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_INT32)   ) return true;
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_UINT32)  ) return true;
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_INT64)   ) return true;
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_UINT64)  ) return true;
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_DOUBLE)  ) return true;
-
-    return false;
-}
-
-double gvariant_get_number(GVariant* parameter)
-{
-    const GVariantType * t = g_variant_get_type(parameter);      
-
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_BYTE)    ) return g_variant_get_byte(parameter);
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_INT16)   ) return g_variant_get_int16(parameter);
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_UINT16)  ) return g_variant_get_uint16(parameter);
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_INT32)   ) return g_variant_get_int32(parameter);
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_UINT32)  ) return g_variant_get_uint32(parameter);
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_INT64)   ) return g_variant_get_int64(parameter);
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_UINT64)  ) return g_variant_get_uint64(parameter);
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_DOUBLE)  ) return g_variant_get_double(parameter);
-
-    return 0;
-}
-
-
-GVariant* make_variant(PyObject* pyObj)
+GVariant* make_variant(PyObjectRef& pyObj)
 {
 //    PyObject_Print(pyObj, stdout,0);
 //    printf("\n");
 
     if (!pyObj)
     {
-        return g_variant_new_maybe (G_VARIANT_TYPE_VARIANT,NULL);
+        return gnull();
     }
 
-    if ( PyUnicode_Check(pyObj) ) 
+    if( pyObj.isString() || pyObj.isByteArray() )
     {
-        const char* c = PyUnicode_AsUTF8(pyObj);
-        return g_variant_new("s",c);                       
+        return g_variant_new_string(pyObj.str());                       
     }
-    else if ( PyByteArray_Check(pyObj) )
+    else if ( pyObj.isNone() ) 
     {
-        char* c = PyByteArray_AsString(pyObj);
-        return g_variant_new("s",c);                       
+       return gnull();
     }
-    else if ( pyObj == Py_None ) 
+    else if ( pyObj.isBoolean() )
     {
-       return g_variant_new_maybe (G_VARIANT_TYPE_VARIANT,NULL);
-    }
-    else if ( PyBool_Check(pyObj) ) 
-    {
-        bool b = pyObj == Py_True;
+        bool b = pyObj.boolean();
         return g_variant_new_boolean(b);               
     }
-    else if (PyLong_Check(pyObj) ) 
+    else if ( pyObj.isLong() ) 
     {
-        long l = PyLong_AsLong(pyObj);
-        return g_variant_new("x",l);
+        long l = pyObj.integer();
+        return g_variant_new_int64 (l);
     }
-    else if (PyFloat_Check(pyObj) ) 
+    else if ( pyObj.isFloat() )
     {
-        double d = PyFloat_AsDouble(pyObj);
+        double d = pyObj.number();
         return g_variant_new_double(d);
     }
-    else if (PyTuple_CheckExact(pyObj)) 
+    else if ( pyObj.isTuple() || pyObj.isList() )
     {
-        Py_ssize_t len = PySequence_Size(pyObj);
+        gvar_builder builder = gtuple();
 
-        GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE_TUPLE);
-        for(Py_ssize_t i = 0; i < len; i++)
+        pyObj.for_each( [&builder] (int index, PyObjectRef& item)
         {
-            PyObjectRef item = PySequence_GetItem(pyObj,i);
-            g_variant_builder_add(builder, "v", make_variant(item));
-        }
-        return g_variant_builder_end(builder);
+            builder.add(make_variant(item));
+        });
+
+        return builder.build(); 
     }
-    else if (PyList_CheckExact(pyObj)) 
+    else if ( pyObj.isDict() )
     {
-        Py_ssize_t len = PySequence_Size(pyObj);
-        GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE_TUPLE);
-        for(Py_ssize_t i = 0; i < len; i++)
+        gvar_builder builder = garray();
+
+        pyObj.for_each( [&builder] ( const char* key, PyObjectRef& value)
         {
-            PyObjectRef item = PySequence_GetItem(pyObj,i);
-            g_variant_builder_add(builder, "v", make_variant(item));
-        }
-        return g_variant_builder_end(builder);
-    }
-    else if (PyDict_CheckExact(pyObj))
-    {
-        GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE_ARRAY);
+            builder.add(key,make_variant(value));
+        });
 
-        PyObjectRef keys = PyDict_Keys(pyObj);
-        Py_ssize_t len = PySequence_Size(keys);
-
-        for(Py_ssize_t i = 0; i < len; i++)
-        {
-            PyObjectRef key = PySequence_GetItem(keys,i);
-
-            const char* k = PyUnicode_AsUTF8(key);
-            PyObjectRef value = PyMapping_GetItemString(pyObj, k);
-
-            GVariant* dict = g_variant_new("{sv}", k,make_variant(value));
-            g_variant_builder_add_value(builder,dict);
-        }  
-        return g_variant_builder_end(builder);
+        return builder.build(); 
     }
 
     return g_variant_new_maybe (G_VARIANT_TYPE_VARIANT,NULL);
@@ -127,89 +68,75 @@ PyObject* gvariant_to_py_value(GVariant* parameter)
         Py_RETURN_NONE;
     }
 
-    const GVariantType * t = g_variant_get_type(parameter);      
+    gvar param(parameter);
 
-    if ( g_variant_type_equal (t,G_VARIANT_TYPE_STRING)  ) 
+    if ( param.isString() )
     {
-        const char* c = g_variant_get_string (parameter,NULL);
-        return PyUnicode_FromString(c);
+        return PyUnicode_FromString(param.str());
     }
-    else if ( g_variant_type_equal (t,G_VARIANT_TYPE_VARIANT) )
+    else if ( param.isVariant())
     {
-        GVariant* v = g_variant_get_variant(parameter);
+        GVariant* v = param.variant();
         return gvariant_to_py_value(v);
     }
-    else if ( g_variant_type_is_tuple (t) )
+    else if (param.isTuple())
     {
-        gsize s = g_variant_n_children (parameter);
-        PyObject* ret = PyTuple_New(s);
+        int len = param.length();
+        PyObject* ret = PyTuple_New(len);
 
-        for( gsize i = 0; i < s; i++)
+        param.for_each( [&ret](int index, GVariant* item)
         {
-            GVariant* v = g_variant_get_child_value (parameter,i);
-            PyObject* p = gvariant_to_py_value(v);
-            PyTuple_SetItem(ret, i, p);
-            g_variant_unref(v);
-        }
+            PyObject* p = gvariant_to_py_value(item);
+            PyTuple_SetItem(ret, index, p); // steals ref to p!
+        });
 
         return ret;
     }
-    else if ( g_variant_type_equal (t,G_VARIANT_TYPE_MAYBE) )
+    else if ( param.isMaybe() )
     {
-        GVariant* v = g_variant_get_maybe(parameter);
+        GVariant* v = param.maybe();
         if(!v)
         {
             Py_RETURN_NONE;
         }
         else
         {
-            auto ret = gvariant_to_py_value(v);
+            PyObject* ret = gvariant_to_py_value(v);
             g_variant_unref(v);
             return ret;
         }
     }
-    else if ( g_variant_type_equal (t,G_VARIANT_TYPE_BOOLEAN) )
+    else if (param.isBoolean())
     {
-        return PyBool_FromLong((long)g_variant_get_boolean(parameter));
+        return PyBool_FromLong( (long) param.boolean() );
     }    
-    else if (gvariant_is_number(parameter) ) 
+    else if ( param.isNumber() )
     {
-        return PyFloat_FromDouble(gvariant_get_number(parameter));
+        return PyFloat_FromDouble(param.number());
     }
-    else if (g_variant_type_equal (t,G_VARIANT_TYPE_VARDICT)) 
+    else if ( param.isDict())
     {
         PyObject* ret = PyDict_New();
 
-        GVariantIter iter;
-        GVariant *value;
-        gchar *key;
-
-        g_variant_iter_init (&iter, parameter);
-        while (g_variant_iter_next (&iter, "{sv}", &key, &value))
+        param.for_each( [&ret](const char* key, GVariant* value)
         {
             PyObjectRef val = gvariant_to_py_value(value);
-            PyObjectRef k = PyUnicode_FromString(key);
+            PyDict_SetItemString(ret, key, val ); // does NOT steal val
+        });
 
-            PyDict_SetItem(ret, k, val );
-
-            /* must free data for ourselves */
-            g_variant_unref (value);
-            g_free (key);
-        }
         return ret;      
     }
-    else if ( g_variant_type_equal (t,G_VARIANT_TYPE_ARRAY) )
+    else if ( param.isArray() )
     {
-        gsize s = g_variant_n_children (parameter);
-        PyObject* ret = PyList_New(s);
+        int len = param.length();
 
-        for( gsize i = 0; i < s; i++)
+        PyObject* ret = PyList_New(len);
+
+        param.for_each( [&ret]( int index, GVariant* item)
         {
-            GVariant* v = g_variant_get_child_value (parameter,i);
-            PyObject* val = gvariant_to_py_value(v);
-            PyList_SetItem(ret, i,val );
-            g_variant_unref(v);
-        }
+            PyObject* value = gvariant_to_py_value(item);
+            PyList_SetItem(ret, index, value ); // steals ref to value
+        });
 
         return ret;
     }    

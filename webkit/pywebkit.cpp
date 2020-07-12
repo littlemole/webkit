@@ -1,6 +1,7 @@
 #include "pywebkit.h"
 #include <iostream>
 #include <Python.h>
+#include "pyglue.h"
 
 #define PROG "[libwebview] "
 
@@ -32,16 +33,12 @@ static void pywebkit_webview_init(PywebkitWebview *web)
 {
     g_print(PROG "pywebkit_webview_init\n");
 
-    PyObject* n = PyUnicode_FromString("WebKitDBus");
-    PyObject* m = PyImport_GetModule(n);
+    PyObjectRef n = PyUnicode_FromString("WebKitDBus");
+    PyObjectRef m = PyImport_GetModule(n);
 
-    PyObject* uid = PyObject_GetAttrString(m,"uid");
+    PyObjectRef uid = PyObject_GetAttrString(m,"uid");
     const char* c = PyUnicode_AsUTF8(uid);
     web->uid = g_strdup (c);
-
-    Py_XDECREF(n);
-    Py_XDECREF(m);
-    Py_XDECREF(uid);
 
     WebKitWebContext* ctx = webkit_web_context_get_default();
     g_signal_connect( G_OBJECT (ctx), "initialize-web-extensions", G_CALLBACK(init_ext), web);

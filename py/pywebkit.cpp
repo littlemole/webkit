@@ -48,28 +48,20 @@ static int signal_object_init(signal_object *self, PyObject *args, PyObject *kwd
 
 static void signal_object_dealloc(signal_object* self)
 {
-    Py_TYPE(self)->tp_free((PyObject*)self);
+    py_dealloc(self);
 }
 
 static PyObject* signal_object_call(PyObject* self, PyObject* args, PyObject* kargs)
 {
     signal_object* that = (signal_object*)self;
 
-    Py_ssize_t len = PySequence_Size(args);
-
-    GVariantBuilder *builder;
-
-    builder = g_variant_builder_new(G_VARIANT_TYPE_TUPLE);
-
-    for( int i = 0; i < len; i++)
+    gvar_builder builder = gtuple();
+    for_each(args,[&builder](int index, PyObjectRef& arg)
     {
-        PyObjectRef arg = PySequence_GetItem(args,0);
+        builder.add(make_variant(arg));
+    });
+    GVariant* params = builder.build();
 
-        g_variant_builder_add(builder,"v",make_variant(arg));
-    }
-
-    GVariant* params = g_variant_builder_end(builder);
- 
     send_dbus_signal(dbus,that->signal_name,params);
 
     Py_RETURN_NONE;
@@ -119,7 +111,7 @@ PyTypeObject signal_objectType = {
 
 extern "C" PyObject* new_signal_object(const char* name)
 {
-    signal_object* self = (signal_object *)(&signal_objectType)->tp_alloc(&signal_objectType, 0);
+    signal_object* self = py_alloc<signal_object>(&signal_objectType);
     self->signal_name = name;
 
     return (PyObject*)self;
@@ -139,7 +131,7 @@ static int signals_object_init(signals_object *self, PyObject *args, PyObject *k
 
 static void signals_object_dealloc(signals_object* self)
 {
-    Py_TYPE(self)->tp_free((PyObject*)self);
+   py_dealloc(self);
 }
 
 static PyObject * signals_object_getattr(signals_object* self, char* name)
@@ -191,7 +183,7 @@ PyTypeObject signals_objectType = {
 
 extern "C" PyObject* new_signals_object()
 {
-    signals_object* self = (signals_object *)(&signals_objectType)->tp_alloc(&signals_objectType, 0);
+    signals_object* self = py_alloc<signals_object>(&signals_objectType);
 
     return (PyObject*)self;
 }
@@ -210,42 +202,9 @@ static void signal_handler(GDBusConnection *connection,
 
     PyGlobalInterpreterLock lock;
 
-    int b = PyObject_HasAttrString(cb,signal_name);
-    if(!b)
-    {
-        g_print (PROG "signal handler for signal name %s not found.\n", signal_name);
-        return;        
-    }
-
     PyObjectRef args = gvariant_to_py_value(parameters);
-    PyObjectRef name = PyUnicode_FromString(signal_name);
 
-    PyObjectRef callable = PyObject_GetAttr(cb,name);
-    if(!PyMethod_Check(callable))
-    {
-        g_print (PROG "signal handler for signal name %s is not a method.\n", signal_name);
-        return;        
-    }
-
-    int s = PyTuple_Size(args);
-
-    PyObjectRef tuple = PyTuple_New(s+1);
-    Py_INCREF(cb); // SetItem steals ref
-    PyTuple_SetItem(tuple,0,cb);
-
-    for ( int i = 0; i < s; i++)
-    {
-        // GetItem gives borrowed ref
-        PyObject* item = PyTuple_GetItem(args,i);
-        Py_INCREF(item);
-        PyTuple_SetItem(tuple,i+1,item);
-    }
-
-    // borrowed ref
-    PyObject* fun = PyMethod_Function(callable);
-
-    // call python!
-    PyObjectRef ret = PyObject_CallObject(fun,tuple);
+    PyObjectRef ret = cb.invoke(signal_name, args);
 }
 
 
@@ -283,7 +242,7 @@ static void send_dbus_signal( GDBusConnection* dbus, std::string s, GVariant*  p
 
 static PyObject* pywebkit_send_signal(PyObject* self, PyObject* args)
 {
-    Py_ssize_t len = PySequence_Size(args);
+    int len = length(args);
 
     if(len<2)
     {
@@ -291,26 +250,25 @@ static PyObject* pywebkit_send_signal(PyObject* self, PyObject* args)
         return NULL;
     }
     
-    PyObjectRef signal = PySequence_GetItem(args,0);
-    PyObjectRef msg = PySequence_GetItem(args,1);
-    const char* c = PyUnicode_AsUTF8(signal);
+    PyObjectRef signal = item(args,0);
+    const char* signal_name = PyUnicode_AsUTF8(signal);
 
-    GVariantBuilder *builder;
+    auto builder = gtuple();
+    for( int i = 1; i < len; i++)
+    {
+        PyObjectRef arg = item( args, i);
+        builder.add(make_variant(arg));
+    }
+    GVariant* params = builder.build();
 
-    builder = g_variant_builder_new(G_VARIANT_TYPE_TUPLE);
-
-    g_variant_builder_add(builder,"v",make_variant(msg));
-
-    GVariant* params = g_variant_builder_end(builder);
-   
-    send_dbus_signal(dbus,c,params);
+    send_dbus_signal(dbus,signal_name,params);
 
     Py_RETURN_NONE;
 }
 
 static PyObject* pywebkit_bind(PyObject* self, PyObject* args)
 {
-    Py_ssize_t len = PySequence_Size(args);
+    int len = length(args);
 
     g_print (PROG "on signal \n");
 
@@ -320,7 +278,7 @@ static PyObject* pywebkit_bind(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    cb = PySequence_GetItem(args,0);
+    cb = item(args,0);
 
     Py_RETURN_NONE;
 }
@@ -342,33 +300,21 @@ static struct PyModuleDef moduledef = {
     NULL,NULL,NULL,NULL
 };
 
-PyMODINIT_FUNC PyInit_WebKitDBus(void) {
-
-    PyObject* m;
-
-    m = PyModule_Create(&moduledef);
-
+PyMODINIT_FUNC PyInit_WebKitDBus(void) 
+{
+    // ready guards
     if (PyType_Ready(&signal_objectType) < 0)
         return 0;    
 
     if (PyType_Ready(&signals_objectType) < 0)
         return 0;    
 
-    Py_INCREF(&signal_objectType);
-    PyModule_AddObject(m, "SignalObject", (PyObject *)&signal_objectType);
-
-    Py_INCREF(&signals_objectType);
-    PyModule_AddObject(m, "SignalsObject", (PyObject *)&signals_objectType);
-
-    PyObject* signalsObject = new_signals_object();
-    PyModule_AddObject(m, "View", signalsObject);
-
+    // generate guid
     gchar* c = g_dbus_generate_guid();
     sid = std::string(c);
     g_free(c);
 
-    PyModule_AddStringConstant(m, "uid", sid.c_str());
-
+    // assemble module config
     std::ostringstream oss_send;
     oss_send << dbus_object_path_send_prefix << sid;
     dbus_object_path_send_path = oss_send.str();
@@ -381,9 +327,21 @@ PyMODINIT_FUNC PyInit_WebKitDBus(void) {
     g_print (PROG "Send; %s.\n", dbus_object_path_send_path.c_str());
     g_print (PROG "Recv; %s.\n", dbus_object_path_recv_path.c_str());
 
+    // acquire dbus session
     g_bus_get(G_BUS_TYPE_SESSION, NULL, &got_dbus,NULL);
 
-    return m;
+    // create and populate module
+    PyObjectRef m = PyModule_Create(&moduledef);
+
+    m.addString( "uid", sid.c_str());
+
+    m.addObject("SignalObject", &signal_objectType);
+    m.addObject("SignalsObject", &signals_objectType);
+    
+    PyObjectRef signalsObject = new_signals_object();
+    m.addObject("View", signalsObject);
+
+    return m.incr();
 }
 
 

@@ -9,6 +9,7 @@
 #include <memory>
 #include <sstream>
 #include "marshal.h"
+#include "gvglue.h"
 
 #define PROG "[web_extension.so]"
 
@@ -24,51 +25,7 @@ std::map<const JSClassDefinition*,JSClassRef> jclass::map_;
 static GDBusConnection* dbuscon = 0;
 static std::string sid;
 
-/*
-struct DBusCallback 
-{
-    DBusCallback()
-        : func(0), context(0)
-    {}
 
-    DBusCallback(JSObjectRef f, JSContextRef ctx)
-        : func(f), context(ctx)
-    {
-        JSValueProtect(ctx,f);
-    }
-
-    ~DBusCallback()
-    {
-         JSValueUnprotect(context,func);
-    }
-
-    DBusCallback& operator=(const DBusCallback& rhs)
-    {
-        if( &rhs == this) 
-        {
-            return *this;
-        }
-        
-        if(context && func)
-        {
-             JSValueUnprotect(context,func);
-        }
-
-        context = rhs.context;
-        func = rhs.func;
-        
-        if(context && func)
-        {
-             JSValueProtect(context,func);
-        }
-        return *this;
-    }
-
-
-    JSObjectRef  func;
-    JSContextRef context;    
-};
-*/
 struct DBusCallback 
 {
     DBusCallback()
@@ -110,36 +67,28 @@ struct DBusCallback
 static DBusCallback cb;
 
 
-static void signal_handler(GDBusConnection *connection,
-                        const gchar *sender_name,
-                        const gchar *object_path,
-                        const gchar *interface_name,
-                        const gchar *signal_name,
-                        GVariant *parameters,
-                        gpointer user_data)
+static void signal_handler(
+    GDBusConnection *connection,
+    const gchar *sender_name,
+    const gchar *object_path,
+    const gchar *interface_name,
+    const gchar *signal_name,
+    GVariant *parameters,
+    gpointer user_data
+    )
 {
-    //g_print (PROG " received signal %s %s\n", signal_name, g_variant_get_type_string (parameters));
-
-    //JSValueRef ex = 0;
-
     std::vector<JSValueRef> arguments = gvariant_to_js_values( cb.obj.ctx(), parameters );
-
-//    jstr name(signal_name);
 
     jsval member = cb.obj.member(signal_name);
 
-//    JSValueRef member = JSObjectGetProperty(cb.context,cb.func,name.ref(),&ex);
-  //  if ( JSValueIsUndefined(cb.context,member))
     if(member.isUndefined())
     {
         g_print (PROG "unknown signal %s\n", signal_name);
     }
     else 
     {
-        //JSObjectRef fun = JSValueToObject(cb.context, member, &ex);
         jsobj fun = member.obj();
 
-        //bool isFunction = JSObjectIsFunction(cb.context, fun);
         bool isFunction = fun.isFunction();
         if(!isFunction)
         {
@@ -148,23 +97,15 @@ static void signal_handler(GDBusConnection *connection,
         else 
         {
             jsval result = fun.invoke(arguments);
-            /*
-            JSValueRef result = JSObjectCallAsFunction(
-                cb.context,
-                fun,
-                NULL,  
-                arguments.size(), 
-                &arguments[0], 
-                &ex
-            );
-            */
         }
     }
 }
 
-static void got_dbus (GObject *source_object,
-                        GAsyncResult *res,
-                        gpointer user_data)
+static void got_dbus (
+    GObject *source_object,
+    GAsyncResult *res,
+    gpointer user_data
+    )
 {
     dbuscon =  g_bus_get_finish (res, NULL);    
 
@@ -182,13 +123,19 @@ static void got_dbus (GObject *source_object,
     );
 }
 
-static JSValueRef send_signal(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception) 
+static JSValueRef send_signal(
+    JSContextRef ctx, 
+    JSObjectRef function, 
+    JSObjectRef thisObject, 
+    size_t argumentCount, 
+    const JSValueRef arguments[], 
+    JSValueRef* exception
+    ) 
 {
     jsctx js(ctx);
 
     if(argumentCount<1) 
     {
-        //return JSValueMakeUndefined(ctx);        
         return js.undefined();
     }
 
@@ -196,13 +143,16 @@ static JSValueRef send_signal(JSContextRef ctx, JSObjectRef function, JSObjectRe
 
     g_print (PROG " send_signal: %s \n", signal.c_str());
 
-    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE_TUPLE);
+    gvar_builder builder = gtuple();
+
     for( size_t i = 1; i < argumentCount; i++)
     {
-        GVariant* v = make_variant(ctx,arguments[i]);
-        g_variant_builder_add(builder, "v", v);
+        jsval arg(ctx,arguments[i]);
+        GVariant* v = make_variant(arg);
+        builder.add(v);
     }
-    GVariant* params = g_variant_builder_end(builder);
+
+    GVariant* params = builder.build();
 
     g_dbus_connection_emit_signal(
         dbuscon,
@@ -215,73 +165,70 @@ static JSValueRef send_signal(JSContextRef ctx, JSObjectRef function, JSObjectRe
     );    
 
     return js.undefined();
-
-//    return JSValueMakeUndefined(ctx);
 }
 
 
-static JSValueRef bind_signals(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef arguments[], JSValueRef* exception) 
+static JSValueRef bind_signals(
+    JSContextRef ctx, 
+    JSObjectRef function, 
+    JSObjectRef thisObject, 
+    size_t argumentCount, 
+    const JSValueRef arguments[], 
+    JSValueRef* exception
+    ) 
 {
     jsctx js(ctx);
 
     if(argumentCount<1) 
     {
         g_print (PROG " error: less than 1 args \n");
-        //return JSValueMakeUndefined(ctx);     
         return js.undefined();   
     }
 
     jsval arg(ctx,arguments[0]);
     if(!arg.isObject())
-    
-    //JSType jt = JSValueGetType(ctx, arguments[0]);
-    //if ( jt !=  kJSTypeObject )
     {
         g_print (PROG " error: first arg is not a obj \n");
-       // return JSValueMakeUndefined(ctx); 
        return js.undefined();
     }    
 
-    //JSValueRef   ex = 0;
-    //JSObjectRef obj = JSValueToObject(ctx, arguments[0], &ex);
-
     jsobj obj = arg.obj();
-
-//    cb = DBusCallback(obj,ctx);
 
     cb = DBusCallback(obj);
 
     g_print (PROG " bind signals \n");
 
-//    return JSValueMakeUndefined(ctx);
     return js.undefined();
 }
+
 ///////////////////////////////////////////////////
 
 
 static JSValueRef Signal_callAsFunctionCallback(
-                JSContextRef ctx, 
-                JSObjectRef function, 
-                JSObjectRef thisObject, 
-                size_t argumentCount, 
-                const JSValueRef arguments[], 
-                JSValueRef* exception)
+    JSContextRef ctx, 
+    JSObjectRef function, 
+    JSObjectRef thisObject, 
+    size_t argumentCount, 
+    const JSValueRef arguments[], 
+    JSValueRef* exception)
 {
     jsctx js(ctx);
     jsobj fun(ctx,function);
 
-    //gchar* signal_name = (gchar*)JSObjectGetPrivate(function);
     gchar* signal_name = (gchar*)fun.private_data();
 
     g_print (PROG " send_signal: %s \n", signal_name);
 
-    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE_TUPLE);
+    gvar_builder builder = gtuple();
+
     for( size_t i = 0; i < argumentCount; i++)
     {
-        GVariant* v = make_variant(ctx,arguments[i]);
-        g_variant_builder_add(builder, "v", v);
+        jsval arg(ctx,arguments[i]);
+        GVariant* v = make_variant(arg);
+        builder.add(v);
     }
-    GVariant* params = g_variant_builder_end(builder);
+
+    GVariant* params = builder.build();
 
     g_dbus_connection_emit_signal(
         dbuscon,
@@ -293,7 +240,6 @@ static JSValueRef Signal_callAsFunctionCallback(
         NULL
     );    
 
-//    return JSValueMakeUndefined(ctx);    
     return js.undefined();
 }
 
@@ -385,49 +331,26 @@ static void web_page_created_cb (WebKitWebExtension *extension, WebKitWebPage *w
     g_print (PROG " Page created\n");
 
     WebKitFrame * frame = webkit_web_page_get_main_frame(web_page);
-//    JSGlobalContextRef jsctx = webkit_frame_get_javascript_global_context  (frame);
     JSGlobalContextRef ctx = webkit_frame_get_javascript_global_context(frame);
     jsctx js(ctx);
 
     jsobj global = js.globalObject();
-//    JSObjectRef globalObject = JSContextGetGlobalObject(jsctx);
 
     jstr sendSignalFunctionName("send_signal");
-//    JSObjectRef sendSignalFunctionObject = JSObjectMakeFunctionWithCallback(jsctx, sendSignalFunctionName.ref(), &send_signal);
-
     jsobj sendSignalFunction = js.make_function(sendSignalFunctionName.ref(), &send_signal);
 
     jstr bindSignalsFunctionName("bind");
-//    JSObjectRef bindSignalsunctionObject = JSObjectMakeFunctionWithCallback(jsctx, bindSignalsName.ref(), &bind_signals);
-
     jsobj bindSignalsFunction = js.make_function(bindSignalsFunctionName.ref(), &bind_signals);
 
-    //JSObjectRef WebKitDBus = JSObjectMake(jsctx,0,NULL);
     jsobj WebKitDBus = js.object();
 
     WebKitDBus.set(sendSignalFunctionName.ref(), sendSignalFunction.ref());
     WebKitDBus.set(bindSignalsFunctionName.ref(), bindSignalsFunction.ref());
 
-//    JSObjectSetProperty(jsctx, WebKitDBus, bindSignalsName.ref(), bindSignalsunctionObject, kJSPropertyAttributeNone, nullptr);
-//    JSObjectSetProperty(jsctx, WebKitDBus, sendSignalFunctionName.ref(), sendSignalFunctionObject, kJSPropertyAttributeNone, nullptr);
-
     jsobj controller = js.object(Controller_class_def);
     WebKitDBus.set("Controller",controller.ref());
-/*
-    JSObjectSetProperty(
-        jsctx, 
-        WebKitDBus, 
-        jstr("Controller").ref(), 
-        jclass(&Controller_class_def).create(jsctx,0), 
-        kJSPropertyAttributeNone, 
-        NULL
-    );
-*/
-//    jstr WebKitDBusName("WebKit");
-  //  JSObjectSetProperty(jsctx, globalObject, WebKitDBusName.ref(), WebKitDBus, kJSPropertyAttributeNone, nullptr);
      
-     global.set("WebKit", WebKitDBus.ref());
-
+    global.set("WebKit", WebKitDBus.ref());
 }
 
 // ======================================================================================================
@@ -439,8 +362,8 @@ static void web_page_created_cb (WebKitWebExtension *extension, WebKitWebPage *w
 
 G_MODULE_EXPORT void webkit_web_extension_initialize_with_user_data (WebKitWebExtension *extension,   GVariant *user_data)
 {
-    const gchar* c = g_variant_get_string((GVariant*)user_data,NULL);
-    sid = std::string(c);
+    gvar data(user_data);
+    sid = std::string(data.str());
 
     g_print(PROG " PLUGIN activated %s\n", sid.c_str());
 

@@ -40,7 +40,7 @@ class Controller(object):
             ),
         )
 
-        print(dir(dlg))
+#        print(dir(dlg))
         response = dlg.run()
         #self.text.set_text(dlg.get_filename())
         WebKitDBus.View.recvFilename(dlg.get_filename())
