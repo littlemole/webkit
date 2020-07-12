@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -26,7 +27,10 @@
    </tr>
   </table> 
 
-  <button name="open" onclick="return onOpen(this);">Open</button>
+  <div id="helloWorld">HELLO WORLD</div>
+
+  <button name="open" onclick="return onOpen(this);"">Open</button>
+  <button name="fullscreen" onclick="return onFullscreen(this);">Open</button>
 
  </form>
 
@@ -58,6 +62,23 @@ function onSubmit(form)
     form.on_signal.value = "";
    // Model.send_signal("sendData",json);
     WebKit.Controller.sendData(json);
+    return false;
+}
+
+function onFullscreen()
+{
+    alert(document.webkitFullscreenEnabled );
+
+    if(document.webkitFullscreenElement)
+    {
+        document.exitFullscreen();
+    }
+    else
+    {
+        let el = document.getElementById("helloWorld");
+        alert(el.webkitRequestFullscreen);
+        el.webkitRequestFullscreen();
+    }
     return false;
 }
 

@@ -29,14 +29,15 @@ class Controller(object):
 #        print(dir(Gtk.FileChooserDialog))
         #dlg = Gtk.FileChooserDialog("Open..", None, Gtk.FILE_CHOOSER_ACTION_OPEN,(Gtk.STOCK_CANCEL, Gtk.RESPONSE_CANCEL, Gtk.STOCK_OPEN, Gtk.RESPONSE_OK))
         dlg = Gtk.FileChooserDialog(
-            "Please choose a file",
-            win,
-            Gtk.FileChooserAction.OPEN,
+            title = "Please choose a file",
+            parent = win,
+            action = Gtk.FileChooserAction.OPEN,
+            buttons =
             (
                 Gtk.STOCK_CANCEL,
-                Gtk.ResponseType.CANCEL,
+                Gtk.ButtonsType.CANCEL,
                 Gtk.STOCK_OPEN,
-                Gtk.ResponseType.OK,
+                Gtk.ButtonsType.OK,
             ),
         )
 
@@ -45,6 +46,12 @@ class Controller(object):
         #self.text.set_text(dlg.get_filename())
         WebKitDBus.View.recvFilename(dlg.get_filename())
         dlg.destroy()
+
+
+def onActivate(event):
+    print ("ACtiVE")
+    print(event.action_target_value)
+    print("\n")
 
 # instantiate controller and bind signals
 controller = Controller()        
@@ -62,10 +69,32 @@ print(web.uid)
 scrolledwindow = Gtk.ScrolledWindow()
 scrolledwindow.add(web)
 
+menuBar = Gtk.MenuBar()
+file = Gtk.MenuItem(label="_File")
+menu1 = Gtk.Menu()
+file.set_submenu(menu1)
+
+item1 = Gtk.MenuItem(label="New")
+item1.action_target_value = "HUBU!"
+item2 = Gtk.MenuItem("Open")
+
+menu1.append(item1)
+menu1.append(item2)
+
+item1.connect( "activate" , onActivate )
+
+menuBar.append(file)
+
+vbox = Gtk.VBox(False, 2)
+vbox.pack_start(menuBar, False, False, 0)
+vbox.pack_start(scrolledwindow, True, True, 0)
+
+
 # main window
 win = Gtk.Window()     
 win.set_default_size(550, 350)   
-win.add(scrolledwindow)
+#win.add(scrolledwindow)
+win.add(vbox)
 win.connect("delete-event", Gtk.main_quit)
 win.show_all()
 
