@@ -338,6 +338,10 @@ static struct PyModuleDef moduledef = {
     NULL,NULL,NULL,NULL
 };
 
+void add_future_obj_def(PyObjectRef& m);
+void add_future_iter_obj_def(PyObjectRef& m);
+void add_task_obj_def(PyObjectRef& m);
+
 PyMODINIT_FUNC PyInit_WebKitDBus(void) 
 {
     // ready guards
@@ -375,6 +379,10 @@ PyMODINIT_FUNC PyInit_WebKitDBus(void)
 
     m.addObject("SignalObject", &signal_objectType);
     m.addObject("SignalsObject", &signals_objectType);
+
+    add_future_obj_def(m);
+    add_future_iter_obj_def(m);    
+    add_task_obj_def(m);
     
     PyObjectRef signalsObject = new_signals_object();
     m.addObject("View", signalsObject);
