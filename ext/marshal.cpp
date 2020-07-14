@@ -93,7 +93,15 @@ std::vector<JSValueRef> gvariant_to_js_values(JSContextRef context, GVariant* pa
 {
     std::vector<JSValueRef> ret;
 
+    if(!parameters)
+        return ret;
+
     gvar params(parameters);
+
+    if(params.length() < 1 )
+    {
+        return ret;
+    }
 
     //g_print (PROG " gvariant_to_js_values %s \n", g_variant_get_type_string (parameters));
 

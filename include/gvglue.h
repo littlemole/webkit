@@ -168,6 +168,11 @@ public:
         return 0;
     }
 
+    GVariant* value()
+    {
+        return v_;
+    }
+
 private:
 
     GVariant* v_;

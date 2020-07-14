@@ -16,7 +16,7 @@
 #define PROG "[pycoro]"
 
 
-
+extern "C" PyObject* new_future_iter_object(PyObject* future);
 
 /////////////////////////////////////////////
 // Future object 
@@ -78,12 +78,12 @@ static PyObject* future_set_result(future_object* self, PyObject* args)
     if( self->cb != Py_None )
     {
         PyObjectRef tuple = PyTuple_New(1);
-        tuple.item(0,self);
+        tuple.item(0,(PyObject*)self);
 
         PyObjectRef ret = PyObject_CallObject(self->cb,tuple);
     }
 
-    return Py_RETURN_NONE;
+    Py_RETURN_NONE;
 }
 
 static PyObject* future_set_exception(future_object* self, PyObject* args)
@@ -106,12 +106,12 @@ static PyObject* future_set_exception(future_object* self, PyObject* args)
     if( self->cb != Py_None )
     {
         PyObjectRef tuple = PyTuple_New(1);
-        tuple.item(0,self);
+        tuple.item(0,(PyObject*)self);
 
         PyObjectRef ret = PyObject_CallObject(self->cb,tuple);
     }
 
-    return Py_RETURN_NONE;
+    Py_RETURN_NONE;
 }
 
 static PyObject* future_add_done_callback(future_object* self, PyObject* args)
@@ -132,11 +132,11 @@ static PyObject* future_add_done_callback(future_object* self, PyObject* args)
     if(self->done)
     {
         PyObjectRef tuple = PyTuple_New(1);
-        tuple.item(0,self);
+        tuple.item(0,(PyObject*)self);
         PyObjectRef ret = PyObject_CallObject(self->cb,tuple);
     }
 
-    return Py_RETURN_NONE;
+    Py_RETURN_NONE;
 }
 
 static PyObject* future_result(future_object* self, PyObject* args)
@@ -167,7 +167,7 @@ static PyMethodDef future_methods[] = {
 
 static PyObject* future_await(PyObject* self)
 {
-    return new_future_iter(self);
+    return new_future_iter_object(self);
 }
 
 PyAsyncMethods future_AsyncMethods = {
@@ -185,7 +185,7 @@ PyTypeObject future_objectType = {
     0,                         /*tp_print*/
     0,/*tp_getattr*/
     0,/*tp_setattr*/
-    future_AsyncMethods,       /*tp_compare tp_as_async */
+    &future_AsyncMethods,       /*tp_compare tp_as_async */
     0,                         /*tp_repr*/
     0,                         /*tp_as_number*/
     0,                         /*tp_as_sequence*/
@@ -228,7 +228,7 @@ extern "C" PyObject* new_future_object()
 // _FutureIter object 
 
 typedef struct {
-    future_iter_objectType; // inherit from!
+    future_object super; // inherit from!
     int state;
     PyObject* future;
 } future_iter_object;
@@ -255,17 +255,19 @@ static void future_iter_object_dealloc(future_iter_object* self)
 }
 
 
-static PyObject* future_iter_iter(future_iter_object* self)
+static PyObject* future_iter_iter(PyObject* self)
 {
     Py_INCREF(self);
     return self;
 }
 
-static PyObject* future_iter_next(future_iter_object* self)
+static PyObject* future_iter_next(PyObject* myself)
 {
+    future_iter_object* self = (future_iter_object*)myself;
     if(self->state == 0)
     {
-        PyObjectRef done = PyObject_CallMethod(self->future,"done");
+        PyObjectRef name = PyUnicode_FromString("done");
+        PyObjectRef done = PyObject_CallMethodObjArgs(self->future,name);
         if(!done.isValid())
             return NULL;
 
@@ -278,7 +280,7 @@ static PyObject* future_iter_next(future_iter_object* self)
             }
             else
             {
-                state = 1
+                self->state = 1;
             }
         }
         else
@@ -289,7 +291,8 @@ static PyObject* future_iter_next(future_iter_object* self)
     }
     if (self->state == 1)
     {
-        PyObjectRef r = PyObject_CallMethod(self->future,"result");
+        PyObjectRef name = PyUnicode_FromString("result");
+        PyObjectRef r = PyObject_CallMethodObjArgs(self->future,name);
         if(!r.isValid())
             return NULL;
 
@@ -369,9 +372,11 @@ PyTypeObject future_iter_objectType = {
     PyType_GenericNew                         /* tp_new */
 };
 
-extern "C" PyObject* new_future_iter_object()
+extern "C" PyObject* new_future_iter_object(PyObject* future)
 {
     future_iter_object* self = py_alloc<future_iter_object>(&future_iter_objectType);
+    self->future = future;
+    Py_INCREF(future);
     return (PyObject*)self;
 }
 

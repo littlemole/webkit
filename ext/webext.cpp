@@ -14,11 +14,11 @@
 #define PROG "[web_extension.so]"
 
 static const std::string dbus_interface = "org.oha7.webkit.WebKitDBus";
-static const std::string dbus_object_path_send_prefix = "/org/oha7/webkit/WebKitDBus/view/";
-static const std::string dbus_object_path_recv_prefix = "/org/oha7/webkit/WebKitDBus/controller/";
+static const std::string dbus_object_path_send_req_prefix = "/org/oha7/webkit/WebKitDBus/view/request/";
+static const std::string dbus_object_path_recv_req_prefix = "/org/oha7/webkit/WebKitDBus/controller/request/";
 
-static std::string dbus_object_path_send_path;
-static std::string dbus_object_path_recv_path; 
+static std::string dbus_object_path_send_req_path;
+static std::string dbus_object_path_recv_req_path; 
 
 std::map<const JSClassDefinition*,JSClassRef> jclass::map_;
 
@@ -77,7 +77,28 @@ static void signal_handler(
     gpointer user_data
     )
 {
-    std::vector<JSValueRef> arguments = gvariant_to_js_values( cb.obj.ctx(), parameters );
+    gvar params(parameters);
+
+    if(!params.isTuple())
+    {
+        g_print (PROG "invalid signal params is not a tuple:  %s\n", signal_name);
+        return;
+    }
+
+    int len = params.length();
+
+    gvar uid = params.item(0);
+    g_print (PROG "recevied signal with uid:  %s %s\n", signal_name,uid.str() );
+
+
+    std::vector<JSValueRef> arguments;
+
+    if(len>1)
+    {
+        gvar args = params.item(1);
+
+        arguments = gvariant_to_js_values( cb.obj.ctx(), args.value() );
+    }
 
     jsval member = cb.obj.member(signal_name);
 
@@ -114,7 +135,7 @@ static void got_dbus (
         /*sender*/ NULL, 
         dbus_interface.c_str(),
         /*const gchar *member*/ NULL,
-        dbus_object_path_recv_path.c_str(),
+        dbus_object_path_recv_req_path.c_str(),
         NULL,
         G_DBUS_SIGNAL_FLAGS_NONE,
         &signal_handler,
@@ -143,24 +164,41 @@ static JSValueRef send_signal(
 
     g_print (PROG " send_signal: %s \n", signal.c_str());
 
-    gvar_builder builder = gtuple();
+    GVariant* params = 0;
 
-    for( size_t i = 1; i < argumentCount; i++)
+    if(argumentCount > 1)
     {
-        jsval arg(ctx,arguments[i]);
-        GVariant* v = make_variant(arg);
-        builder.add(v);
+        gvar_builder builder = gtuple();
+
+        for( size_t i = 1; i < argumentCount; i++)
+        {
+            jsval arg(ctx,arguments[i]);
+            GVariant* v = make_variant(arg);
+            builder.add(v);
+        }
+
+        params = builder.build();
     }
 
-    GVariant* params = builder.build();
+    gchar* uid = g_dbus_generate_guid();
+
+    gvar_builder tuple = gtuple();
+    tuple.add(g_variant_new_string(uid));
+    if(params)
+    {
+        tuple.add(params);
+    }
+    GVariant* parameters = tuple.build();
+
+    g_free(uid);
 
     g_dbus_connection_emit_signal(
         dbuscon,
         NULL,
-        dbus_object_path_send_path.c_str(),
+        dbus_object_path_send_req_path.c_str(),
         dbus_interface.c_str(),
         signal.c_str(),
-        params,
+        parameters,
         NULL
     );    
 
@@ -217,28 +255,50 @@ static JSValueRef Signal_callAsFunctionCallback(
 
     gchar* signal_name = (gchar*)fun.private_data();
 
-    g_print (PROG " send_signal: %s \n", signal_name);
+    g_print (PROG " send_signal cf: %s \n", signal_name);
 
-    gvar_builder builder = gtuple();
+    GVariant* params = 0;
 
-    for( size_t i = 0; i < argumentCount; i++)
+    if( argumentCount > 0)
     {
-        jsval arg(ctx,arguments[i]);
-        GVariant* v = make_variant(arg);
-        builder.add(v);
+        gvar_builder builder = gtuple();
+
+        for( size_t i = 0; i < argumentCount; i++)
+        {
+            jsval arg(ctx,arguments[i]);
+            GVariant* v = make_variant(arg);
+            builder.add(v);
+        }
+
+        params = builder.build();
     }
 
-    GVariant* params = builder.build();
+    gchar* uid = g_dbus_generate_guid();
+
+    gvar_builder tuple = gtuple();
+
+    tuple.add(g_variant_new_string(uid));
+    g_free(uid);
+
+    if(params)
+    {
+        tuple.add(params);
+    }
+
+    GVariant* parameters = tuple.build();
+
+    g_print (PROG "send_signal cf: %s %s\n", signal_name, g_variant_get_type_string (parameters));
 
     g_dbus_connection_emit_signal(
         dbuscon,
         NULL,
-        dbus_object_path_send_path.c_str(),
+        dbus_object_path_send_req_path.c_str(),
         dbus_interface.c_str(),
         signal_name,
-        params,
+        parameters,
         NULL
     );    
+
 
     return js.undefined();
 }
@@ -368,16 +428,16 @@ G_MODULE_EXPORT void webkit_web_extension_initialize_with_user_data (WebKitWebEx
     g_print(PROG " PLUGIN activated %s\n", sid.c_str());
 
     std::ostringstream oss_send;
-    oss_send << dbus_object_path_send_prefix << sid;
-    dbus_object_path_send_path = oss_send.str();
+    oss_send << dbus_object_path_send_req_prefix << sid;
+    dbus_object_path_send_req_path = oss_send.str();
 
     std::ostringstream oss_recv;
-    oss_recv << dbus_object_path_recv_prefix << sid;
-    dbus_object_path_recv_path = oss_recv.str();
+    oss_recv << dbus_object_path_recv_req_prefix << sid;
+    dbus_object_path_recv_req_path = oss_recv.str();
 
     g_print (PROG "Interface: %s.\n", dbus_interface.c_str());
-    g_print (PROG "Send: %s.\n", dbus_object_path_send_path.c_str());
-    g_print (PROG "Recv: %s.\n", dbus_object_path_recv_path.c_str());
+    g_print (PROG "Send: %s.\n", dbus_object_path_send_req_path.c_str());
+    g_print (PROG "Recv: %s.\n", dbus_object_path_recv_req_path.c_str());
     
     g_bus_get(G_BUS_TYPE_SESSION, NULL, &got_dbus,NULL);
 

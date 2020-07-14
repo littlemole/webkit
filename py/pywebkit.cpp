@@ -16,11 +16,11 @@
 #define PROG "[pydbus]"
 
 static const std::string dbus_interface = "org.oha7.webkit.WebKitDBus";
-static const std::string dbus_object_path_send_prefix = "/org/oha7/webkit/WebKitDBus/controller/";
-static const std::string dbus_object_path_recv_prefix = "/org/oha7/webkit/WebKitDBus/view/";
+static const std::string dbus_object_path_send_req_prefix = "/org/oha7/webkit/WebKitDBus/controller/request/";
+static const std::string dbus_object_path_recv_req_prefix = "/org/oha7/webkit/WebKitDBus/view/request/";
 
-static std::string dbus_object_path_send_path;
-static std::string dbus_object_path_recv_path; 
+static std::string dbus_object_path_send_req_path;
+static std::string dbus_object_path_recv_req_path; 
 
 static GDBusConnection* dbus = 0;
 static std::string sid;
@@ -55,13 +55,18 @@ static PyObject* signal_object_call(PyObject* self, PyObject* args, PyObject* ka
 {
     signal_object* that = (signal_object*)self;
 
-    gvar_builder builder = gtuple();
-    for_each(args,[&builder](int index, PyObjectRef& arg)
-    {
-        builder.add(make_variant(arg));
-    });
-    GVariant* params = builder.build();
+    int len = length(args);
+    GVariant* params = 0;
 
+    if(len>0)
+    {
+        gvar_builder builder = gtuple();
+        for_each(args,[&builder](int index, PyObjectRef& arg)
+        {
+            builder.add(make_variant(arg));
+        });
+        params = builder.build();
+    }
     send_dbus_signal(dbus,that->signal_name,params);
 
     Py_RETURN_NONE;
@@ -202,11 +207,29 @@ static void signal_handler(GDBusConnection *connection,
 
     PyGlobalInterpreterLock lock;
 
-    PyObjectRef args = gvariant_to_py_value(parameters);
+    gvar params(parameters);
+    int len = params.length();
+    if(len < 1)
+    {
+        g_print (PROG " received invalid signal %s %s\n", signal_name, g_variant_get_type_string (parameters));
+        return;
+    }
 
-    PyObjectRef ret = cb.invoke(signal_name, args);
+    PyObjectRef uid = gvariant_to_py_value(params.item(0));
+    g_print (PROG "received signal %s %s\n", signal_name, uid.str() );
+
+    if(len>1)
+    {
+        PyObjectRef args = gvariant_to_py_value(params.item(1));
+        PyObjectRef ret = cb.invoke(signal_name, args);
+    }
+    else
+    {
+        PyObjectRef emptyTuple = PyTuple_New(0);
+        PyObjectRef ret = cb.invoke(signal_name, emptyTuple);        
+    }
+
 }
-
 
 static void got_dbus (GObject *source_object, GAsyncResult *res, gpointer user_data)
 {
@@ -217,7 +240,7 @@ static void got_dbus (GObject *source_object, GAsyncResult *res, gpointer user_d
         /*sender*/ NULL, 
          dbus_interface.c_str(),
         /*const gchar *member*/ NULL,
-        dbus_object_path_recv_path.c_str(),
+        dbus_object_path_recv_req_path.c_str(),
         NULL,
         G_DBUS_SIGNAL_FLAGS_NONE,
         &signal_handler,
@@ -229,13 +252,25 @@ static void got_dbus (GObject *source_object, GAsyncResult *res, gpointer user_d
 
 static void send_dbus_signal( GDBusConnection* dbus, std::string s, GVariant*  params)
 {
+    gchar* uid = g_dbus_generate_guid();
+
+    gvar_builder builder = gtuple();
+    builder.add(g_variant_new_string(uid));
+    if(params)
+    {
+        builder.add(params);
+    }
+    GVariant* parameters = builder.build();
+
+    g_free(uid);
+
     g_dbus_connection_emit_signal(
         dbus,
         NULL,
-        dbus_object_path_send_path.c_str(),
+        dbus_object_path_send_req_path.c_str(),
         dbus_interface.c_str(),
         s.c_str(),
-        params,
+        parameters,
         NULL
     );
 }
@@ -244,23 +279,26 @@ static PyObject* pywebkit_send_signal(PyObject* self, PyObject* args)
 {
     int len = length(args);
 
-    if(len<2)
+    if(len<1)
     {
-        PyErr_SetString(PyExc_RuntimeError, "less than two args for call to send_signal!");
+        PyErr_SetString(PyExc_RuntimeError, "less than one arg for call to send_signal!");
         return NULL;
     }
     
     PyObjectRef signal = item(args,0);
     const char* signal_name = PyUnicode_AsUTF8(signal);
 
-    auto builder = gtuple();
-    for( int i = 1; i < len; i++)
+    GVariant* params = 0;
+    if(len>1)
     {
-        PyObjectRef arg = item( args, i);
-        builder.add(make_variant(arg));
+        auto builder = gtuple();
+        for( int i = 1; i < len; i++)
+        {
+            PyObjectRef arg = item( args, i);
+            builder.add(make_variant(arg));
+        }
+        params = builder.build();
     }
-    GVariant* params = builder.build();
-
     send_dbus_signal(dbus,signal_name,params);
 
     Py_RETURN_NONE;
@@ -316,16 +354,16 @@ PyMODINIT_FUNC PyInit_WebKitDBus(void)
 
     // assemble module config
     std::ostringstream oss_send;
-    oss_send << dbus_object_path_send_prefix << sid;
-    dbus_object_path_send_path = oss_send.str();
+    oss_send << dbus_object_path_send_req_prefix << sid;
+    dbus_object_path_send_req_path = oss_send.str();
 
     std::ostringstream oss_recv;
-    oss_recv << dbus_object_path_recv_prefix << sid;
-    dbus_object_path_recv_path = oss_recv.str();
+    oss_recv << dbus_object_path_recv_req_prefix << sid;
+    dbus_object_path_recv_req_path = oss_recv.str();
 
     g_print (PROG "Interface; %s.\n", dbus_interface.c_str());
-    g_print (PROG "Send; %s.\n", dbus_object_path_send_path.c_str());
-    g_print (PROG "Recv; %s.\n", dbus_object_path_recv_path.c_str());
+    g_print (PROG "Send; %s.\n", dbus_object_path_send_req_path.c_str());
+    g_print (PROG "Recv; %s.\n", dbus_object_path_recv_req_path.c_str());
 
     // acquire dbus session
     g_bus_get(G_BUS_TYPE_SESSION, NULL, &got_dbus,NULL);
