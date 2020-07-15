@@ -147,6 +147,10 @@ def run_task(coro,*args):
     print("run task")
     #task = Task(coro)
     task = WebKitDBus.Task(coro)
+
+    pprint.pprint(task.step)
+    pprint.pprint(task.result)
+    
     if len(args) > 0:
         cb = args[0]
         if(task.done()):
@@ -177,6 +181,7 @@ def goSync():
     return "SYNCED"
 
 def onGoAsyncDone(f):
+    #pprint.pprint(f)
     print("ASNYC DONE: " + f.result())
 
 def onGoSyncDone(f):

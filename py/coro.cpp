@@ -94,6 +94,11 @@ static PyObject* future_set_result(future_object* self, PyObject* args)
         printf("\n");
 
         PyObjectRef ret = PyObject_CallObject(self->cb,tuple);
+        if(PyErr_Occurred())
+        {
+            g_print (PROG "ERRRÖR\n");
+            PyErr_PrintEx(0);          
+        }
     }
 
     g_print (PROG "4 future_set_result\n");
@@ -447,6 +452,7 @@ extern "C" PyObject* new_future_iter_object(PyObject* future)
 {
      g_print (PROG "new_future_iter_object; %i.\n", (void*)future);
     future_iter_object* self = py_alloc<future_iter_object>(&future_iter_objectType);
+    self->state = 0;
     self->future = future;
     Py_INCREF(future);
      g_print (PROG "2 new_future_iter_object; %i.\n", (void*)future);
@@ -602,14 +608,15 @@ gboolean task_do_step(gpointer user_data)
             // must get "value" attribute of pvalue ???
             if(pvalue)
             {
-                PyObject* value = PyObject_GetAttrString(pvalue,"value");
+                PyObjectRef value = PyObject_GetAttrString(pvalue,"value");
                 if(super->value != Py_None)
                 {
                     Py_DECREF(super->value);
                 }
-                super->value = value;
-                super->done = true;
-                Py_XDECREF(pvalue);
+  //              super->value = value;
+//                super->done = true;
+                future_set_result( super, value);
+               // Py_XDECREF(pvalue);
             }
 
         }
@@ -622,15 +629,17 @@ gboolean task_do_step(gpointer user_data)
                 {
                     Py_DECREF(super->ex);
                 }
-                super->ex = pvalue;
-                super->done = true;
+//                super->ex = pvalue;
+  //              super->done = true;
+                future_set_exception( super, pvalue);
+
             }            
         }
 
         g_print (PROG "__stepping__ end try catch\n");   
 
         Py_XDECREF(ptype);
-        //Py_XDECREF(pvalue);  // we stored this one, so keep ref
+        Py_XDECREF(pvalue);  
         Py_XDECREF(ptraceback);
     }
     else
@@ -788,7 +797,7 @@ PyTypeObject task_objectType = {
     0,                         /*tp_getattro*/
     0,                         /*tp_setattro*/
     0,                         /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT,//|Py_TPFLAGS_BASETYPE,        /*tp_flags*/
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE,        /*tp_flags*/
     "task object",       /* tp_doc */
     0,		                   /* tp_traverse */
     0,		                   /* tp_clear */
@@ -799,7 +808,7 @@ PyTypeObject task_objectType = {
     task_methods,                         /* tp_methods */
     0,//future_members,                         /* tp_members */
     0,                         /* tp_getset */
-    &future_objectType,                         /* tp_base */
+    0,//&future_objectType,                         /* tp_base */
     0,                         /* tp_dict */
     0,                         /* tp_descr_get */
     0,                         /* tp_descr_set */
@@ -836,6 +845,8 @@ extern "C" PyObject* new_task_object(PyObject* coro)
 
 void add_task_obj_def(PyObjectRef& m)
 {
+    task_objectType.tp_base = &future_objectType;
+    
     if (PyType_Ready(&task_objectType) < 0)
         return;    
 
