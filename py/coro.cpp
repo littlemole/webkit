@@ -79,34 +79,12 @@ static PyObject* future_set_result(future_object* self, PyObject* args)
 
     if( self->cb != Py_None )
     {
-        PyObjectRef tuple = PyTuple_New(1);
-        tuple.item(0,(PyObject*)self);
+        PyObjectRef ret = call(self->cb,(PyObject*)self);
 
-        g_print (PROG "3.6 future_set_result %i\n", (void*)self->cb);
-
-        PyObject_Print(self->cb, stdout,0);
-        printf("\n");
-        PyObject_Print((PyObject*)self,stdout,0);
-        printf("\n");
-        printf("%i\n", Py_REFCNT((PyObject*)self));
-        PyObject_Print((PyObject*)self->value,stdout,0);
-        printf("\n");
-        printf("%i\n", Py_REFCNT((PyObject*)self->value));
-
-        PyObjectRef ret = PyObject_CallObject(self->cb,tuple);
-        if(PyErr_Occurred())
-        {
-            g_print (PROG "ERRRÖR\n");
-            PyErr_PrintEx(0);          
-        }
         Py_XDECREF(self->cb);
- //       Py_XDECREF(self->value);
         self->cb = Py_None;
-//        self->value = Py_None;
         Py_INCREF(self->cb);
     }
-
-    g_print (PROG "4 future_set_result\n");
 
     Py_RETURN_NONE;
 }
@@ -130,17 +108,11 @@ static PyObject* future_set_exception(future_object* self, PyObject* args)
 
     if( self->cb != Py_None )
     {
-        PyObjectRef tuple = PyTuple_New(1);
-        tuple.item(0,(PyObject*)self);
-
-        PyObjectRef ret = PyObject_CallObject(self->cb,tuple);
+        PyObjectRef ret = call(self->cb, (PyObject*)self);
 
         Py_XDECREF(self->cb);
- //       Py_XDECREF(self->value);
         self->cb = Py_None;
-//        self->value = Py_None;
         Py_INCREF(self->cb);
-
     }
 
     Py_RETURN_NONE;
@@ -148,9 +120,10 @@ static PyObject* future_set_exception(future_object* self, PyObject* args)
 
 static PyObject* future_add_done_callback(future_object* self, PyObject* args)
 {
+    int len = length(args);
+
     Py_XDECREF(self->cb);
 
-    int len = length(args);
     if ( len < 1 )
     {
         self->cb = Py_None;
@@ -160,20 +133,16 @@ static PyObject* future_add_done_callback(future_object* self, PyObject* args)
     {
         PyObject* cb = item(args,0);
         self->cb = cb;
+        
     }
 
     if(self->done)
     {
-        PyObjectRef tuple = PyTuple_New(1);
-        tuple.item(0,(PyObject*)self);
-        PyObjectRef ret = PyObject_CallObject(self->cb,tuple);
+        PyObjectRef ret = call(self->cb, (PyObject*)self);
 
         Py_XDECREF(self->cb);
- //       Py_XDECREF(self->value);
         self->cb = Py_None;
-//        self->value = Py_None;
         Py_INCREF(self->cb);
-
     }
 
     Py_RETURN_NONE;
@@ -183,34 +152,11 @@ static PyObject* future_result(future_object* self, PyObject* args)
 {
     if(self->ex != Py_None)
     {
-        //PyErr_SetNone(self->ex);
         PyObjectRef ptype = PyObject_Type(self->ex);
-
-        PyObject_Print(ptype.ref(),stdout,0);
-        printf("\n");
-
-//        PyObjectRef tuple = PyTuple_New(0);
-  //      PyObjectRef name = PyUnicode_FromString("value");
- 
-//     PyObjectRef value = PyObject_CallMethodObjArgs(self->ex,name,NULL);
-
-   //     PyObjectRef value = PyObject_GetAttrString(self->ex,"value");
-
-        if(PyErr_Occurred())
-        {
-            g_print (PROG "IRRRÖR\n");
-            PyErr_PrintEx(0);          
-        }
-
-
-    //   PyObject_Print(value.ref(),stdout,0);
-      //  printf("\n");
-
-         //ptype.invoke("value",tuple);
-         PyErr_SetObject(ptype,self->ex);
-        //PyErr_Restore(ptype,value,Py_None);
+        PyErr_SetObject(ptype,self->ex);
         return NULL;
     }
+
     Py_INCREF(self->value);
     return self->value;
 }
@@ -244,34 +190,34 @@ PyAsyncMethods future_AsyncMethods = {
 
 PyTypeObject future_objectType = {
     PyVarObject_HEAD_INIT(NULL,0)
-    "WebKitDBus.Future",        /*tp_name*/
-    sizeof(future_object), /*tp_basicsize*/
+    "WebKitDBus.Future",       /*tp_name*/
+    sizeof(future_object),     /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)future_object_dealloc,  /*tp_dealloc*/
     0,                         /*tp_print*/
-    0,/*tp_getattr*/
-    0,/*tp_setattr*/
-    &future_AsyncMethods,       /*tp_compare tp_as_async */
+    0,                         /*tp_getattr*/
+    0,                         /*tp_setattr*/
+    &future_AsyncMethods,      /*tp_compare tp_as_async */
     0,                         /*tp_repr*/
     0,                         /*tp_as_number*/
     0,                         /*tp_as_sequence*/
     0,                         /*tp_as_mapping*/
     0,                         /*tp_hash */
-    0,                      /*tp_call*/
+    0,                         /*tp_call*/
     0,                         /*tp_str*/
     0,                         /*tp_getattro*/
     0,                         /*tp_setattro*/
     0,                         /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE ,        /*tp_flags*/
-    "future object",       /* tp_doc */
+    "future object",           /* tp_doc */
     0,		                   /* tp_traverse */
     0,		                   /* tp_clear */
     0,		                   /* tp_richcompare */
     0,		                   /* tp_weaklistoffset */
     0,		                   /* tp_iter */
     0,		                   /* tp_iternext */
-    future_methods,                         /* tp_methods */
-    future_members,                         /* tp_members */
+    future_methods,            /* tp_methods */
+    future_members,            /* tp_members */
     0,                         /* tp_getset */
     0,                         /* tp_base */
     0,                         /* tp_dict */
@@ -280,7 +226,7 @@ PyTypeObject future_objectType = {
     0,                         /* tp_dictoffset */
     (initproc)future_object_init, /* tp_init */
     0,                         /* tp_alloc */
-    PyType_GenericNew                         /* tp_new */
+    PyType_GenericNew          /* tp_new */
 };
 
 extern "C" PyObject* new_future_object()
@@ -352,12 +298,11 @@ static PyObject* future_iter_next(PyObject* myself)
 
     if(self->state == 0)
     {
-        PyObjectRef name = PyUnicode_FromString("done");
-        PyObjectRef done = PyObject_CallMethodObjArgs(self->future,name,NULL);
-
+        PyObjectRef tuple = ptuple();
+        PyObjectRef done = future_done((future_object*)(self->future),tuple);
         if(!done.isValid())
         {
-             g_print (PROG "future_iter_next invalid done state: %i\n", self->state);
+            PyErr_SetString(PyExc_RuntimeError,"future_iter_next invalid done state");
             return NULL;
         }
 
@@ -387,7 +332,6 @@ static PyObject* future_iter_next(PyObject* myself)
         if(!r.isValid())
             return NULL;
 
-        // incr r ?
         PyErr_SetObject(PyExc_StopIteration,r);
         return NULL;
     }
@@ -396,72 +340,46 @@ static PyObject* future_iter_next(PyObject* myself)
     return NULL;
 }
 
-/* 
-static PyMemberDef future_members[] = {
-    {"_asyncio_future_blocking", T_OBJECT_EX, offsetof(future_object, _asyncio_future_blocking), 0, "is blocking future" },
-    {NULL}  /* Sentinel * /
-};
 
-static PyMethodDef future_methods[] = {
-    {"done", (PyCFunction) future_done, METH_VARARGS, "check if future is done" },
-    {"set_result", (PyCFunction) future_set_result, METH_VARARGS, "check if future is done" },
-    {"set_exception", (PyCFunction) future_set_exception, METH_VARARGS, "check if future is done" },
-    {"add_done_callback", (PyCFunction) future_add_done_callback, METH_VARARGS, "check if future is done" },
-    {"result", (PyCFunction) future_result, METH_VARARGS, "check if future is done" },
-    {NULL}  /* Sentinel * /
-};
-*/
-/*
-static PyObject* future_await(PyObject* self)
-{
-    return new_future_iter_object(self);
-}
-
-PyAsyncMethods future_AsyncMethods = {
-    future_await,
-    NULL,
-    NULL
-};
-*/
 PyTypeObject future_iter_objectType = {
     PyVarObject_HEAD_INIT(NULL,0)
-    "WebKitDBus._FutureIter",        /*tp_name*/
-    sizeof(future_iter_object), /*tp_basicsize*/
+    "WebKitDBus._FutureIter",  /*tp_name*/
+    sizeof(future_iter_object),/*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)future_iter_object_dealloc,  /*tp_dealloc*/
     0,                         /*tp_print*/
-    0,/*tp_getattr*/
-    0,/*tp_setattr*/
-    0,//future_AsyncMethods,       /*tp_compare tp_as_async */
+    0,                         /*tp_getattr*/
+    0,                         /*tp_setattr*/
+    0,                         /*tp_compare tp_as_async */
     0,                         /*tp_repr*/
     0,                         /*tp_as_number*/
     0,                         /*tp_as_sequence*/
     0,                         /*tp_as_mapping*/
     0,                         /*tp_hash */
-    0,                      /*tp_call*/
+    0,                         /*tp_call*/
     0,                         /*tp_str*/
     0,                         /*tp_getattro*/
     0,                         /*tp_setattro*/
     0,                         /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT,//|Py_TPFLAGS_BASETYPE,        /*tp_flags*/
-    "future iterator object",       /* tp_doc */
+    Py_TPFLAGS_DEFAULT,        /*tp_flags*/
+    "future iterator object",  /* tp_doc */
     0,		                   /* tp_traverse */
     0,		                   /* tp_clear */
     0,		                   /* tp_richcompare */
     0,		                   /* tp_weaklistoffset */
-    future_iter_iter,		                   /* tp_iter */
-    future_iter_next,		                   /* tp_iternext */
-    0,//future_methods,                         /* tp_methods */
-    0,//future_members,                         /* tp_members */
+    future_iter_iter,		   /* tp_iter */
+    future_iter_next,		   /* tp_iternext */
+    0,                         /* tp_methods */
+    0,                         /* tp_members */
     0,                         /* tp_getset */
-    0,//&future_objectType,                         /* tp_base */
+    0,                         /* tp_base */
     0,                         /* tp_dict */
     0,                         /* tp_descr_get */
     0,                         /* tp_descr_set */
     0,                         /* tp_dictoffset */
     (initproc)future_iter_object_init, /* tp_init */
     0,                         /* tp_alloc */
-    PyType_GenericNew                         /* tp_new */
+    PyType_GenericNew          /* tp_new */
 };
 
 extern "C" PyObject* new_future_iter_object(PyObject* future)
@@ -500,23 +418,18 @@ static void start_coro(task_object* self)
 
     if(!isCoro)
     {
-        g_print (PROG "normal function result was passed to task \n");
-        PyObjectRef tuple = PyTuple_New(1);
-        tuple.item(0,self->coro);
+        PyObjectRef tuple = ptuple(self->coro);
         PyObjectRef ret = future_set_result(super,tuple);
     }
     else
     {
-        g_print (PROG "starting coroutine \n");
-        PyObjectRef tuple = PyTuple_New(0);
+        PyObjectRef tuple = ptuple();
         PyObjectRef ret = task_step(self,tuple);
     }
 }
 
 static int task_object_init(task_object *self, PyObject *args, PyObject *kwds)
 {
-    g_print (PROG "task_object_init\n");
-
     future_object* super = &self->super;
 
     super->value = Py_None;
@@ -575,8 +488,6 @@ gboolean task_do_step(gpointer user_data)
     PyObject* self = step->self.ref();
     PyObject* ex = step->ex.ref();
 
-    g_print (PROG "do_step start %i\n", Py_REFCNT(self));
-
     task_object* task = (task_object*)self;
     future_object* super = &task->super;
 
@@ -595,19 +506,10 @@ gboolean task_do_step(gpointer user_data)
     }
     else
     {
-        PyObjectRef name = PyUnicode_FromString("throw");
-        res = PyObject_CallMethodObjArgs( 
-            task->coro, 
-            name,
-            PyExc_RuntimeError,
-            super->ex,
-            Py_None,
-            NULL
-        );
+        res = invoke(task->coro,"throw",PyExc_RuntimeError, super->ex,Py_None);
     }
 
-    PyObject* err = PyErr_Occurred(); // borrowed ref
-    if(err)
+    if(py_error())
     {
         PyObject* ptype = NULL;
         PyObject* pvalue = NULL;
@@ -616,25 +518,22 @@ gboolean task_do_step(gpointer user_data)
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         if( PyErr_GivenExceptionMatches(ptype,PyExc_StopIteration))
         {
-            g_print (PROG "__stepping__ StopIteration\n");    
             if(pvalue)
             {
-                PyObjectRef tuple = PyTuple_New(1);
-                tuple.item(0,pvalue);
+                PyObjectRef tuple = ptuple(pvalue);
+                future_set_result( super, tuple);
+            }
+            else
+            {
+                PyObjectRef tuple = ptuple();
                 future_set_result( super, tuple);
             }
         }
         else
         {
-            g_print (PROG "__stepping__ Exceptionn\n");   
-
-            PyObject_Print(pvalue, stdout,0);
-            printf("\n");
-                    
             if(pvalue)
             {
-                PyObjectRef tuple = PyTuple_New(1);
-                tuple.item(0,pvalue);
+                PyObjectRef tuple = ptuple(pvalue);
                 future_set_exception( super, tuple);
             }            
         }
@@ -667,8 +566,6 @@ gboolean task_do_step(gpointer user_data)
         }
     }
 
-    g_print (PROG "do_step done %i\n", Py_REFCNT(self));
-
     Py_XDECREF(res);
 
     delete step;
@@ -677,8 +574,6 @@ gboolean task_do_step(gpointer user_data)
 
 static PyObject* task_step(task_object* self, PyObject* args)
 {
-    g_print (PROG "_task_step %i\n", Py_REFCNT(self));
-
     PyObject* ex = self->super.ex;
 
     Py_INCREF(self);
@@ -693,32 +588,25 @@ static PyObject* task_step(task_object* self, PyObject* args)
 
 static PyObject* task_wakeup(task_object* self, PyObject* args)
 {
-    g_print (PROG "_task_wakeup %i\n", Py_REFCNT(self));    
-
     int len = length(args);
     if(len<1)
     {
-        g_print (PROG "to few arguments in call to_task_wakeup\n");
+        PyErr_SetString(PyExc_RuntimeError,"to few arguments in call to_task_wakeup");
         return NULL;
     }
 
     PyObjectRef arg = item(args,0);
+    PyObjectRef ret = arg.invoke("result");
 
-    PyObjectRef name = PyUnicode_FromString("result");
-    PyObjectRef ret = PyObject_CallMethodObjArgs(arg,name, NULL);
-
-    PyObject* err = PyErr_Occurred(); // borrowed ref
-    if(err)
+    if(py_error())
     {
-        g_print (PROG "wakeup err\n");
         PyObject* ptype = NULL;
         PyObject* pvalue = NULL;
         PyObject* ptraceback = NULL;
 
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
 
-        PyObjectRef tuple = PyTuple_New(1);
-        tuple.item(0,pvalue);
+        PyObjectRef tuple = ptuple(pvalue);
 
         Py_XDECREF(ptype);
         Py_XDECREF(pvalue);  
@@ -728,9 +616,7 @@ static PyObject* task_wakeup(task_object* self, PyObject* args)
     }
     else
     {
-        PyObjectRef tuple = PyTuple_New(1);
-        tuple.item(0,Py_None);
-
+        PyObjectRef tuple = ptuple(Py_None);
         PyObjectRef ret = task_step(self,tuple);
     }
 
@@ -738,81 +624,60 @@ static PyObject* task_wakeup(task_object* self, PyObject* args)
 }
 
 
-/*
-static PyMemberDef future_members[] = {
-    {"_asyncio_future_blocking", T_OBJECT_EX, offsetof(future_object, _asyncio_future_blocking), 0, "is blocking future" },
-    {NULL}  /* Sentinel * /
-};
-*/
 static PyMethodDef task_methods[] = {
     {"step", (PyCFunction) task_step, METH_VARARGS, "start coro stepping" },
     {"_wakeup", (PyCFunction) task_wakeup, METH_VARARGS, "wakeup coro stepping" },
-//    {"_step", (PyCFunction) task_do_step, METH_VARARGS, "coro stepping impl" },
     {NULL}  /* Sentinel */
 };
 
-/*
-static PyObject* future_await(PyObject* self)
-{
-    return new_future_iter_object(self);
-}
-
-PyAsyncMethods future_AsyncMethods = {
-    future_await,
-    NULL,
-    NULL
-};
-*/
 PyTypeObject task_objectType = {
     PyVarObject_HEAD_INIT(NULL,0)
-    "WebKitDBus.Task",        /*tp_name*/
-    sizeof(task_object), /*tp_basicsize*/
+    "WebKitDBus.Task",         /*tp_name*/
+    sizeof(task_object),       /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)task_object_dealloc,  /*tp_dealloc*/
     0,                         /*tp_print*/
-    0,/*tp_getattr*/
-    0,/*tp_setattr*/
-    0,//future_AsyncMethods,       /*tp_compare tp_as_async */
+    0,                         /*tp_getattr*/
+    0,                         /*tp_setattr*/
+    0,                         /*tp_compare tp_as_async */
     0,                         /*tp_repr*/
     0,                         /*tp_as_number*/
     0,                         /*tp_as_sequence*/
     0,                         /*tp_as_mapping*/
     0,                         /*tp_hash */
-    0,                      /*tp_call*/
+    0,                         /*tp_call*/
     0,                         /*tp_str*/
     0,                         /*tp_getattro*/
     0,                         /*tp_setattro*/
     0,                         /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE,        /*tp_flags*/
-    "task object",       /* tp_doc */
+    "task object",             /* tp_doc */
     0,		                   /* tp_traverse */
     0,		                   /* tp_clear */
     0,		                   /* tp_richcompare */
     0,		                   /* tp_weaklistoffset */
     0,		                   /* tp_iter */
     0,		                   /* tp_iternext */
-    task_methods,                         /* tp_methods */
-    0,//future_members,                         /* tp_members */
+    task_methods,              /* tp_methods */
+    0,                         /* tp_members */
     0,                         /* tp_getset */
-    0,//&future_objectType,                         /* tp_base */
+    0,                         /* tp_base */
     0,                         /* tp_dict */
     0,                         /* tp_descr_get */
     0,                         /* tp_descr_set */
     0,                         /* tp_dictoffset */
-    (initproc)task_object_init, /* tp_init */
+    (initproc)task_object_init,/* tp_init */
     0,                         /* tp_alloc */
-    PyType_GenericNew                         /* tp_new */
+    PyType_GenericNew          /* tp_new */
 };
 
 
 extern "C" PyObject* new_task_object(PyObject* coro)
 {
-    g_print (PROG "new_task_object; %i.\n", (void*)coro);
     task_object* self = py_alloc<task_object>(&task_objectType);
     self->coro = coro;
     Py_INCREF(coro);
 
-    //super().__init__()
     future_object* super = &self->super;
 
     super->value = Py_None;

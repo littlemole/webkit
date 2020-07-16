@@ -221,12 +221,12 @@ static void signal_handler(GDBusConnection *connection,
     if(len>1)
     {
         PyObjectRef args = gvariant_to_py_value(params.item(1));
-        PyObjectRef ret = cb.invoke(signal_name, args);
+        PyObjectRef ret = cb.invoke_with_tuple(signal_name, args);
     }
     else
     {
-        PyObjectRef emptyTuple = PyTuple_New(0);
-        PyObjectRef ret = cb.invoke(signal_name, emptyTuple);        
+        //PyObjectRef emptyTuple = PyTuple_New(0);
+        PyObjectRef ret = cb.invoke(signal_name);//, emptyTuple);        
     }
 
 }
@@ -335,14 +335,7 @@ static gboolean run_async_cb(gpointer user_data)
 
     run_async_cb_struct* data = (run_async_cb_struct*)user_data;
 
-    PyObjectRef tuple = PyTuple_New(1);
-    tuple.item(0,data->task);
-
-    //PyObjectRef res = data->cb.invoke(tuple);
-
-    //PyObjectRef name = PyUnicode_FromString("done");
-    PyObjectRef done = PyObject_CallObject(data->cb,tuple);
-
+    PyObjectRef done = data->cb.invoke("done",data->task.ref());
 
     delete data;
     return false;
@@ -351,8 +344,6 @@ static gboolean run_async_cb(gpointer user_data)
 static PyObject* pywebkit_run_async(PyObject* self, PyObject* args)
 {
     int len = length(args);
-
-    g_print (PROG "on pywebkit_run_async %i\n",len);
 
     if(len<1)
     {
@@ -364,45 +355,27 @@ static PyObject* pywebkit_run_async(PyObject* self, PyObject* args)
 
     PyObjectRef task = new_task_object(coro);
 
-    g_print (PROG "task launched 1\n");
-
     if(len>1)
     {
-
-        g_print (PROG "task launched 2\n");
-
         PyObjectRef done_cb = item(args,1);
-
-        g_print (PROG "task launched 3\n");
-
-        PyObjectRef tuple = PyTuple_New(0);
-//        PyObjectRef done = task.invoke("done",tuple);
-
-        PyObjectRef name = PyUnicode_FromString("done");
-        PyObjectRef done = PyObject_CallMethodObjArgs(task,name,NULL);
-
-        g_print (PROG "task launched 4\n");
-
-        if(PyErr_Occurred())
-        {
-            g_print (PROG "ERRRÖR\n");
-            PyErr_PrintEx(0);          
-        }
+    
+        PyObjectRef done = task.invoke("done");
 
         if(done.isValid() && done.boolean() == true)
         {
-            g_print (PROG "task done \n");
-
             task.incr();
             done_cb.incr();
-            run_async_cb_struct* racs = new run_async_cb_struct{ task,done_cb };
+            run_async_cb_struct* racs = new run_async_cb_struct{ done_cb, task };
             g_idle_add(run_async_cb,racs);
         }
         else
         {
-            PyObjectRef tuple = PyTuple_New(1);
-            tuple.item(0,done_cb);
-            task.invoke("add_done_callback",tuple);
+            PyObjectRef ret = task.invoke("add_done_callback", done_cb.ref());
+            if(PyErr_Occurred())
+            {
+                g_print (PROG "ERRRÖR\n");
+                PyErr_PrintEx(0);          
+            }
         }
     }
     return task.incr();

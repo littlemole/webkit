@@ -49,8 +49,8 @@ class Worker(threading.Thread):
 
     def done(self):
         print("done: "  + self.msg)
-        #self.future.set_result(self.msg)
-        self.future.set_exception(RuntimeError("HAHA"))
+        self.future.set_result(self.msg)
+        #self.future.set_exception(RuntimeError("HAHA"))
         #self.future.done()
         
  
@@ -171,9 +171,9 @@ async def goAsync():
     worker =  Worker("HELO")
     f =  worker.begin()
     #f.add_done_callback(doneCB)
-    #raise RuntimeError("ÄRRÖR")
     r = await f
     print("awakening" + str(r))
+    #raise RuntimeError("ÄRRÖR")
 
     return r
 
@@ -183,8 +183,9 @@ def goSync():
     return "SYNCED"
 
 def onGoAsyncDone(f):
-#    pprint.pprint(f)
+    print("asyncDone")
     try:
+        pprint.pprint(f.result())
         print("ASNYC DONE: " + f.result())
     except BaseException as ex:
         print("################")
@@ -206,7 +207,14 @@ async def onClickAsync2(w):
     print("clicked async2")
     #task = run_task(goAsync())
     #task.add_done_callback(onClickDone)
-    return await goAsync()
+
+    worker =  Worker("HELÖÖÖÖÖ")
+    f =  worker.begin()
+    #f.add_done_callback(doneCB)
+    r = await f
+
+    print("ASYNC2 DONE: " + r)
+
 
 def onClickSync(w):
     print("clicked sync")
@@ -221,11 +229,12 @@ controller = Controller()
 buttAsync = Gtk.Button(label="Click Async")
 #buttAsync.connect("clicked", onClickAsync)
 #buttAsync.connect("clicked", lambda w : run_task(onClickAsync2(w),onGoAsyncDone) )
-buttAsync.connect("clicked", lambda w : WebKitDBus.run_async(onClickAsync2(w),onGoAsyncDone) )
+#buttAsync.connect("clicked", lambda w : WebKitDBus.run_async(onClickAsync2(w),onGoAsyncDone) )
+buttAsync.connect("clicked", lambda w : WebKitDBus.run_async(onClickAsync2(w)) )
 
 buttSync = Gtk.Button(label="Click Sync")
-#buttSync.connect("clicked", onClickSync)
-buttSync.connect("clicked", lambda w: onClickSync(w) )
+buttSync.connect("clicked", onClickSync)
+#buttSync.connect("clicked", lambda w: onClickSync(w) )
 
 hbox = Gtk.HBox()
 hbox.add(buttAsync)

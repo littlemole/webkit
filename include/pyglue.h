@@ -28,6 +28,34 @@ private:
 
 };
 
+
+inline int length(PyObject* obj)
+{
+    return PySequence_Size(obj);
+}
+
+inline PyObject* item(PyObject* obj, int index)
+{
+    return PySequence_GetItem(obj,index);
+}
+
+template<class ...Args>
+PyObject* ptuple(Args*... args);
+
+
+template<class ...Args>
+PyObject* invoke(PyObject* self, const char* name, Args* ... args);
+
+template<class ...Args>
+PyObject* call(PyObject* self, Args* ... args);
+
+
+inline bool py_error()
+{
+    return PyErr_Occurred() != 0;
+}
+
+
 class PyObjectRef
 {
 public:
@@ -154,22 +182,32 @@ public:
         return PyFunction_Check(ref_);
     }
 
-    PyObject* invoke(const char* name, PyObjectRef& args)
+    template<class ...Args>
+    PyObject* invoke(const char* name, Args* ... args)
     {
         if(!hasAttr(name))
         {
             Py_RETURN_NONE;
         }
 
-        int len = args.length();
+        return ::invoke(ref_,name,args...);
+    }
+
+    PyObject* invoke_with_tuple(const char* name, PyObject* args)
+    {
+        if(!hasAttr(name))
+        {
+            Py_RETURN_NONE;
+        }
+
+        int len = ::length(args);
 
         PyObjectRef tuple = PyTuple_New(len+1);
         tuple.item(0,ref_);
 
         for ( int i = 0; i < len; i++)
         {
-            PyObjectRef item = args.item(i);
-            tuple.item(i+1,item);
+            tuple.item( i+1, ::item(args,i) );
         }        
 
         PyObjectRef callable = attr(name);
@@ -182,7 +220,13 @@ public:
         return ret;
     }
 
-    PyObject* invoke(PyObject* args)
+    template<class ...Args>
+    PyObject* call(Args* ... args)
+    {
+        return ::invoke(ref_,args...);
+    }
+
+    PyObject* call_tuple(PyObject* args)
     {
         // call python!
         PyObject* ret = PyObject_CallObject(ref_,args);
@@ -350,14 +394,19 @@ private:
     PyObject* ref_;
 };
 
-inline int length(PyObject* obj)
+template<class ...Args>
+PyObject* ptuple(Args*... args)
 {
-    return PySequence_Size(obj);
-}
+    std::vector<PyObject*> v{args...};
+    int len = v.size();
 
-inline PyObject* item(PyObject* obj, int index)
-{
-    return PySequence_GetItem(obj,index);
+    PyObjectRef tuple = PyTuple_New(len);
+    for( int i = 0; i < len; i++)
+    {
+        tuple.item( i, v[i] );
+    }
+
+    return tuple.incr();
 }
 
 template<class T>
@@ -392,6 +441,32 @@ inline void for_each(PyObjectRef& obj, std::function<void(const char*,PyObjectRe
         PyObjectRef member = obj.member(key);
         fun( key.c_str(), member);
     }
+}
+
+
+template<class ...Args>
+PyObject* invoke(PyObject* self, const char* name, Args* ... args)
+{
+    PyObjectRef member = PyUnicode_FromString(name);
+    PyObject* ret = PyObject_CallMethodObjArgs(self,member,args...,NULL);
+    return ret;
+}
+
+
+template<class ...Args>
+PyObject* call(PyObject* self, Args* ... args)
+{
+    std::vector<PyObject*> v{args...};
+    int len = v.size();
+
+    PyObjectRef tuple = PyTuple_New(len);
+    for( int i = 0; i < len; i++)
+    {
+        tuple.item( i, v[i] );
+    }
+    // call python!
+    PyObject* ret = PyObject_CallObject(self,tuple);
+    return ret;
 }
 
 #endif
