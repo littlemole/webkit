@@ -43,6 +43,15 @@ typedef struct {
 
 static int signal_object_init(signal_object *self, PyObject *args, PyObject *kwds)
 {
+    pyobj arguments(args);
+    if(arguments.length()<1)
+    {
+        PyErr_SetString(PyExc_RuntimeError,"invalid signal_object_init no signal name passed to init");
+        return -1;        
+    }
+    
+    pyobj_ref signal = arguments.item(0);
+    self->signal_name = pyobj(signal).str();
     return 0;
 }
 
@@ -117,8 +126,11 @@ PyTypeObject signal_objectType = {
 extern "C" PyObject* new_signal_object(const char* name)
 {
     signal_object* self = py_alloc<signal_object>(&signal_objectType);
-    self->signal_name = name;
 
+    pyobj_ref signal = PyUnicode_FromString(name);
+    pyobj_ref tuple = ptuple(signal.ref());
+
+    signal_object_init(self,tuple,NULL);
     return (PyObject*)self;
 }
 

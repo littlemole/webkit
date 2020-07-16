@@ -40,9 +40,6 @@ static int future_object_init(future_object *self, PyObject *args, PyObject *kwd
 
     incr(self->value, self->ex, self->cb);
 
-//    Py_INCREF(self->value);
-//    Py_INCREF(self->ex);
-//    Py_INCREF(self->cb);
     return 0;
 }
 
@@ -52,21 +49,16 @@ static void future_object_dealloc(future_object* self)
 
     decr(self->value, self->ex, self->cb,self->_asyncio_future_blocking);
 
-/*    Py_XDECREF(self->value);
-    Py_XDECREF(self->ex);
-    Py_XDECREF(self->cb);
-    Py_XDECREF(self->_asyncio_future_blocking);
-    */
     py_dealloc(self);
 }
 
 
-static PyObject* future_done(future_object* self, PyObject* args)
+static PyObject* future_object_done(future_object* self, PyObject* args)
 {
     return PyBool_FromLong(self->done);
 }
 
-static PyObject* future_set_result(future_object* self, PyObject* args)
+static PyObject* future_object_set_result(future_object* self, PyObject* args)
 {
     Py_XDECREF(self->value);
 
@@ -95,7 +87,7 @@ static PyObject* future_set_result(future_object* self, PyObject* args)
     Py_RETURN_NONE;
 }
 
-static PyObject* future_set_exception(future_object* self, PyObject* args)
+static PyObject* future_object_set_exception(future_object* self, PyObject* args)
 {
     Py_XDECREF(self->ex);
 
@@ -124,7 +116,7 @@ static PyObject* future_set_exception(future_object* self, PyObject* args)
     Py_RETURN_NONE;
 }
 
-static PyObject* future_add_done_callback(future_object* self, PyObject* args)
+static PyObject* future_object_add_done_callback(future_object* self, PyObject* args)
 {
     int len = pyobj(args).length();
 
@@ -154,7 +146,7 @@ static PyObject* future_add_done_callback(future_object* self, PyObject* args)
     Py_RETURN_NONE;
 }
 
-static PyObject* future_result(future_object* self, PyObject* args)
+static PyObject* future_object_result(future_object* self, PyObject* args)
 {
     if(self->ex != Py_None)
     {
@@ -175,11 +167,11 @@ static PyMemberDef future_members[] = {
 };
 
 static PyMethodDef future_methods[] = {
-    {"done", (PyCFunction) future_done, METH_VARARGS, "check if future is done" },
-    {"set_result", (PyCFunction) future_set_result, METH_VARARGS, "check if future is done" },
-    {"set_exception", (PyCFunction) future_set_exception, METH_VARARGS, "check if future is done" },
-    {"add_done_callback", (PyCFunction) future_add_done_callback, METH_VARARGS, "check if future is done" },
-    {"result", (PyCFunction) future_result, METH_VARARGS, "check if future is done" },
+    {"done", (PyCFunction) future_object_done, METH_VARARGS, "check if future is done" },
+    {"set_result", (PyCFunction) future_object_set_result, METH_VARARGS, "check if future is done" },
+    {"set_exception", (PyCFunction) future_object_set_exception, METH_VARARGS, "check if future is done" },
+    {"add_done_callback", (PyCFunction) future_object_add_done_callback, METH_VARARGS, "check if future is done" },
+    {"result", (PyCFunction) future_object_result, METH_VARARGS, "check if future is done" },
     {NULL}  /* Sentinel */
 };
 
@@ -239,17 +231,7 @@ extern "C" PyObject* new_future_object()
 {
     future_object* self = py_alloc<future_object>(&future_objectType);
 
-    self->done = false;
-    self->value = Py_None;
-    self->ex = Py_None;
-    self->cb = Py_None;
-    self->_asyncio_future_blocking = PyBool_FromLong(TRUE);
-
-    incr(self->value,self->ex,self->cb);
-
-//    Py_INCREF(self->value);
-//    Py_INCREF(self->ex);
-//    Py_INCREF(self->cb);
+    future_object_init(self,NULL,NULL);
 
     return (PyObject*)self;
 }
@@ -308,7 +290,7 @@ static PyObject* future_iter_next(PyObject* myself)
     if(self->state == 0)
     {
         pyobj_ref tuple = ptuple();
-        pyobj_ref done = future_done((future_object*)(self->future),tuple);
+        pyobj_ref done = future_object_done((future_object*)(self->future),tuple);
         if(!done.isValid())
         {
             PyErr_SetString(PyExc_RuntimeError,"future_iter_next invalid done state");
@@ -336,7 +318,7 @@ static PyObject* future_iter_next(PyObject* myself)
     if (self->state == 1)
     {
         pyobj_ref tuple = ptuple();
-        pyobj_ref r = future_result( (future_object*)self->future, tuple);
+        pyobj_ref r = future_object_result( (future_object*)self->future, tuple);
 
         if(!r.isValid())
             return NULL;
@@ -394,9 +376,9 @@ PyTypeObject future_iter_objectType = {
 extern "C" PyObject* new_future_iter_object(PyObject* future)
 {
     future_iter_object* self = py_alloc<future_iter_object>(&future_iter_objectType);
-    self->state = 0;
-    self->future = future;
-    incr(future);
+
+    pyobj_ref tuple = ptuple(future);
+    future_iter_object_init(self,tuple,NULL);
 
     return (PyObject*)self;
 }
@@ -418,9 +400,9 @@ typedef struct {
     PyObject* coro;
 } task_object;
 
-static PyObject* task_step(task_object* self, PyObject* args);
+static PyObject* task_object_step(task_object* self, PyObject* args);
 
-static void start_coro(task_object* self)
+static void task_start_coro(task_object* self)
 {
     future_object* super = &self->super;
 
@@ -429,26 +411,19 @@ static void start_coro(task_object* self)
     if(!isCoro)
     {
         pyobj_ref tuple = ptuple(self->coro);
-        pyobj_ref ret = future_set_result(super,tuple);
+        pyobj_ref ret = future_object_set_result(super,tuple);
     }
     else
     {
         pyobj_ref tuple = ptuple();
-        pyobj_ref ret = task_step(self,tuple);
+        pyobj_ref ret = task_object_step(self,tuple);
     }
 }
 
 static int task_object_init(task_object *self, PyObject *args, PyObject *kwds)
 {
     future_object* super = &self->super;
-
-    super->done = false;
-    super->value = Py_None;
-    super->ex = Py_None;
-    super->cb = Py_None;
-    super->_asyncio_future_blocking = PyBool_FromLong(TRUE);
-
-    incr(super->value,super->ex,super->cb);   
+    future_object_init(super,NULL,NULL);
 
     int len = pyobj(args).length();
     if(len< 1)
@@ -459,7 +434,7 @@ static int task_object_init(task_object *self, PyObject *args, PyObject *kwds)
 
     self->coro = pyobj(args).item(0);
 
-    start_coro(self);
+    task_start_coro(self);
 
     return 0;
 }
@@ -468,16 +443,9 @@ static void task_object_dealloc(task_object* self)
 {
     g_print (PROG "++++ NO TASK\n");
 
-//    Py_XDECREF(self->coro);
-
     future_object* super = &self->super;
 
     decr(self->coro,super->value,super->ex,super->cb,super->_asyncio_future_blocking);
-
-  //  Py_XDECREF(super->value);
-  //  Py_XDECREF(super->ex);
-  //  Py_XDECREF(super->cb);
-  //  Py_XDECREF(super->_asyncio_future_blocking);
 
     py_dealloc(self);
 }
@@ -528,12 +496,12 @@ gboolean task_do_step(gpointer user_data)
             if(pe.pvalue)
             {
                 pyobj_ref tuple = ptuple(pe.pvalue);
-                future_set_result( super, tuple);
+                future_object_set_result( super, tuple);
             }
             else
             {
                 pyobj_ref tuple = ptuple();
-                future_set_result( super, tuple);
+                future_object_set_result( super, tuple);
             }
         }
         else
@@ -541,7 +509,7 @@ gboolean task_do_step(gpointer user_data)
             if(pe.pvalue)
             {
                 pyobj_ref tuple = ptuple(pe.pvalue);
-                future_set_exception( super, tuple);
+                future_object_set_exception( super, tuple);
             }            
         }
     }
@@ -558,13 +526,13 @@ gboolean task_do_step(gpointer user_data)
                 pyobj_ref method = PyMethod_New(func,self);
 
                 pyobj_ref tuple = ptuple(method.ref());
-                pyobj_ref r = future_add_done_callback((future_object*)res,tuple);
+                pyobj_ref r = future_object_add_done_callback((future_object*)res,tuple);
             }
         }
         else if(res == Py_None)
         {
             pyobj_ref tuple = ptuple();
-            pyobj_ref r = task_step(task,tuple);
+            pyobj_ref r = task_object_step(task,tuple);
         }
     }
 
@@ -574,14 +542,11 @@ gboolean task_do_step(gpointer user_data)
     return false;
 }
 
-static PyObject* task_step(task_object* self, PyObject* args)
+static PyObject* task_object_step(task_object* self, PyObject* args)
 {
     PyObject* ex = self->super.ex;
 
     incr( (PyObject*)(self),ex);
-
-//    Py_INCREF(self);
-//    Py_INCREF(ex);
 
     StepStruct* step = new StepStruct{ (PyObject*)self,ex };
     g_idle_add(task_do_step,step);
@@ -590,7 +555,7 @@ static PyObject* task_step(task_object* self, PyObject* args)
 }
 
 
-static PyObject* task_wakeup(task_object* self, PyObject* args)
+static PyObject* task_object_wakeup(task_object* self, PyObject* args)
 {
     int len = pyobj(args).length();
     if(len<1)
@@ -606,12 +571,12 @@ static PyObject* task_wakeup(task_object* self, PyObject* args)
     {
         PyError pe;
         pyobj_ref tuple = ptuple(pe.pvalue);
-        pyobj_ref ret = task_step(self,tuple);
+        pyobj_ref ret = task_object_step(self,tuple);
     }
     else
     {
         pyobj_ref tuple = ptuple(Py_None);
-        pyobj_ref ret = task_step(self,tuple);
+        pyobj_ref ret = task_object_step(self,tuple);
     }
 
     Py_RETURN_NONE;
@@ -619,8 +584,8 @@ static PyObject* task_wakeup(task_object* self, PyObject* args)
 
 
 static PyMethodDef task_methods[] = {
-    {"step", (PyCFunction) task_step, METH_VARARGS, "start coro stepping" },
-    {"_wakeup", (PyCFunction) task_wakeup, METH_VARARGS, "wakeup coro stepping" },
+    {"step", (PyCFunction) task_object_step, METH_VARARGS, "start coro stepping" },
+    {"_wakeup", (PyCFunction) task_object_wakeup, METH_VARARGS, "wakeup coro stepping" },
     {NULL}  /* Sentinel */
 };
 
@@ -669,25 +634,9 @@ PyTypeObject task_objectType = {
 extern "C" PyObject* new_task_object(PyObject* coro)
 {
     task_object* self = py_alloc<task_object>(&task_objectType);
-    self->coro = coro;
 
-    //Py_INCREF(coro);
-
-    future_object* super = &self->super;
-
-    super->value = Py_None;
-    super->ex = Py_None;
-    super->cb = Py_None;
-    super->_asyncio_future_blocking = PyBool_FromLong(TRUE);
-
-    incr(self->coro,super->value,super->ex,super->cb);
-
-
-//    Py_INCREF(super->value);
-//    Py_INCREF(super->ex);
-//    Py_INCREF(super->cb);
-
-    start_coro(self);
+    pyobj_ref tuple = ptuple(coro);
+    task_object_init(self,tuple,NULL);
 
     return (PyObject*)self;
 }
