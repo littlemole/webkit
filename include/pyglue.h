@@ -39,14 +39,14 @@ public:
     PyObjectRef(PyObject* ref)
         : ref_(ref)
     {}
-
+/*
     PyObjectRef(const PyObjectRef& ref)
         : ref_(ref.ref_)
     {
         if(ref_)
             Py_DECREF(ref_);
     }
-
+*/
     ~PyObjectRef()
     {
         if(ref_)

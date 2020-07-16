@@ -49,7 +49,8 @@ class Worker(threading.Thread):
 
     def done(self):
         print("done: "  + self.msg)
-        self.future.set_result(self.msg)
+        #self.future.set_result(self.msg)
+        self.future.set_exception(RuntimeError("HAHA"))
         #self.future.done()
         
  
@@ -170,6 +171,7 @@ async def goAsync():
     worker =  Worker("HELO")
     f =  worker.begin()
     #f.add_done_callback(doneCB)
+    #raise RuntimeError("ÄRRÖR")
     r = await f
     print("awakening" + str(r))
 
@@ -182,7 +184,12 @@ def goSync():
 
 def onGoAsyncDone(f):
 #    pprint.pprint(f)
-    print("ASNYC DONE: " + f.result())
+    try:
+        print("ASNYC DONE: " + f.result())
+    except BaseException as ex:
+        print("################")
+        pprint.pprint(ex)
+        print (str(ex))
 
 def onGoSyncDone(f):
     pprint.pprint(f)
@@ -192,21 +199,33 @@ def onClickAsync(w):
     print("clicked async")
     #task = run_task(goAsync())
     #task.add_done_callback(onClickDone)
-    run_task(goAsync(),onGoAsyncDone)
+    #run_task(goAsync(),onGoAsyncDone)
+    WebKitDBus.run_async(goAsync(),onGoAsyncDone)
+
+async def onClickAsync2(w):
+    print("clicked async2")
+    #task = run_task(goAsync())
+    #task.add_done_callback(onClickDone)
+    return await goAsync()
 
 def onClickSync(w):
     print("clicked sync")
     #task = run_task(goAsync())
     #task.add_done_callback(onClickDone)
-    run_task(goSync(),onGoSyncDone)
+    #run_task(goSync(),onGoSyncDone)
+    WebKitDBus.run_async(goSync(),onGoSyncDone)
 
 # global main.controller accessed from javascript
 controller = Controller()        
 
 buttAsync = Gtk.Button(label="Click Async")
-buttAsync.connect("clicked", onClickAsync)
+#buttAsync.connect("clicked", onClickAsync)
+#buttAsync.connect("clicked", lambda w : run_task(onClickAsync2(w),onGoAsyncDone) )
+buttAsync.connect("clicked", lambda w : WebKitDBus.run_async(onClickAsync2(w),onGoAsyncDone) )
+
 buttSync = Gtk.Button(label="Click Sync")
-buttSync.connect("clicked", onClickSync)
+#buttSync.connect("clicked", onClickSync)
+buttSync.connect("clicked", lambda w: onClickSync(w) )
 
 hbox = Gtk.HBox()
 hbox.add(buttAsync)

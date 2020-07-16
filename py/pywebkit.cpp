@@ -321,9 +321,97 @@ static PyObject* pywebkit_bind(PyObject* self, PyObject* args)
     Py_RETURN_NONE;
 }
 
+extern "C" PyObject* new_task_object(PyObject* coro);
+
+struct run_async_cb_struct 
+{
+    PyObjectRef cb;
+    PyObjectRef task;
+};
+
+static gboolean run_async_cb(gpointer user_data)
+{
+    PyGlobalInterpreterLock lock;
+
+    run_async_cb_struct* data = (run_async_cb_struct*)user_data;
+
+    PyObjectRef tuple = PyTuple_New(1);
+    tuple.item(0,data->task);
+
+    //PyObjectRef res = data->cb.invoke(tuple);
+
+    //PyObjectRef name = PyUnicode_FromString("done");
+    PyObjectRef done = PyObject_CallObject(data->cb,tuple);
+
+
+    delete data;
+    return false;
+}
+
+static PyObject* pywebkit_run_async(PyObject* self, PyObject* args)
+{
+    int len = length(args);
+
+    g_print (PROG "on pywebkit_run_async %i\n",len);
+
+    if(len<1)
+    {
+        PyErr_SetString(PyExc_RuntimeError, "less than one args for call to pywebkit_run_async!");
+        return NULL;
+    }
+
+    PyObjectRef coro = item(args,0);
+
+    PyObjectRef task = new_task_object(coro);
+
+    g_print (PROG "task launched 1\n");
+
+    if(len>1)
+    {
+
+        g_print (PROG "task launched 2\n");
+
+        PyObjectRef done_cb = item(args,1);
+
+        g_print (PROG "task launched 3\n");
+
+        PyObjectRef tuple = PyTuple_New(0);
+//        PyObjectRef done = task.invoke("done",tuple);
+
+        PyObjectRef name = PyUnicode_FromString("done");
+        PyObjectRef done = PyObject_CallMethodObjArgs(task,name,NULL);
+
+        g_print (PROG "task launched 4\n");
+
+        if(PyErr_Occurred())
+        {
+            g_print (PROG "ERRRÖR\n");
+            PyErr_PrintEx(0);          
+        }
+
+        if(done.isValid() && done.boolean() == true)
+        {
+            g_print (PROG "task done \n");
+
+            task.incr();
+            done_cb.incr();
+            run_async_cb_struct* racs = new run_async_cb_struct{ task,done_cb };
+            g_idle_add(run_async_cb,racs);
+        }
+        else
+        {
+            PyObjectRef tuple = PyTuple_New(1);
+            tuple.item(0,done_cb);
+            task.invoke("add_done_callback",tuple);
+        }
+    }
+    return task.incr();
+}
+
 static PyMethodDef pywebkit_module_methods[] = {
     {"send_signal",  pywebkit_send_signal, METH_VARARGS, "Send a signal to webview child process via dbus."},
     {"bind",  pywebkit_bind, METH_VARARGS, "register listening for signal via dbus."},
+    {"run_async",  pywebkit_run_async, METH_VARARGS, "run a coroutine."},
     {NULL}  /* Sentinel */
 };
 

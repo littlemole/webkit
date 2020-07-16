@@ -183,7 +183,32 @@ static PyObject* future_result(future_object* self, PyObject* args)
 {
     if(self->ex != Py_None)
     {
-        PyErr_SetNone(self->ex);
+        //PyErr_SetNone(self->ex);
+        PyObjectRef ptype = PyObject_Type(self->ex);
+
+        PyObject_Print(ptype.ref(),stdout,0);
+        printf("\n");
+
+//        PyObjectRef tuple = PyTuple_New(0);
+  //      PyObjectRef name = PyUnicode_FromString("value");
+ 
+//     PyObjectRef value = PyObject_CallMethodObjArgs(self->ex,name,NULL);
+
+   //     PyObjectRef value = PyObject_GetAttrString(self->ex,"value");
+
+        if(PyErr_Occurred())
+        {
+            g_print (PROG "IRRRÖR\n");
+            PyErr_PrintEx(0);          
+        }
+
+
+    //   PyObject_Print(value.ref(),stdout,0);
+      //  printf("\n");
+
+         //ptype.invoke("value",tuple);
+         PyErr_SetObject(ptype,self->ex);
+        //PyErr_Restore(ptype,value,Py_None);
         return NULL;
     }
     Py_INCREF(self->value);
@@ -602,11 +627,15 @@ gboolean task_do_step(gpointer user_data)
         else
         {
             g_print (PROG "__stepping__ Exceptionn\n");   
+
+            PyObject_Print(pvalue, stdout,0);
+            printf("\n");
+                    
             if(pvalue)
             {
                 PyObjectRef tuple = PyTuple_New(1);
-                tuple.item(0,ptype);
-                future_set_exception( super, ptype);
+                tuple.item(0,pvalue);
+                future_set_exception( super, tuple);
             }            
         }
         Py_XDECREF(ptype);
