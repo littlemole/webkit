@@ -74,26 +74,26 @@ static PyObject* signal_object_call(PyObject* self, PyObject* args, PyObject* ka
 
 PyTypeObject signal_objectType = {
     PyVarObject_HEAD_INIT(NULL,0)
-    "WebKitDBus.SignalObject",        /*tp_name*/
-    sizeof(signal_object), /*tp_basicsize*/
+    "WebKitDBus.SignalObject", /*tp_name*/
+    sizeof(signal_object),     /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)signal_object_dealloc,  /*tp_dealloc*/
     0,                         /*tp_print*/
-    0,/*tp_getattr*/
-    0,/*tp_setattr*/
+    0,                         /*tp_getattr*/
+    0,                         /*tp_setattr*/
     0,                         /*tp_compare*/
     0,                         /*tp_repr*/
     0,                         /*tp_as_number*/
     0,                         /*tp_as_sequence*/
     0,                         /*tp_as_mapping*/
     0,                         /*tp_hash */
-    signal_object_call,     /*tp_call*/
+    signal_object_call,        /*tp_call*/
     0,                         /*tp_str*/
     0,                         /*tp_getattro*/
     0,                         /*tp_setattro*/
     0,                         /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT,        /*tp_flags*/
-    "signal wrapper objects",       /* tp_doc */
+    "signal wrapper objects",  /* tp_doc */
     0,		                   /* tp_traverse */
     0,		                   /* tp_clear */
     0,		                   /* tp_richcompare */
@@ -110,7 +110,7 @@ PyTypeObject signal_objectType = {
     0,                         /* tp_dictoffset */
     (initproc)signal_object_init, /* tp_init */
     0,                         /* tp_alloc */
-    PyType_GenericNew                         /* tp_new */
+    PyType_GenericNew          /* tp_new */
 };
 
 
@@ -147,26 +147,26 @@ static PyObject * signals_object_getattr(signals_object* self, char* name)
 
 PyTypeObject signals_objectType = {
     PyVarObject_HEAD_INIT(NULL,0)
-    "WebKitDBus.SignalsObject",        /*tp_name*/
-    sizeof(signals_object), /*tp_basicsize*/
+    "WebKitDBus.SignalsObject",/*tp_name*/
+    sizeof(signals_object),    /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)signals_object_dealloc,  /*tp_dealloc*/
     0,                         /*tp_print*/
     (getattrfunc)signals_object_getattr, /*tp_getattr*/
-    0,/*tp_setattr*/
+    0,                         /*tp_setattr*/
     0,                         /*tp_compare*/
     0,                         /*tp_repr*/
     0,                         /*tp_as_number*/
     0,                         /*tp_as_sequence*/
     0,                         /*tp_as_mapping*/
     0,                         /*tp_hash */
-    0,    /*tp_call*/
+    0,                         /*tp_call*/
     0,                         /*tp_str*/
     0,                         /*tp_getattro*/
     0,                         /*tp_setattro*/
     0,                         /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT,        /*tp_flags*/
-    "signals objects",       /* tp_doc */
+    "signals objects",         /* tp_doc */
     0,		                   /* tp_traverse */
     0,		                   /* tp_clear */
     0,		                   /* tp_richcompare */
@@ -183,7 +183,7 @@ PyTypeObject signals_objectType = {
     0,                         /* tp_dictoffset */
     (initproc)signals_object_init, /* tp_init */
     0,                         /* tp_alloc */
-    PyType_GenericNew,                         /* tp_new */
+    PyType_GenericNew,         /* tp_new */
 };
 
 extern "C" PyObject* new_signals_object()
@@ -225,8 +225,7 @@ static void signal_handler(GDBusConnection *connection,
     }
     else
     {
-        //pyobj_ref emptyTuple = PyTuple_New(0);
-        pyobj_ref ret = pyobj(cb).invoke(signal_name);//, emptyTuple);        
+        pyobj_ref ret = pyobj(cb).invoke(signal_name);
     }
 
 }

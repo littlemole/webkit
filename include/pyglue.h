@@ -522,4 +522,56 @@ PyObject* call(PyObject* self, Args* ... args)
     return ret;
 }
 */
+
+class PyError
+{
+public:
+
+    PyError()
+    {
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+    }
+
+    ~PyError()
+    {
+        Py_XDECREF(ptype);
+        Py_XDECREF(pvalue);  
+        Py_XDECREF(ptraceback);        
+    }
+
+    template<class E>
+    bool matches(E& ex)
+    {
+        return PyErr_GivenExceptionMatches(ptype,ex);
+    }
+
+    PyObject* ptype = NULL;
+    PyObject* pvalue = NULL;
+    PyObject* ptraceback = NULL;
+};
+
+template<class ...Args>
+void incr(Args*... args)
+{
+    std::vector<PyObject*> v{args...};
+
+    int len = v.size();
+    for( int i = 0; i < len; i++)
+    {
+        Py_XINCREF(v[i]);
+    }
+}
+
+template<class ...Args>
+void decr(Args*... args)
+{
+    std::vector<PyObject*> v{args...};
+
+    int len = v.size();
+    for( int i = 0; i < len; i++)
+    {
+        Py_XDECREF(v[i]);
+    }
+}
+
 #endif
