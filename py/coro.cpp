@@ -32,8 +32,6 @@ typedef struct {
 
 static int future_object_init(future_object *self, PyObject *args, PyObject *kwds)
 {
-    g_print (PROG "!!!!!!!!!!!!!!!!!!!!!!!future_object_init\n");
-
     self->value = Py_None;
     self->ex = Py_None;
     self->cb = Py_None;
@@ -47,6 +45,8 @@ static int future_object_init(future_object *self, PyObject *args, PyObject *kwd
 
 static void future_object_dealloc(future_object* self)
 {
+    g_print (PROG "++++ NO FUTURE\n");
+
     Py_XDECREF(self->value);
     Py_XDECREF(self->ex);
     Py_XDECREF(self->cb);
@@ -62,11 +62,7 @@ static PyObject* future_done(future_object* self, PyObject* args)
 
 static PyObject* future_set_result(future_object* self, PyObject* args)
 {
-    g_print (PROG "1 future_set_result\n");
-
     Py_XDECREF(self->value);
-
-    g_print (PROG "2 future_set_result\n");
 
     int len = length(args);
     if ( len < 1 )
@@ -81,8 +77,6 @@ static PyObject* future_set_result(future_object* self, PyObject* args)
 
     self->done = true;
 
-    g_print (PROG "3 future_set_result\n");
-
     if( self->cb != Py_None )
     {
         PyObjectRef tuple = PyTuple_New(1);
@@ -92,6 +86,12 @@ static PyObject* future_set_result(future_object* self, PyObject* args)
 
         PyObject_Print(self->cb, stdout,0);
         printf("\n");
+        PyObject_Print((PyObject*)self,stdout,0);
+        printf("\n");
+        printf("%i\n", Py_REFCNT((PyObject*)self));
+        PyObject_Print((PyObject*)self->value,stdout,0);
+        printf("\n");
+        printf("%i\n", Py_REFCNT((PyObject*)self->value));
 
         PyObjectRef ret = PyObject_CallObject(self->cb,tuple);
         if(PyErr_Occurred())
@@ -99,6 +99,11 @@ static PyObject* future_set_result(future_object* self, PyObject* args)
             g_print (PROG "ERRRÖR\n");
             PyErr_PrintEx(0);          
         }
+        Py_XDECREF(self->cb);
+ //       Py_XDECREF(self->value);
+        self->cb = Py_None;
+//        self->value = Py_None;
+        Py_INCREF(self->cb);
     }
 
     g_print (PROG "4 future_set_result\n");
@@ -129,6 +134,13 @@ static PyObject* future_set_exception(future_object* self, PyObject* args)
         tuple.item(0,(PyObject*)self);
 
         PyObjectRef ret = PyObject_CallObject(self->cb,tuple);
+
+        Py_XDECREF(self->cb);
+ //       Py_XDECREF(self->value);
+        self->cb = Py_None;
+//        self->value = Py_None;
+        Py_INCREF(self->cb);
+
     }
 
     Py_RETURN_NONE;
@@ -136,12 +148,7 @@ static PyObject* future_set_exception(future_object* self, PyObject* args)
 
 static PyObject* future_add_done_callback(future_object* self, PyObject* args)
 {
-    g_print (PROG "future_add_done_callback %i\n", (void*)args);
-        PyObject_Print(args, stdout,0);
-        printf("\n");        
-
     Py_XDECREF(self->cb);
-
 
     int len = length(args);
     if ( len < 1 )
@@ -152,19 +159,21 @@ static PyObject* future_add_done_callback(future_object* self, PyObject* args)
     else
     {
         PyObject* cb = item(args,0);
-        g_print (PROG "future_add_done_callback %i\n", (void*)cb);
-        PyObject_Print(cb, stdout,0);
-        printf("\n");        
         self->cb = cb;
     }
-
-    g_print (PROG "-------------->  future_add_done_callback %i\n", (void*)self->cb);
 
     if(self->done)
     {
         PyObjectRef tuple = PyTuple_New(1);
         tuple.item(0,(PyObject*)self);
         PyObjectRef ret = PyObject_CallObject(self->cb,tuple);
+
+        Py_XDECREF(self->cb);
+ //       Py_XDECREF(self->value);
+        self->cb = Py_None;
+//        self->value = Py_None;
+        Py_INCREF(self->cb);
+
     }
 
     Py_RETURN_NONE;
@@ -199,8 +208,6 @@ static PyMethodDef future_methods[] = {
 
 static PyObject* future_await(PyObject* self)
 {
-     g_print (PROG "future_await\n");
-
     return new_future_iter_object(self);
 }
 
@@ -253,7 +260,6 @@ PyTypeObject future_objectType = {
 
 extern "C" PyObject* new_future_object()
 {
-    g_print (PROG "*******************future_object_init\n");
     future_object* self = py_alloc<future_object>(&future_objectType);
 
     self->value = Py_None;
@@ -287,8 +293,6 @@ typedef struct {
 
 static int future_iter_object_init(future_iter_object *self, PyObject *args, PyObject *kwds)
 {
-         g_print (PROG "!!!!!!!!!!!!!!!!!!!!!!!future_iter_object_init\n");
-
     int len = length(args);
     if(len< 1)
     {
@@ -304,8 +308,7 @@ static int future_iter_object_init(future_iter_object *self, PyObject *args, PyO
 
 static void future_iter_object_dealloc(future_iter_object* self)
 {
-             g_print (PROG "future_iter_object_dealloc\n");
-
+    g_print (PROG "++++ NO FUTURE ITER\n");
 
     Py_XDECREF(self->future);
     py_dealloc(self);
@@ -314,7 +317,6 @@ static void future_iter_object_dealloc(future_iter_object* self)
 
 static PyObject* future_iter_iter(PyObject* self)
 {
-     g_print (PROG "future_iter_iter\n");
     Py_INCREF(self);
     return self;
 }
@@ -323,15 +325,10 @@ static PyObject* future_iter_next(PyObject* myself)
 {
     future_iter_object* self = (future_iter_object*)myself;
 
-     g_print (PROG "future_iter_next state: %i\n", self->state);
-
     if(self->state == 0)
     {
         PyObjectRef name = PyUnicode_FromString("done");
-             g_print (PROG "name %i \n", (void*)(self->future));
         PyObjectRef done = PyObject_CallMethodObjArgs(self->future,name,NULL);
-
-             g_print (PROG "done");
 
         if(!done.isValid())
         {
@@ -339,19 +336,15 @@ static PyObject* future_iter_next(PyObject* myself)
             return NULL;
         }
 
-         g_print (PROG "future_iter_next check bool state: %i\n", self->state);
-
         if( done.isBoolean())
         {
             if( done.boolean() == false)
             {
-                g_print (PROG "FALSE future_iter_next check bool state: %i\n", self->state);
                 Py_INCREF(self->future);
                 return self->future;
             }
             else
             {
-                g_print (PROG "TRUE future_iter_next check bool state: %i\n", self->state);
                 self->state = 1;
             }
         }
@@ -363,15 +356,13 @@ static PyObject* future_iter_next(PyObject* myself)
     }
     if (self->state == 1)
     {
-//        PyObjectRef name = PyUnicode_FromString("result");
-  //      PyObjectRef r = PyObject_CallMethodObjArgs(self->future,name,NULL);
-  
         PyObjectRef tuple = PyTuple_New(0);
         PyObjectRef r = future_result( (future_object*)self->future, tuple);
 
         if(!r.isValid())
             return NULL;
 
+        // incr r ?
         PyErr_SetObject(PyExc_StopIteration,r);
         return NULL;
     }
@@ -450,12 +441,10 @@ PyTypeObject future_iter_objectType = {
 
 extern "C" PyObject* new_future_iter_object(PyObject* future)
 {
-     g_print (PROG "new_future_iter_object; %i.\n", (void*)future);
     future_iter_object* self = py_alloc<future_iter_object>(&future_iter_objectType);
     self->state = 0;
     self->future = future;
     Py_INCREF(future);
-     g_print (PROG "2 new_future_iter_object; %i.\n", (void*)future);
     return (PyObject*)self;
 }
 
@@ -530,6 +519,8 @@ static int task_object_init(task_object *self, PyObject *args, PyObject *kwds)
 
 static void task_object_dealloc(task_object* self)
 {
+    g_print (PROG "++++ NO TASK\n");
+
     Py_XDECREF(self->coro);
 
     future_object* super = &self->super;
@@ -552,20 +543,18 @@ struct StepStruct
 
 gboolean task_do_step(gpointer user_data)
 {
-     g_print (PROG "start __stepping__\n");
-
-    // GIL ???
-     PyGlobalInterpreterLock lock;
+    PyGlobalInterpreterLock lock;
 
     StepStruct* step = (StepStruct*)user_data;
 
     PyObject* self = step->self.ref();
     PyObject* ex = step->ex.ref();
 
+    g_print (PROG "do_step start %i\n", Py_REFCNT(self));
+
     task_object* task = (task_object*)self;
     future_object* super = &task->super;
 
-    g_print (PROG "__stepping__\n");
     if(super->done)
     {
         PyErr_SetString(PyExc_RuntimeError,"task is already done!");
@@ -573,25 +562,24 @@ gboolean task_do_step(gpointer user_data)
         return NULL;
     }
 
-    PyObject* res = 0; // ?????????? decr
+    PyObject* res = 0; 
 
     if(super->ex == Py_None)
     {
-        g_print (PROG "__stepping__ SEND %i\n", (void*)task->coro);     
-
-        //PyObjectRef name = PyUnicode_FromString("send");
-        //res = PyObject_CallMethodObjArgs(task->coro,name, Py_None, NULL);
-
         res = _PyGen_Send((PyGenObject*)task->coro,Py_None);
     }
     else
     {
-        g_print (PROG "__stepping__ THROW\n");    
         PyObjectRef name = PyUnicode_FromString("throw");
-        res = PyObject_CallMethodObjArgs(task->coro,name, super->ex, NULL);
+        res = PyObject_CallMethodObjArgs( 
+            task->coro, 
+            name,
+            PyExc_RuntimeError,
+            super->ex,
+            Py_None,
+            NULL
+        );
     }
-
-    g_print (PROG "__stepping__ TRYD\n");        
 
     PyObject* err = PyErr_Occurred(); // borrowed ref
     if(err)
@@ -604,90 +592,63 @@ gboolean task_do_step(gpointer user_data)
         if( PyErr_GivenExceptionMatches(ptype,PyExc_StopIteration))
         {
             g_print (PROG "__stepping__ StopIteration\n");    
-
-            // must get "value" attribute of pvalue ???
             if(pvalue)
             {
-                PyObjectRef value = PyObject_GetAttrString(pvalue,"value");
-                if(super->value != Py_None)
-                {
-                    Py_DECREF(super->value);
-                }
-  //              super->value = value;
-//                super->done = true;
-                future_set_result( super, value);
-               // Py_XDECREF(pvalue);
+                PyObjectRef tuple = PyTuple_New(1);
+                tuple.item(0,pvalue);
+                future_set_result( super, tuple);
             }
-
         }
         else
         {
             g_print (PROG "__stepping__ Exceptionn\n");   
             if(pvalue)
             {
-                if(super->ex != Py_None)
-                {
-                    Py_DECREF(super->ex);
-                }
-//                super->ex = pvalue;
-  //              super->done = true;
-                future_set_exception( super, pvalue);
-
+                PyObjectRef tuple = PyTuple_New(1);
+                tuple.item(0,ptype);
+                future_set_exception( super, ptype);
             }            
         }
-
-        g_print (PROG "__stepping__ end try catch\n");   
-
         Py_XDECREF(ptype);
         Py_XDECREF(pvalue);  
         Py_XDECREF(ptraceback);
     }
     else
     {
-        g_print (PROG "__stepping__ SUCCESSn\n"); 
-
         PyObjectRef blocking = PyObject_GetAttrString(res,"_asyncio_future_blocking");
         if(!blocking.isNone())
         {
-            g_print (PROG "__stepping__ blocking\n");    
-
             if(blocking.boolean())
             {
-                g_print (PROG "1 __stepping__ blocking TRUE \n");
                 PyObject_SetAttrString(res,"_asyncio_future_blocking", PyBool_FromLong(0));
 
                 PyObjectRef func = PyObject_GetAttrString(self,"_wakeup");
                 PyObjectRef method = PyMethod_New(func,self);
-                //func.incr();
-                //method.incr();
 
                 PyObjectRef tuple = PyTuple_New(1);
                 tuple.item(0,method);
-                PyObjectRef r = future_add_done_callback((future_object*)res,tuple);
 
-               // PyObjectRef name = PyUnicode_FromString("add_done_callback");
-                //PyObjectRef r = PyObject_CallMethodObjArgs(res,name, method,NULL);
+                PyObjectRef r = future_add_done_callback((future_object*)res,tuple);
             }
-            g_print (PROG "__stepping__ done with blocking\n");  
         }
         else if(res == Py_None)
         {
-            g_print (PROG "__stepping__ non-blocking\n");
             PyObjectRef tuple = PyTuple_New(0);
             PyObjectRef r = task_step(task,tuple);
         }
     }
 
-    g_print (PROG "__stepping__ END\n");
+    g_print (PROG "do_step done %i\n", Py_REFCNT(self));
 
-    //delete step;
+    Py_XDECREF(res);
 
+    delete step;
     return false;
 }
 
 static PyObject* task_step(task_object* self, PyObject* args)
 {
-    g_print (PROG "_task_step\n");
+    g_print (PROG "_task_step %i\n", Py_REFCNT(self));
 
     PyObject* ex = self->super.ex;
 
@@ -703,7 +664,7 @@ static PyObject* task_step(task_object* self, PyObject* args)
 
 static PyObject* task_wakeup(task_object* self, PyObject* args)
 {
-    g_print (PROG "_task_wakeup\n");    
+    g_print (PROG "_task_wakeup %i\n", Py_REFCNT(self));    
 
     int len = length(args);
     if(len<1)
@@ -716,8 +677,6 @@ static PyObject* task_wakeup(task_object* self, PyObject* args)
 
     PyObjectRef name = PyUnicode_FromString("result");
     PyObjectRef ret = PyObject_CallMethodObjArgs(arg,name, NULL);
-
-    g_print (PROG "wakeup try\n");
 
     PyObject* err = PyErr_Occurred(); // borrowed ref
     if(err)
@@ -736,7 +695,6 @@ static PyObject* task_wakeup(task_object* self, PyObject* args)
         Py_XDECREF(pvalue);  
         Py_XDECREF(ptraceback);
 
-        g_print (PROG "wakeup next step with ex\n");
         PyObjectRef ret = task_step(self,tuple);
     }
     else
@@ -744,7 +702,6 @@ static PyObject* task_wakeup(task_object* self, PyObject* args)
         PyObjectRef tuple = PyTuple_New(1);
         tuple.item(0,Py_None);
 
-        g_print (PROG "wakeup next step\n");
         PyObjectRef ret = task_step(self,tuple);
     }
 
@@ -846,7 +803,7 @@ extern "C" PyObject* new_task_object(PyObject* coro)
 void add_task_obj_def(PyObjectRef& m)
 {
     task_objectType.tp_base = &future_objectType;
-    
+
     if (PyType_Ready(&task_objectType) < 0)
         return;    
 
