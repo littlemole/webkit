@@ -10,19 +10,19 @@
 #include <structmember.h>
 //#include <JavaScriptCore/JSContextRef.h>
 
-class PyObjectRef
+class pyobj_ref
 {
 public:
 
-    PyObjectRef()
+    pyobj_ref()
         : ref_(0)
     {}
 
-    PyObjectRef(PyObject* ref)
+    pyobj_ref(PyObject* ref)
         : ref_(ref)
     {}
 
-    ~PyObjectRef()
+    ~pyobj_ref()
     {
         if(ref_)
             Py_DECREF(ref_);
@@ -35,7 +35,7 @@ public:
     }
 
 
-    PyObjectRef& operator=(const PyObjectRef& rhs)
+    pyobj_ref& operator=(const PyObjectRef& rhs)
     {
         if ( this == &rhs )
             return *this;
@@ -110,7 +110,7 @@ GVariant* make_variant(PyObject* pyObj)
         GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE_TUPLE);
         for(Py_ssize_t i = 0; i < len; i++)
         {
-            PyObjectRef item = PySequence_GetItem(pyObj,i);
+            pyobj_ref item = PySequence_GetItem(pyObj,i);
             g_variant_builder_add(builder, "v", make_variant(item));
         }
         return g_variant_builder_end(builder);
@@ -122,7 +122,7 @@ GVariant* make_variant(PyObject* pyObj)
         GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE_TUPLE);
         for(Py_ssize_t i = 0; i < len; i++)
         {
-            PyObjectRef item = PySequence_GetItem(pyObj,i);
+            pyobj_ref item = PySequence_GetItem(pyObj,i);
             g_variant_builder_add(builder, "v", make_variant(item));
         }
         return g_variant_builder_end(builder);
@@ -133,7 +133,7 @@ GVariant* make_variant(PyObject* pyObj)
                 printf("\n");
 
         GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE_ARRAY);
-        PyObjectRef keys = PyDict_Keys(pyObj);//PyObject_CallMethod(pyObj,(char*)"keys",NULL);
+        pyobj_ref keys = PyDict_Keys(pyObj);//PyObject_CallMethod(pyObj,(char*)"keys",NULL);
             PyObject_Print(keys, stdout,0);
                 printf("\n");
         Py_ssize_t len = PySequence_Size(keys);
@@ -141,14 +141,14 @@ GVariant* make_variant(PyObject* pyObj)
         for(Py_ssize_t i = 0; i < len; i++)
         {
             std::cout << "DICT: " << i  << std::endl;
-            PyObjectRef key = PySequence_GetItem(keys,i);
+            pyobj_ref key = PySequence_GetItem(keys,i);
 
             PyObject_Print(key, stdout,0);
                 printf("\n");
 
             const char* k = PyUnicode_AsUTF8(key);
             std::cout << "K: " << k << std::endl;
-            PyObjectRef value = PyMapping_GetItemString(pyObj, k);
+            pyobj_ref value = PyMapping_GetItemString(pyObj, k);
 
             GVariant* dict = g_variant_new("{sv}", k,make_variant(value));
             g_variant_builder_add_value(builder,dict);
@@ -258,8 +258,8 @@ PyObject_Print(args, stdout,0);
     Py_ssize_t len = PySequence_Size(args);
 
     //builder
-    PyObjectRef signal = PySequence_GetItem(args,0);
-    PyObjectRef msg = PySequence_GetItem(args,1);
+    pyobj_ref signal = PySequence_GetItem(args,0);
+    pyobj_ref msg = PySequence_GetItem(args,1);
 
     const char* c = PyUnicode_AsUTF8(signal);
 
@@ -341,8 +341,8 @@ static PyObject* send_signal(PyObject* self, PyObject* args)
         std::cout << "less than two args" << std::endl;
     }
 
-    PyObjectRef signal = PySequence_GetItem(args,0);
-    PyObjectRef msg = PySequence_GetItem(args,1);
+    pyobj_ref signal = PySequence_GetItem(args,0);
+    pyobj_ref msg = PySequence_GetItem(args,1);
     const char* c = PyUnicode_AsUTF8(signal);
 
     std::cout << "SEND SIGNAL " << (void*)dbus << " " << c << " " << len <<  std::endl;

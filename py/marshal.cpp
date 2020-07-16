@@ -1,12 +1,14 @@
 #include "marshal.h"
 #include "pyglue.h"
 
-GVariant* make_variant(PyObjectRef& pyObj)
+GVariant* make_variant(pyobj_ref& obj)
 {
 //    PyObject_Print(pyObj, stdout,0);
 //    printf("\n");
 
-    if (!pyObj)
+    pyobj pyObj(obj);
+
+    if (!pyObj.isValid())
     {
         return gnull();
     }
@@ -38,7 +40,7 @@ GVariant* make_variant(PyObjectRef& pyObj)
     {
         gvar_builder builder = gtuple();
 
-        pyObj.for_each( [&builder] (int index, PyObjectRef& item)
+        pyObj.for_each( [&builder] (int index, pyobj_ref& item)
         {
             builder.add(make_variant(item));
         });
@@ -49,7 +51,7 @@ GVariant* make_variant(PyObjectRef& pyObj)
     {
         gvar_builder builder = garray();
 
-        pyObj.for_each( [&builder] ( const char* key, PyObjectRef& value)
+        pyObj.for_each( [&builder] ( const char* key, pyobj_ref& value)
         {
             builder.add(key,make_variant(value));
         });
@@ -120,7 +122,7 @@ PyObject* gvariant_to_py_value(GVariant* parameter)
 
         param.for_each( [&ret](const char* key, GVariant* value)
         {
-            PyObjectRef val = gvariant_to_py_value(value);
+            pyobj_ref val = gvariant_to_py_value(value);
             PyDict_SetItemString(ret, key, val ); // does NOT steal val
         });
 

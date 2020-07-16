@@ -33,10 +33,10 @@ static void pywebkit_webview_init(PywebkitWebview *web)
 {
     g_print(PROG "pywebkit_webview_init\n");
 
-    PyObjectRef n = PyUnicode_FromString("WebKitDBus");
-    PyObjectRef m = PyImport_GetModule(n);
+    pyobj_ref n = PyUnicode_FromString("WebKitDBus");
+    pyobj_ref m = PyImport_GetModule(n);
 
-    PyObjectRef uid = PyObject_GetAttrString(m,"uid");
+    pyobj_ref uid = PyObject_GetAttrString(m,"uid");
     const char* c = PyUnicode_AsUTF8(uid);
     web->uid = g_strdup (c);
 

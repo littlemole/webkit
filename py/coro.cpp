@@ -64,7 +64,7 @@ static PyObject* future_set_result(future_object* self, PyObject* args)
 {
     Py_XDECREF(self->value);
 
-    int len = length(args);
+    int len = pyobj(args).length();
     if ( len < 1 )
     {
         self->value = Py_None;
@@ -72,14 +72,14 @@ static PyObject* future_set_result(future_object* self, PyObject* args)
     }
     else
     {
-        self->value = item(args,0);
+        self->value = pyobj(args).item(0);
     }
 
     self->done = true;
 
     if( self->cb != Py_None )
     {
-        PyObjectRef ret = call(self->cb,(PyObject*)self);
+        pyobj_ref ret = pyobj(self->cb).call((PyObject*)self);
 
         Py_XDECREF(self->cb);
         self->cb = Py_None;
@@ -93,7 +93,7 @@ static PyObject* future_set_exception(future_object* self, PyObject* args)
 {
     Py_XDECREF(self->ex);
 
-    int len = length(args);
+    int len = pyobj(args).length();
     if ( len < 1 )
     {
         self->ex = Py_None;
@@ -101,14 +101,14 @@ static PyObject* future_set_exception(future_object* self, PyObject* args)
     }
     else
     {
-        self->ex = item(args,0);
+        self->ex = pyobj(args).item(0);
     }
 
     self->done = true;
 
     if( self->cb != Py_None )
     {
-        PyObjectRef ret = call(self->cb, (PyObject*)self);
+        pyobj_ref ret = pyobj(self->cb).call( (PyObject*)self);
 
         Py_XDECREF(self->cb);
         self->cb = Py_None;
@@ -120,7 +120,7 @@ static PyObject* future_set_exception(future_object* self, PyObject* args)
 
 static PyObject* future_add_done_callback(future_object* self, PyObject* args)
 {
-    int len = length(args);
+    int len = pyobj(args).length();
 
     Py_XDECREF(self->cb);
 
@@ -131,14 +131,14 @@ static PyObject* future_add_done_callback(future_object* self, PyObject* args)
     }
     else
     {
-        PyObject* cb = item(args,0);
+        PyObject* cb = pyobj(args).item(0);
         self->cb = cb;
         
     }
 
     if(self->done)
     {
-        PyObjectRef ret = call(self->cb, (PyObject*)self);
+        pyobj_ref ret = pyobj(self->cb).call( (PyObject*)self);
 
         Py_XDECREF(self->cb);
         self->cb = Py_None;
@@ -152,7 +152,7 @@ static PyObject* future_result(future_object* self, PyObject* args)
 {
     if(self->ex != Py_None)
     {
-        PyObjectRef ptype = PyObject_Type(self->ex);
+        pyobj_ref ptype = PyObject_Type(self->ex);
         PyErr_SetObject(ptype,self->ex);
         return NULL;
     }
@@ -245,12 +245,12 @@ extern "C" PyObject* new_future_object()
     return (PyObject*)self;
 }
 
-void add_future_obj_def(PyObjectRef& m)
+void add_future_obj_def(pyobj_ref& m)
 {
     if (PyType_Ready(&future_objectType) < 0)
         return;    
 
-    m.addObject("Future",&future_objectType);
+    pyobj(m).addObject("Future",&future_objectType);
 }
 
 /////////////////////////////////////////////
@@ -264,7 +264,7 @@ typedef struct {
 
 static int future_iter_object_init(future_iter_object *self, PyObject *args, PyObject *kwds)
 {
-    int len = length(args);
+    int len = pyobj(args).length();
     if(len< 1)
     {
         PyErr_SetString(PyExc_RuntimeError,"invalid future iter no arguments passed to init");
@@ -272,7 +272,7 @@ static int future_iter_object_init(future_iter_object *self, PyObject *args, PyO
     }
 
     self->state = 0;
-    self->future = item(args,0);
+    self->future = pyobj(args).item(0);
 
     return 0;
 }
@@ -298,17 +298,17 @@ static PyObject* future_iter_next(PyObject* myself)
 
     if(self->state == 0)
     {
-        PyObjectRef tuple = ptuple();
-        PyObjectRef done = future_done((future_object*)(self->future),tuple);
+        pyobj_ref tuple = ptuple();
+        pyobj_ref done = future_done((future_object*)(self->future),tuple);
         if(!done.isValid())
         {
             PyErr_SetString(PyExc_RuntimeError,"future_iter_next invalid done state");
             return NULL;
         }
 
-        if( done.isBoolean())
+        if( pyobj(done).isBoolean())
         {
-            if( done.boolean() == false)
+            if( pyobj(done).boolean() == false)
             {
                 Py_INCREF(self->future);
                 return self->future;
@@ -326,8 +326,8 @@ static PyObject* future_iter_next(PyObject* myself)
     }
     if (self->state == 1)
     {
-        PyObjectRef tuple = PyTuple_New(0);
-        PyObjectRef r = future_result( (future_object*)self->future, tuple);
+        pyobj_ref tuple = ptuple();// PyTuple_New(0);
+        pyobj_ref r = future_result( (future_object*)self->future, tuple);
 
         if(!r.isValid())
             return NULL;
@@ -391,12 +391,12 @@ extern "C" PyObject* new_future_iter_object(PyObject* future)
     return (PyObject*)self;
 }
 
-void add_future_iter_obj_def(PyObjectRef& m)
+void add_future_iter_obj_def(pyobj_ref& m)
 {
     if (PyType_Ready(&future_iter_objectType) < 0)
         return;    
 
-    m.addObject("_FutureIter",&future_iter_objectType);
+    pyobj(m).addObject("_FutureIter",&future_iter_objectType);
 }
 
 
@@ -418,13 +418,13 @@ static void start_coro(task_object* self)
 
     if(!isCoro)
     {
-        PyObjectRef tuple = ptuple(self->coro);
-        PyObjectRef ret = future_set_result(super,tuple);
+        pyobj_ref tuple = ptuple(self->coro);
+        pyobj_ref ret = future_set_result(super,tuple);
     }
     else
     {
-        PyObjectRef tuple = ptuple();
-        PyObjectRef ret = task_step(self,tuple);
+        pyobj_ref tuple = ptuple();
+        pyobj_ref ret = task_step(self,tuple);
     }
 }
 
@@ -441,14 +441,14 @@ static int task_object_init(task_object *self, PyObject *args, PyObject *kwds)
     Py_INCREF(super->ex);
     Py_INCREF(super->cb);   
 
-    int len = length(args);
+    int len = pyobj(args).length();
     if(len< 1)
     {
         PyErr_SetString(PyExc_RuntimeError,"invalid Task no arguments passed to init");
         return -1;
     }
 
-    self->coro = item(args,0);
+    self->coro = pyobj(args).item(0);
 
     start_coro(self);
 
@@ -474,8 +474,8 @@ static void task_object_dealloc(task_object* self)
 
 struct StepStruct
 {
-    PyObjectRef self;
-    PyObjectRef ex;
+    pyobj_ref self;
+    pyobj_ref ex;
 };
 
 
@@ -506,7 +506,7 @@ gboolean task_do_step(gpointer user_data)
     }
     else
     {
-        res = invoke(task->coro,"throw",PyExc_RuntimeError, super->ex,Py_None);
+        res = pyobj(task->coro).invoke("throw",PyExc_RuntimeError, super->ex,Py_None);
     }
 
     if(py_error())
@@ -520,12 +520,12 @@ gboolean task_do_step(gpointer user_data)
         {
             if(pvalue)
             {
-                PyObjectRef tuple = ptuple(pvalue);
+                pyobj_ref tuple = ptuple(pvalue);
                 future_set_result( super, tuple);
             }
             else
             {
-                PyObjectRef tuple = ptuple();
+                pyobj_ref tuple = ptuple();
                 future_set_result( super, tuple);
             }
         }
@@ -533,7 +533,7 @@ gboolean task_do_step(gpointer user_data)
         {
             if(pvalue)
             {
-                PyObjectRef tuple = ptuple(pvalue);
+                pyobj_ref tuple = ptuple(pvalue);
                 future_set_exception( super, tuple);
             }            
         }
@@ -543,26 +543,26 @@ gboolean task_do_step(gpointer user_data)
     }
     else
     {
-        PyObjectRef blocking = PyObject_GetAttrString(res,"_asyncio_future_blocking");
-        if(!blocking.isNone())
+        pyobj_ref blocking = PyObject_GetAttrString(res,"_asyncio_future_blocking");
+        if(!pyobj(blocking).isNone())
         {
-            if(blocking.boolean())
+            if(pyobj(blocking).boolean())
             {
                 PyObject_SetAttrString(res,"_asyncio_future_blocking", PyBool_FromLong(0));
 
-                PyObjectRef func = PyObject_GetAttrString(self,"_wakeup");
-                PyObjectRef method = PyMethod_New(func,self);
+                pyobj_ref func = PyObject_GetAttrString(self,"_wakeup");
+                pyobj_ref method = PyMethod_New(func,self);
 
-                PyObjectRef tuple = PyTuple_New(1);
-                tuple.item(0,method);
-
-                PyObjectRef r = future_add_done_callback((future_object*)res,tuple);
+               // pyobj_ref tuple = PyTuple_New(1);
+               // tuple.item(0,method);
+                pyobj_ref tuple = ptuple(method.ref());
+                pyobj_ref r = future_add_done_callback((future_object*)res,tuple);
             }
         }
         else if(res == Py_None)
         {
-            PyObjectRef tuple = PyTuple_New(0);
-            PyObjectRef r = task_step(task,tuple);
+            pyobj_ref tuple = ptuple();// PyTuple_New(0);
+            pyobj_ref r = task_step(task,tuple);
         }
     }
 
@@ -588,15 +588,15 @@ static PyObject* task_step(task_object* self, PyObject* args)
 
 static PyObject* task_wakeup(task_object* self, PyObject* args)
 {
-    int len = length(args);
+    int len = pyobj(args).length();
     if(len<1)
     {
         PyErr_SetString(PyExc_RuntimeError,"to few arguments in call to_task_wakeup");
         return NULL;
     }
 
-    PyObjectRef arg = item(args,0);
-    PyObjectRef ret = arg.invoke("result");
+    pyobj_ref arg = pyobj(args).item(0);
+    pyobj_ref ret = pyobj(arg).invoke("result");
 
     if(py_error())
     {
@@ -606,18 +606,18 @@ static PyObject* task_wakeup(task_object* self, PyObject* args)
 
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
 
-        PyObjectRef tuple = ptuple(pvalue);
+        pyobj_ref tuple = ptuple(pvalue);
 
         Py_XDECREF(ptype);
         Py_XDECREF(pvalue);  
         Py_XDECREF(ptraceback);
 
-        PyObjectRef ret = task_step(self,tuple);
+        pyobj_ref ret = task_step(self,tuple);
     }
     else
     {
-        PyObjectRef tuple = ptuple(Py_None);
-        PyObjectRef ret = task_step(self,tuple);
+        pyobj_ref tuple = ptuple(Py_None);
+        pyobj_ref ret = task_step(self,tuple);
     }
 
     Py_RETURN_NONE;
@@ -694,12 +694,12 @@ extern "C" PyObject* new_task_object(PyObject* coro)
     return (PyObject*)self;
 }
 
-void add_task_obj_def(PyObjectRef& m)
+void add_task_obj_def(pyobj_ref& m)
 {
     task_objectType.tp_base = &future_objectType;
 
     if (PyType_Ready(&task_objectType) < 0)
         return;    
 
-    m.addObject("Task",&task_objectType);
+    pyobj(m).addObject("Task",&task_objectType);
 }

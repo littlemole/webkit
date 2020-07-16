@@ -24,7 +24,7 @@ static std::string dbus_object_path_recv_req_path;
 
 static GDBusConnection* dbus = 0;
 static std::string sid;
-static PyObjectRef cb;
+static pyobj_ref cb;
 
 /////////////////////////////////////////////
 // forwards
@@ -55,13 +55,13 @@ static PyObject* signal_object_call(PyObject* self, PyObject* args, PyObject* ka
 {
     signal_object* that = (signal_object*)self;
 
-    int len = length(args);
+    int len = pyobj(args).length();
     GVariant* params = 0;
 
     if(len>0)
     {
         gvar_builder builder = gtuple();
-        for_each(args,[&builder](int index, PyObjectRef& arg)
+        pyobj(args).for_each([&builder](int index, pyobj_ref& arg)
         {
             builder.add(make_variant(arg));
         });
@@ -215,18 +215,18 @@ static void signal_handler(GDBusConnection *connection,
         return;
     }
 
-    PyObjectRef uid = gvariant_to_py_value(params.item(0));
-    g_print (PROG "received signal %s %s\n", signal_name, uid.str() );
+    pyobj_ref uid = gvariant_to_py_value(params.item(0));
+    g_print (PROG "received signal %s %s\n", signal_name, pyobj(uid).str() );
 
     if(len>1)
     {
-        PyObjectRef args = gvariant_to_py_value(params.item(1));
-        PyObjectRef ret = cb.invoke_with_tuple(signal_name, args);
+        pyobj_ref args = gvariant_to_py_value(params.item(1));
+        pyobj_ref ret = pyobj(cb).invoke_with_tuple(signal_name, args);
     }
     else
     {
-        //PyObjectRef emptyTuple = PyTuple_New(0);
-        PyObjectRef ret = cb.invoke(signal_name);//, emptyTuple);        
+        //pyobj_ref emptyTuple = PyTuple_New(0);
+        pyobj_ref ret = pyobj(cb).invoke(signal_name);//, emptyTuple);        
     }
 
 }
@@ -277,7 +277,7 @@ static void send_dbus_signal( GDBusConnection* dbus, std::string s, GVariant*  p
 
 static PyObject* pywebkit_send_signal(PyObject* self, PyObject* args)
 {
-    int len = length(args);
+    int len = pyobj(args).length();
 
     if(len<1)
     {
@@ -285,7 +285,7 @@ static PyObject* pywebkit_send_signal(PyObject* self, PyObject* args)
         return NULL;
     }
     
-    PyObjectRef signal = item(args,0);
+    pyobj_ref signal = pyobj(args).item(0);
     const char* signal_name = PyUnicode_AsUTF8(signal);
 
     GVariant* params = 0;
@@ -294,7 +294,7 @@ static PyObject* pywebkit_send_signal(PyObject* self, PyObject* args)
         auto builder = gtuple();
         for( int i = 1; i < len; i++)
         {
-            PyObjectRef arg = item( args, i);
+            pyobj_ref arg = pyobj(args).item( i);
             builder.add(make_variant(arg));
         }
         params = builder.build();
@@ -306,7 +306,7 @@ static PyObject* pywebkit_send_signal(PyObject* self, PyObject* args)
 
 static PyObject* pywebkit_bind(PyObject* self, PyObject* args)
 {
-    int len = length(args);
+    int len = pyobj(args).length();
 
     g_print (PROG "on signal \n");
 
@@ -316,7 +316,7 @@ static PyObject* pywebkit_bind(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    cb = item(args,0);
+    cb = pyobj(args).item(0);
 
     Py_RETURN_NONE;
 }
@@ -325,8 +325,8 @@ extern "C" PyObject* new_task_object(PyObject* coro);
 
 struct run_async_cb_struct 
 {
-    PyObjectRef cb;
-    PyObjectRef task;
+    pyobj_ref cb;
+    pyobj_ref task;
 };
 
 static gboolean run_async_cb(gpointer user_data)
@@ -335,7 +335,7 @@ static gboolean run_async_cb(gpointer user_data)
 
     run_async_cb_struct* data = (run_async_cb_struct*)user_data;
 
-    PyObjectRef done = data->cb.invoke("done",data->task.ref());
+    pyobj_ref done = pyobj(data->cb).invoke("done",data->task.ref());
 
     delete data;
     return false;
@@ -343,7 +343,7 @@ static gboolean run_async_cb(gpointer user_data)
 
 static PyObject* pywebkit_run_async(PyObject* self, PyObject* args)
 {
-    int len = length(args);
+    int len = pyobj(args).length();
 
     if(len<1)
     {
@@ -351,17 +351,17 @@ static PyObject* pywebkit_run_async(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    PyObjectRef coro = item(args,0);
+    pyobj_ref coro = pyobj(args).item(0);
 
-    PyObjectRef task = new_task_object(coro);
+    pyobj_ref task = new_task_object(coro);
 
     if(len>1)
     {
-        PyObjectRef done_cb = item(args,1);
+        pyobj_ref done_cb = pyobj(args).item(1);
     
-        PyObjectRef done = task.invoke("done");
+        pyobj_ref done = pyobj(task).invoke("done");
 
-        if(done.isValid() && done.boolean() == true)
+        if(pyobj(done).isValid() && pyobj(done).boolean() == true)
         {
             task.incr();
             done_cb.incr();
@@ -370,7 +370,7 @@ static PyObject* pywebkit_run_async(PyObject* self, PyObject* args)
         }
         else
         {
-            PyObjectRef ret = task.invoke("add_done_callback", done_cb.ref());
+            pyobj_ref ret = pyobj(task).invoke("add_done_callback", done_cb.ref());
             if(PyErr_Occurred())
             {
                 g_print (PROG "ERRRÖR\n");
@@ -399,9 +399,9 @@ static struct PyModuleDef moduledef = {
     NULL,NULL,NULL,NULL
 };
 
-void add_future_obj_def(PyObjectRef& m);
-void add_future_iter_obj_def(PyObjectRef& m);
-void add_task_obj_def(PyObjectRef& m);
+void add_future_obj_def(pyobj_ref& m);
+void add_future_iter_obj_def(pyobj_ref& m);
+void add_task_obj_def(pyobj_ref& m);
 
 PyMODINIT_FUNC PyInit_WebKitDBus(void) 
 {
@@ -434,19 +434,19 @@ PyMODINIT_FUNC PyInit_WebKitDBus(void)
     g_bus_get(G_BUS_TYPE_SESSION, NULL, &got_dbus,NULL);
 
     // create and populate module
-    PyObjectRef m = PyModule_Create(&moduledef);
+    pyobj_ref m = PyModule_Create(&moduledef);
 
-    m.addString( "uid", sid.c_str());
+    pyobj(m).addString( "uid", sid.c_str());
 
-    m.addObject("SignalObject", &signal_objectType);
-    m.addObject("SignalsObject", &signals_objectType);
+    pyobj(m).addObject("SignalObject", &signal_objectType);
+    pyobj(m).addObject("SignalsObject", &signals_objectType);
 
     add_future_obj_def(m);
     add_future_iter_obj_def(m);    
     add_task_obj_def(m);
     
-    PyObjectRef signalsObject = new_signals_object();
-    m.addObject("View", signalsObject);
+    pyobj_ref signalsObject = new_signals_object();
+    pyobj(m).addObject("View", signalsObject);
 
     return m.incr();
 }

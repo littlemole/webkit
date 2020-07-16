@@ -12,7 +12,7 @@
 #include "gvglue.h"
 #include "pyglue.h"
 
-GVariant* make_variant(PyObjectRef& pyObj);
+GVariant* make_variant(pyobj_ref& pyObj);
 
 PyObject* gvariant_to_py_value(GVariant* parameters);
 

@@ -28,7 +28,7 @@ private:
 
 };
 
-
+/*
 inline int length(PyObject* obj)
 {
     return PySequence_Size(obj);
@@ -48,7 +48,7 @@ PyObject* invoke(PyObject* self, const char* name, Args* ... args);
 
 template<class ...Args>
 PyObject* call(PyObject* self, Args* ... args);
-
+*/
 
 inline bool py_error()
 {
@@ -56,26 +56,27 @@ inline bool py_error()
 }
 
 
-class PyObjectRef
+class pyobj_ref
 {
+friend class pyobj;
 public:
 
-    PyObjectRef()
+    pyobj_ref()
         : ref_(0)
     {}
 
-    PyObjectRef(PyObject* ref)
+    pyobj_ref(PyObject* ref)
         : ref_(ref)
     {}
 /*
-    PyObjectRef(const PyObjectRef& ref)
+    pyobj_ref(const PyObjectRef& ref)
         : ref_(ref.ref_)
     {
         if(ref_)
             Py_DECREF(ref_);
     }
 */
-    ~PyObjectRef()
+    ~pyobj_ref()
     {
         if(ref_)
             Py_DECREF(ref_);
@@ -88,7 +89,7 @@ public:
     }
 
 
-    PyObjectRef& operator=(const PyObjectRef& rhs)
+    pyobj_ref& operator=(const pyobj_ref& rhs)
     {
         if ( this == &rhs )
             return *this;
@@ -100,7 +101,7 @@ public:
         return *this;
     }
 
-    PyObjectRef& operator=( PyObject* rhs)
+    pyobj_ref& operator=( PyObject* rhs)
     {
         if ( this->ref_ == rhs )
             return *this;
@@ -120,6 +121,45 @@ public:
     {
         return ref_;
     }
+
+    bool isValid()
+    {
+        return ref_ != 0;
+    }
+
+    PyObject* ref()
+    {
+        return ref_;
+    }
+
+    PyObject* incr()
+    {
+        Py_INCREF(ref_);
+        return ref_;
+    }
+
+    PyObject* decr()
+    {
+        Py_DECREF(ref_);
+        return ref_;
+    }
+
+private:
+    PyObject* ref_;
+
+};
+
+class pyobj
+{
+public:
+
+    pyobj( PyObject* obj)
+        : ref_(obj)
+    {}
+
+    pyobj( const pyobj_ref& obj)
+        : ref_(obj.ref_)
+    {}
 
     bool isValid()
     {
@@ -190,7 +230,9 @@ public:
             Py_RETURN_NONE;
         }
 
-        return ::invoke(ref_,name,args...);
+        pyobj_ref member = PyUnicode_FromString(name);
+        PyObject* ret = PyObject_CallMethodObjArgs(ref_,member,args...,NULL);
+        return ret;
     }
 
     PyObject* invoke_with_tuple(const char* name, PyObject* args)
@@ -200,17 +242,18 @@ public:
             Py_RETURN_NONE;
         }
 
-        int len = ::length(args);
+        int len = pyobj(args).length();// ::length(args);
 
-        PyObjectRef tuple = PyTuple_New(len+1);
-        tuple.item(0,ref_);
+        pyobj_ref tuple = PyTuple_New(len+1);
+        pyobj(tuple).item(0,ref_);
+
 
         for ( int i = 0; i < len; i++)
         {
-            tuple.item( i+1, ::item(args,i) );
+            pyobj(tuple).item( i+1, pyobj(args).item(i) );
         }        
 
-        PyObjectRef callable = attr(name);
+        pyobj_ref callable = attr(name);
 
         // borrowed ref
         PyObject* fun = PyMethod_Function(callable);
@@ -223,7 +266,17 @@ public:
     template<class ...Args>
     PyObject* call(Args* ... args)
     {
-        return ::invoke(ref_,args...);
+        std::vector<PyObject*> v{args...};
+        int len = v.size();
+
+        pyobj_ref tuple = PyTuple_New(len);
+        for( int i = 0; i < len; i++)
+        {
+            pyobj(tuple).item( i, v[i] );
+        }
+        // call python!
+        PyObject* ret = PyObject_CallObject(ref_,tuple);
+        return ret;
     }
 
     PyObject* call_tuple(PyObject* args)
@@ -249,22 +302,22 @@ public:
         PyTuple_SetItem(ref_,index,value);
     }
 
-    void for_each(std::function<void(int,PyObjectRef&)> fun)
+    void for_each(std::function<void(int,pyobj_ref&)> fun)
     {
         int len = length();
         for( int i = 0; i < len; i++)
         {
-            PyObjectRef value = item(i);
+            pyobj_ref value = item(i);
             fun(i,value);
         }
     }
 
-    void for_each(std::function<void(const char*,PyObjectRef&)> fun)
+    void for_each(std::function<void(const char*,pyobj_ref&)> fun)
     {
         auto members = keys();
         for( auto& key: members)
         {
-            PyObjectRef value = member(key);
+            pyobj_ref value = member(key);
             fun( key.c_str(), value);
         }
     }
@@ -307,12 +360,12 @@ public:
             return ret;
         }
 
-        PyObjectRef keys = PyDict_Keys(ref_);
+        pyobj_ref keys = PyDict_Keys(ref_);
         Py_ssize_t len = PySequence_Size(keys);
 
         for(Py_ssize_t i = 0; i < len; i++)
         {
-            PyObjectRef key = PySequence_GetItem(keys,i);
+            pyobj_ref key = PySequence_GetItem(keys,i);
             const char* k = PyUnicode_AsUTF8(key);
             ret.push_back(k);
         }  
@@ -400,10 +453,10 @@ PyObject* ptuple(Args*... args)
     std::vector<PyObject*> v{args...};
     int len = v.size();
 
-    PyObjectRef tuple = PyTuple_New(len);
+    pyobj_ref tuple = PyTuple_New(len);
     for( int i = 0; i < len; i++)
     {
-        tuple.item( i, v[i] );
+        pyobj(tuple).item( i, v[i] );
     }
 
     return tuple.incr();
@@ -422,23 +475,23 @@ void py_dealloc(T* self)
     Py_TYPE(self)->tp_free((PyObject*)self);    
 }
 
-
-inline void for_each(PyObject* obj, std::function<void(int,PyObjectRef&)> fun)
+/*
+inline void for_each(PyObject* obj, std::function<void(int,pyobj_ref&)> fun)
 {
     int len = length(obj);
     for( int i = 0; i < len; i++)
     {
-        PyObjectRef value = item(obj,i);
+        pyobj_ref value = item(obj,i);
         fun(i,value);
     }
 }
 
-inline void for_each(PyObjectRef& obj, std::function<void(const char*,PyObjectRef&)> fun)
+inline void for_each(pyobj_ref& obj, std::function<void(const char*,pyobj_ref&)> fun)
 {
     auto members = obj.keys();
     for( auto& key: members)
     {
-        PyObjectRef member = obj.member(key);
+        pyobj_ref member = obj.member(key);
         fun( key.c_str(), member);
     }
 }
@@ -447,7 +500,7 @@ inline void for_each(PyObjectRef& obj, std::function<void(const char*,PyObjectRe
 template<class ...Args>
 PyObject* invoke(PyObject* self, const char* name, Args* ... args)
 {
-    PyObjectRef member = PyUnicode_FromString(name);
+    pyobj_ref member = PyUnicode_FromString(name);
     PyObject* ret = PyObject_CallMethodObjArgs(self,member,args...,NULL);
     return ret;
 }
@@ -459,7 +512,7 @@ PyObject* call(PyObject* self, Args* ... args)
     std::vector<PyObject*> v{args...};
     int len = v.size();
 
-    PyObjectRef tuple = PyTuple_New(len);
+    pyobj_ref tuple = PyTuple_New(len);
     for( int i = 0; i < len; i++)
     {
         tuple.item( i, v[i] );
@@ -468,5 +521,5 @@ PyObject* call(PyObject* self, Args* ... args)
     PyObject* ret = PyObject_CallObject(self,tuple);
     return ret;
 }
-
+*/
 #endif
