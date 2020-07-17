@@ -16,9 +16,14 @@
 static const std::string dbus_interface = "org.oha7.webkit.WebKitDBus";
 static const std::string dbus_object_path_send_req_prefix = "/org/oha7/webkit/WebKitDBus/view/request/";
 static const std::string dbus_object_path_recv_req_prefix = "/org/oha7/webkit/WebKitDBus/controller/request/";
+static const std::string dbus_object_path_send_res_prefix = "/org/oha7/webkit/WebKitDBus/view/response/";
+static const std::string dbus_object_path_recv_res_prefix = "/org/oha7/webkit/WebKitDBus/controller/response/";
 
 static std::string dbus_object_path_send_req_path;
 static std::string dbus_object_path_recv_req_path; 
+
+static std::string dbus_object_path_send_res_path;
+static std::string dbus_object_path_recv_res_path; 
 
 std::map<const JSClassDefinition*,JSClassRef> jclass::map_;
 
@@ -65,6 +70,39 @@ struct DBusCallback
 };
 
 static DBusCallback cb;
+
+
+static void send_response(
+    const gchar* uid,
+    JSContextRef ctx, 
+    const JSValueRef value
+    ) 
+{
+    jsctx js(ctx);
+
+    g_print (PROG " send_response: %s \n", uid);
+
+    gvar_builder builder = gtuple();  
+
+    GVariant* guid = g_variant_new_string(uid);  
+    builder.add(guid);
+
+    jsval arg(ctx,value);
+    GVariant* data = make_variant(arg);
+    builder.add(data);
+
+    GVariant* params = builder.build();
+
+    g_dbus_connection_emit_signal(
+        dbuscon,
+        NULL,
+        dbus_object_path_send_res_path.c_str(),
+        dbus_interface.c_str(),
+        "response",
+        params,
+        NULL
+    );    
+}
 
 
 static void signal_handler(
@@ -118,6 +156,24 @@ static void signal_handler(
         else 
         {
             jsval result = fun.invoke(arguments);
+            if(result.isObject())
+            {
+                jsobj r = result.obj();
+                if(r.hasMember("then"))
+                {
+                    g_print (PROG "houston, we have a promise \n", signal_name);
+                }
+                else
+                {
+                    g_print (PROG "houston, we do NOT have a promise \n", signal_name);
+                    send_response(uid.str(),cb.obj.ctx(),result.ref());
+                }
+            }
+            else
+            {
+                g_print (PROG "houston, we do NOT have a promise \n", signal_name);
+                send_response(uid.str(),cb.obj.ctx(),result.ref());
+            }
         }
     }
 }
@@ -434,6 +490,14 @@ G_MODULE_EXPORT void webkit_web_extension_initialize_with_user_data (WebKitWebEx
     std::ostringstream oss_recv;
     oss_recv << dbus_object_path_recv_req_prefix << sid;
     dbus_object_path_recv_req_path = oss_recv.str();
+
+    std::ostringstream oss_res_send;
+    oss_res_send << dbus_object_path_send_res_prefix << sid;
+    dbus_object_path_send_res_path = oss_res_send.str();
+
+    std::ostringstream oss_res_recv;
+    oss_res_recv << dbus_object_path_recv_res_prefix << sid;
+    dbus_object_path_recv_res_path = oss_res_recv.str();
 
     g_print (PROG "Interface: %s.\n", dbus_interface.c_str());
     g_print (PROG "Send: %s.\n", dbus_object_path_send_req_path.c_str());

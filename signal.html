@@ -38,14 +38,16 @@
 
 let View = {
 
-    recvData : function(json) {
+    recvData : async function(json) {
 
         let msg = JSON.stringify(json);
         document.theForm.on_signal.value = msg;
+        return "Response: recvData";
     },
 
     recvFilename : function(fn) {
         document.theForm.on_signal.value = fn;
+        return "Response: recvFilename";
     }
 };
 

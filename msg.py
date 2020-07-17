@@ -48,10 +48,13 @@ class Controller(object):
         dlg.destroy()
 
 
-def onActivate(event):
-    print ("ACtiVE")
+async def onActivate(event):
+    print ("ACtiVE ")
     print(event.action_target_value)
     print("\n")
+    #WebKitDBus.send_signal("recvData","partytime").add_done_callback( lambda x: print(x.result()) )
+    r = await WebKitDBus.send_signal("recvData","partytime")
+    print(r)
 
 # instantiate controller and bind signals
 controller = Controller()        
@@ -81,7 +84,10 @@ item2 = Gtk.MenuItem("Open")
 menu1.append(item1)
 menu1.append(item2)
 
-item1.connect( "activate" , onActivate )
+#item1.connect( "activate" , onActivate )
+item1.connect( "activate" , lambda w : WebKitDBus.run_async(onActivate(w)) )
+
+#lambda w : WebKitDBus.run_async(onClickAsync2(w)) 
 
 menuBar.append(file)
 

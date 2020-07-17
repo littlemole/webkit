@@ -1,14 +1,4 @@
-#include "pyglue.h"
-#include "marshal.h"
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <map>
-#include <memory>
-#include <gio/gio.h>
-#include <glib.h>
-#include <gdk/gdk.h>
+#include "coro.h"
 
 /////////////////////////////////////////////
 // globals
@@ -18,19 +8,61 @@
 static const std::string dbus_interface = "org.oha7.webkit.WebKitDBus";
 static const std::string dbus_object_path_send_req_prefix = "/org/oha7/webkit/WebKitDBus/controller/request/";
 static const std::string dbus_object_path_recv_req_prefix = "/org/oha7/webkit/WebKitDBus/view/request/";
+static const std::string dbus_object_path_send_res_prefix = "/org/oha7/webkit/WebKitDBus/controller/response/";
+static const std::string dbus_object_path_recv_res_prefix = "/org/oha7/webkit/WebKitDBus/view/response/";
 
 static std::string dbus_object_path_send_req_path;
 static std::string dbus_object_path_recv_req_path; 
 
+static std::string dbus_object_path_send_res_path;
+static std::string dbus_object_path_recv_res_path; 
+
+
 static GDBusConnection* dbus = 0;
 static std::string sid;
+static std::string rsid;
 static pyobj_ref cb;
 
 /////////////////////////////////////////////
 // forwards
 
-static void send_dbus_signal( GDBusConnection* dbus, std::string s, GVariant*  params);
+static void send_dbus_signal( GDBusConnection* dbus, gchar* uid, std::string s, GVariant*  params);
 
+class Responses
+{
+public:
+
+    void add(const char* uid, PyObject* p)
+    {
+        pyobj(p).incr();
+        pending_.insert( std::make_pair(std::string(uid),p) );
+
+        g_print (PROG "responses add %s\n", uid );
+    }
+
+    PyObject* get(const char* uid)
+    {
+        g_print (PROG "responses get %s\n", uid );
+
+        if ( pending_.count(std::string(uid)) == 0)
+        {
+            return 0;
+        }
+        PyObject* res = pending_[std::string(uid)];
+        pending_.erase(uid);
+        return res;
+    }
+
+private:
+
+    std::map<std::string,PyObject*> pending_;
+};
+
+Responses& responses()
+{
+    static Responses r;
+    return r;
+}
 
 /////////////////////////////////////////////
 // signal object - function object that 
@@ -76,7 +108,12 @@ static PyObject* signal_object_call(PyObject* self, PyObject* args, PyObject* ka
         });
         params = builder.build();
     }
-    send_dbus_signal(dbus,that->signal_name,params);
+
+    gchar* uid = g_dbus_generate_guid();
+
+    send_dbus_signal(dbus,uid,that->signal_name,params);
+    
+    g_free(uid);
 
     Py_RETURN_NONE;
 }
@@ -204,6 +241,46 @@ extern "C" PyObject* new_signals_object()
 
     return (PyObject*)self;
 }
+///////////////////////////////////
+
+static void response_handler(GDBusConnection *connection,
+                        const gchar *sender_name,
+                        const gchar *object_path,
+                        const gchar *interface_name,
+                        const gchar *signal_name,
+                        GVariant *parameters,
+                        gpointer user_data)
+{
+    g_print (PROG " received response %s %s\n", signal_name, g_variant_get_type_string (parameters));
+
+    PyGlobalInterpreterLock lock;
+
+    gvar params(parameters);
+    int len = params.length();
+    if(len < 2)
+    {
+        g_print (PROG " received invalid response %s %s\n", signal_name, g_variant_get_type_string (parameters));
+        return;
+    }
+
+    pyobj_ref uid = gvariant_to_py_value(params.item(0));
+    g_print (PROG "received response %s %s\n", signal_name, pyobj(uid).str() );
+
+    pyobj_ref args = gvariant_to_py_value(params.item(1));
+
+    pyobj_ref future = responses().get( pyobj(uid).str() );
+
+    if(future.isValid())
+    {
+        pyobj_ref ret = pyobj(future).invoke("set_result",args.ref());
+    }
+    else
+    {
+        g_print (PROG " received invalid future %s %s\n", signal_name, g_variant_get_type_string (parameters));
+
+    }
+}
+
 
 ///////////////////////////////////
 
@@ -258,12 +335,26 @@ static void got_dbus (GObject *source_object, GAsyncResult *res, gpointer user_d
         NULL,
         NULL
     );    
+
+    rsid = g_dbus_connection_signal_subscribe (
+        dbus, 
+        /*sender*/ NULL, 
+         dbus_interface.c_str(),
+        /*const gchar *member*/ NULL,
+        dbus_object_path_recv_res_path.c_str(),
+        NULL,
+        G_DBUS_SIGNAL_FLAGS_NONE,
+        &response_handler,
+        NULL,
+        NULL
+    );    
+
 }
 
 
-static void send_dbus_signal( GDBusConnection* dbus, std::string s, GVariant*  params)
+static void send_dbus_signal( GDBusConnection* dbus, gchar* uid, std::string s, GVariant*  params)
 {
-    gchar* uid = g_dbus_generate_guid();
+//    gchar* uid = g_dbus_generate_guid();
 
     gvar_builder builder = gtuple();
     builder.add(g_variant_new_string(uid));
@@ -273,7 +364,8 @@ static void send_dbus_signal( GDBusConnection* dbus, std::string s, GVariant*  p
     }
     GVariant* parameters = builder.build();
 
-    g_free(uid);
+//    gchar* uid = g_dbus_generate_guid();
+//    g_free(uid);
 
     g_dbus_connection_emit_signal(
         dbus,
@@ -310,9 +402,17 @@ static PyObject* pywebkit_send_signal(PyObject* self, PyObject* args)
         }
         params = builder.build();
     }
-    send_dbus_signal(dbus,signal_name,params);
+    
+    gchar* uid = g_dbus_generate_guid();
 
-    Py_RETURN_NONE;
+    send_dbus_signal(dbus,uid,signal_name,params);
+
+    PyObject* future = new_future_object();
+
+    responses().add(uid,future);
+
+    g_free(uid);
+    return future;
 }
 
 static PyObject* pywebkit_bind(PyObject* self, PyObject* args)
@@ -436,6 +536,14 @@ PyMODINIT_FUNC PyInit_WebKitDBus(void)
     std::ostringstream oss_recv;
     oss_recv << dbus_object_path_recv_req_prefix << sid;
     dbus_object_path_recv_req_path = oss_recv.str();
+
+    std::ostringstream oss_res_send;
+    oss_res_send << dbus_object_path_send_res_prefix << sid;
+    dbus_object_path_send_res_path = oss_res_send.str();
+
+    std::ostringstream oss_res_recv;
+    oss_res_recv << dbus_object_path_recv_res_prefix << sid;
+    dbus_object_path_recv_res_path = oss_res_recv.str();
 
     g_print (PROG "Interface; %s.\n", dbus_interface.c_str());
     g_print (PROG "Send; %s.\n", dbus_object_path_send_req_path.c_str());
