@@ -54,7 +54,7 @@ async def onActivate(event):
     print("\n")
     #WebKitDBus.send_signal("recvData","partytime").add_done_callback( lambda x: print(x.result()) )
     r = await WebKitDBus.send_signal("recvData","partytime")
-    print(r)
+    print("###############" + str(r))
 
 # instantiate controller and bind signals
 controller = Controller()        

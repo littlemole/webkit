@@ -96,9 +96,17 @@ Model.on_signal("recvData", function(json)
 });
 */
 window.onerror=function(e) {
+  alert(e.prototype);
   alert(e);
 }
 
+function isAsync(f) {
+    let a = Object.getPrototypeOf(async function(){}).constructor;
+    return f.constructor == a;
+}
+document.write(Object.getPrototypeOf(async function(){}).constructor);
+document.write("recvData: " + isAsync(View.recvData) + "<br>" );
+document.write("recvData: " + isAsync(View.recvFilename) + "<br>" );
 </script>
 </body>
 </html>

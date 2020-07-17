@@ -113,70 +113,7 @@ static void signal_handler(
     const gchar *signal_name,
     GVariant *parameters,
     gpointer user_data
-    )
-{
-    gvar params(parameters);
-
-    if(!params.isTuple())
-    {
-        g_print (PROG "invalid signal params is not a tuple:  %s\n", signal_name);
-        return;
-    }
-
-    int len = params.length();
-
-    gvar uid = params.item(0);
-    g_print (PROG "recevied signal with uid:  %s %s\n", signal_name,uid.str() );
-
-
-    std::vector<JSValueRef> arguments;
-
-    if(len>1)
-    {
-        gvar args = params.item(1);
-
-        arguments = gvariant_to_js_values( cb.obj.ctx(), args.value() );
-    }
-
-    jsval member = cb.obj.member(signal_name);
-
-    if(member.isUndefined())
-    {
-        g_print (PROG "unknown signal %s\n", signal_name);
-    }
-    else 
-    {
-        jsobj fun = member.obj();
-
-        bool isFunction = fun.isFunction();
-        if(!isFunction)
-        {
-            g_print (PROG " error: %s is not a function \n", signal_name);
-        }
-        else 
-        {
-            jsval result = fun.invoke(arguments);
-            if(result.isObject())
-            {
-                jsobj r = result.obj();
-                if(r.hasMember("then"))
-                {
-                    g_print (PROG "houston, we have a promise \n", signal_name);
-                }
-                else
-                {
-                    g_print (PROG "houston, we do NOT have a promise \n", signal_name);
-                    send_response(uid.str(),cb.obj.ctx(),result.ref());
-                }
-            }
-            else
-            {
-                g_print (PROG "houston, we do NOT have a promise \n", signal_name);
-                send_response(uid.str(),cb.obj.ctx(),result.ref());
-            }
-        }
-    }
-}
+    );
 
 static void got_dbus (
     GObject *source_object,
@@ -294,6 +231,69 @@ static JSValueRef bind_signals(
 
     return js.undefined();
 }
+///////////////////////////////////////////////////
+
+
+static JSValueRef ResponseCallback_callAsFunctionCallback(
+    JSContextRef ctx, 
+    JSObjectRef function, 
+    JSObjectRef thisObject, 
+    size_t argumentCount, 
+    const JSValueRef arguments[], 
+    JSValueRef* exception)
+{
+    jsctx js(ctx);
+    jsobj fun(ctx,function);
+
+    gchar* uid = (gchar*)fun.private_data();
+
+    g_print (PROG "ResponseCallback send_response  cf: %s \n", uid);
+
+    JSValueRef result = js.undefined();
+
+    if(arguments>0)
+    {
+        result = arguments[0];
+    }
+
+    send_response(uid,ctx,result);
+
+    return js.undefined();
+}
+
+static void ResponseCallback_object_class_finalize_cb(JSObjectRef object)
+{
+    gchar* c = (gchar*)JSObjectGetPrivate(object);
+    g_free(c);
+}
+
+
+static void ResponseCallback_object_class_init_cb(JSContextRef ctx,JSObjectRef object)
+{
+}
+
+static const JSClassDefinition ResponseCallback_class_def =
+{
+    0,                     // version
+    kJSClassAttributeNone, // attributes
+    "ResponseCallback",    // className
+    NULL,                  // parentClass
+    NULL,                  // staticValues
+    NULL,                  // staticFunctions
+    ResponseCallback_object_class_init_cb, // initialize
+    ResponseCallback_object_class_finalize_cb, // finalize
+    NULL,                  // hasProperty
+    NULL,                  // getProperty
+    NULL,                  // setProperty
+    NULL,                  // deleteProperty
+    NULL,                  // getPropertyNames
+    ResponseCallback_callAsFunctionCallback, // callAsFunction
+    NULL,                  // callAsConstructor
+    NULL,                  // hasInstance  
+    NULL                   // convertToType
+};
+
+
 
 ///////////////////////////////////////////////////
 
@@ -440,6 +440,113 @@ static const JSClassDefinition Controller_class_def =
 
 ////////////////////////////////////////////////////////
 
+
+static void signal_handler(
+    GDBusConnection *connection,
+    const gchar *sender_name,
+    const gchar *object_path,
+    const gchar *interface_name,
+    const gchar *signal_name,
+    GVariant *parameters,
+    gpointer user_data
+    )
+{
+    gvar params(parameters);
+
+    if(!params.isTuple())
+    {
+        g_print (PROG "invalid signal params is not a tuple:  %s\n", signal_name);
+        return;
+    }
+
+    int len = params.length();
+
+    gvar uid = params.item(0);
+    g_print (PROG "recevied signal with uid:  %s %s\n", signal_name,uid.str() );
+
+
+    std::vector<JSValueRef> arguments;
+
+    if(len>1)
+    {
+        gvar args = params.item(1);
+
+        arguments = gvariant_to_js_values( cb.obj.ctx(), args.value() );
+    }
+
+    jsval member = cb.obj.member(signal_name);
+
+    if(member.isUndefined())
+    {
+        g_print (PROG "unknown signal %s\n", signal_name);
+    }
+    else 
+    {
+        jsobj fun = member.obj();
+
+        bool isFunction = fun.isFunction();
+        if(!isFunction)
+        {
+            g_print (PROG " error: %s is not a function \n", signal_name);
+        }
+        else 
+        {
+            jsval result = fun.invoke(arguments);
+            if(result.isObject())
+            {
+                jsobj r = result.obj();
+                if(r.hasMember("then"))
+                {
+                    g_print (PROG "houston, we have a promise %i\n", result.isValid());
+
+                    jsctx js(cb.obj.ctx());
+                    jsobj responseCB1 = js.object(ResponseCallback_class_def, g_strdup(uid.str()));
+                    jsobj responseCB2 = js.object(ResponseCallback_class_def, g_strdup(uid.str()));
+                    jsval member = r.member("then");
+                    jsobj then = member.obj();
+
+
+                    std::vector<JSValueRef> args;
+                    args.push_back(responseCB1.ref());
+                    args.push_back(responseCB2.ref());
+
+                    g_print (PROG "houston, we call then on a promise \n", signal_name);
+
+                    then.invoke(args,r.ref());//std::vector<JSValueRef>& arguments, JSObjectRef that = NULL);
+
+/*
+                    JSValueRef ex = 0;
+                    JSValueRef result = JSObjectCallAsFunction(
+                        cb.obj.ctx(),
+                        then.ref(),
+                        r.ref(),  
+                        args.size(), 
+                        &args[0], 
+                        &ex
+                    );                   
+                    if(ex)
+                    {
+                        g_print (PROG "houston, we have an ex \n" );
+                    }
+*/                    
+                    g_print (PROG "houston, we have called a promise \n", signal_name);
+                }
+                else
+                {
+                    g_print (PROG "houston, we do NOT have a promise \n", signal_name);
+                    send_response(uid.str(),cb.obj.ctx(),result.ref());
+                }
+            }
+            else
+            {
+                g_print (PROG "houston, we do NOT have a promise \n", signal_name);
+                send_response(uid.str(),cb.obj.ctx(),result.ref());
+            }
+        }
+    }
+}
+
+////////////////////////////////////////////////////////
 extern "C" {
 
 static void web_page_created_cb (WebKitWebExtension *extension, WebKitWebPage *web_page, gpointer user_data)

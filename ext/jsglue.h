@@ -176,6 +176,16 @@ inline bool is_js_array(JSContextRef context,JSValueRef jsObject)
     return ret;
 }
 
+inline bool is_async_function(JSContextRef context,JSValueRef jsObject)
+{
+    jstr scriptJS("return arguments[0].constructor == Object.getPrototypeOf(async function(){}).constructor");
+    JSObjectRef fn = JSObjectMakeFunction(context, NULL, 0, NULL, scriptJS.ref(), NULL, 1, NULL);
+    JSValueRef result = JSObjectCallAsFunction(context, fn, NULL, 1, (JSValueRef*)&jsObject, NULL);
+   
+    bool ret = JSValueToBoolean(context,result);
+    return ret;
+}
+
 class jsobj;
 
 class jsval 
