@@ -574,4 +574,27 @@ void decr(Args*... args)
     }
 }
 
+
+inline std::string to_json(PyObject* value)
+{
+    pyobj_ref n = PyUnicode_FromString("json");
+    pyobj_ref m = PyImport_GetModule(n);
+
+    pyobj_ref dumps = PyObject_GetAttrString(m,"dumps");
+    pyobj_ref json = pyobj(dumps).call(value);
+
+    return pyobj(json).str();
+}
+
+inline PyObject* from_json(const std::string& value)
+{
+    pyobj_ref n = PyUnicode_FromString("json");
+    pyobj_ref m = PyImport_GetModule(n);
+
+    pyobj_ref loads = PyObject_GetAttrString(m,"loads");
+    pyobj_ref json = PyUnicode_FromString(value.c_str());    
+    return pyobj(loads).call(json.ref());
+}
+
+
 #endif

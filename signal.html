@@ -42,6 +42,7 @@ let View = {
 
         let msg = JSON.stringify(json);
         document.theForm.on_signal.value = msg;
+        //throw ("new error");
         return "Response: recvData";
     },
 
@@ -63,7 +64,8 @@ function onSubmit(form)
     let json = JSON.parse(msg);
     form.on_signal.value = "";
    // Model.send_signal("sendData",json);
-    WebKit.Controller.sendData(json);
+    //WebKit.Controller.sendData(json);
+    WebKit.send_signal("sendData",json)//.then(function(m){alert(m);});
     return false;
 }
 

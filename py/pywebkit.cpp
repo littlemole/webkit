@@ -65,6 +65,134 @@ Responses& responses()
 }
 
 /////////////////////////////////////////////
+// responseCallback object - function object that 
+// emits signal when invoked
+
+typedef struct {
+    PyObject_HEAD
+    std::string uid;
+} responseCB_object;
+
+static int responseCB_object_init(responseCB_object *self, PyObject *args, PyObject *kwds)
+{
+
+    pyobj arguments(args);
+    if(arguments.length()<1)
+    {
+        PyErr_SetString(PyExc_RuntimeError,"invalid responseCB_object_init no uid passed to init");
+        return -1;        
+    }
+
+    
+    pyobj_ref uid = arguments.item(0);
+    self->uid = std::string(pyobj(uid).str());
+    return 0;
+}
+
+static void responseCB_object_dealloc(responseCB_object* self)
+{
+    py_dealloc(self);
+}
+
+static void send_dbus_response( GDBusConnection* dbus, const gchar* uid,  PyObject*  value, const char* ex = NULL);
+
+static PyObject* responseCB_object_call(PyObject* self, PyObject* args, PyObject* kargs)
+{
+    g_print (PROG "responseCB_object_call \n" );
+
+    responseCB_object* that = (responseCB_object*)self;
+
+    int len = pyobj(args).length();
+
+    g_print (PROG "responseCB_object_call %i \n" ,len);
+
+    if(len==0)
+    {
+        pyobj_ref none(Py_None);
+        none.incr(); // hack
+        send_dbus_response(dbus,that->uid.c_str(),none);
+    }
+    else
+    {
+        pyobj_ref arg = pyobj(args).item(0);
+
+        pyobj_ref r = pyobj(arg).invoke("result");
+
+        if(py_error())
+        {
+            PyError err;
+            pyobj_ref msg = PyObject_Str(err.pvalue);
+            send_dbus_response(dbus,that->uid.c_str(),NULL,pyobj(msg).str());
+        }
+        else
+        {
+            send_dbus_response(dbus,that->uid.c_str(),r);
+        }
+
+        g_print (PROG "done responseCB_object_call %i \n" ,len);
+    }
+    
+    Py_RETURN_NONE;
+}
+
+PyTypeObject responseCB_objectType = {
+    PyVarObject_HEAD_INIT(NULL,0)
+    "WebKitDBus.responseCB_object", /*tp_name*/
+    sizeof(responseCB_object),     /*tp_basicsize*/
+    0,                         /*tp_itemsize*/
+    (destructor)responseCB_object_dealloc,  /*tp_dealloc*/
+    0,                         /*tp_print*/
+    0,                         /*tp_getattr*/
+    0,                         /*tp_setattr*/
+    0,                         /*tp_compare*/
+    0,                         /*tp_repr*/
+    0,                         /*tp_as_number*/
+    0,                         /*tp_as_sequence*/
+    0,                         /*tp_as_mapping*/
+    0,                         /*tp_hash */
+    responseCB_object_call,        /*tp_call*/
+    0,                         /*tp_str*/
+    0,                         /*tp_getattro*/
+    0,                         /*tp_setattro*/
+    0,                         /*tp_as_buffer*/
+    Py_TPFLAGS_DEFAULT,        /*tp_flags*/
+    "response callback wrapper objects",  /* tp_doc */
+    0,		                   /* tp_traverse */
+    0,		                   /* tp_clear */
+    0,		                   /* tp_richcompare */
+    0,		                   /* tp_weaklistoffset */
+    0,		                   /* tp_iter */
+    0,		                   /* tp_iternext */
+    0,                         /* tp_methods */
+    0,                         /* tp_members */
+    0,                         /* tp_getset */
+    0,                         /* tp_base */
+    0,                         /* tp_dict */
+    0,                         /* tp_descr_get */
+    0,                         /* tp_descr_set */
+    0,                         /* tp_dictoffset */
+    (initproc)responseCB_object_init, /* tp_init */
+    0,                         /* tp_alloc */
+    PyType_GenericNew          /* tp_new */
+};
+
+
+extern "C" PyObject* new_responseCB_object(const char* uid)
+{
+    responseCB_object* self = py_alloc<responseCB_object>(&responseCB_objectType);
+
+    pyobj_ref id = PyUnicode_FromString(uid);
+    pyobj_ref tuple = ptuple(id.ref());
+
+    responseCB_object_init(self,tuple.ref(),(PyObject*)NULL);
+    return (PyObject*)self;
+}
+
+
+
+/////////////////////
+
+/////////////////////////////////////////////
 // signal object - function object that 
 // emits signal when invoked
 
@@ -96,26 +224,19 @@ static PyObject* signal_object_call(PyObject* self, PyObject* args, PyObject* ka
 {
     signal_object* that = (signal_object*)self;
 
-    int len = pyobj(args).length();
-    GVariant* params = 0;
-
-    if(len>0)
-    {
-        gvar_builder builder = gtuple();
-        pyobj(args).for_each([&builder](int index, pyobj_ref& arg)
-        {
-            builder.add(make_variant(arg));
-        });
-        params = builder.build();
-    }
+    std::string json = to_json(args);
+    GVariant* param = g_variant_new_string(json.c_str());
 
     gchar* uid = g_dbus_generate_guid();
 
-    send_dbus_signal(dbus,uid,that->signal_name,params);
+    send_dbus_signal(dbus,uid,that->signal_name,param);
     
+    PyObject* future = new_future_object();
+    responses().add(uid,future);
+
     g_free(uid);
 
-    Py_RETURN_NONE;
+    return future;
 }
 
 PyTypeObject signal_objectType = {
@@ -256,23 +377,53 @@ static void response_handler(GDBusConnection *connection,
     PyGlobalInterpreterLock lock;
 
     gvar params(parameters);
+
     int len = params.length();
     if(len < 2)
     {
-        g_print (PROG " received invalid response %s %s\n", signal_name, g_variant_get_type_string (parameters));
+        g_print (PROG " received invalid response tuple %s %s\n", signal_name, g_variant_get_type_string (parameters));
         return;
     }
 
-    pyobj_ref uid = gvariant_to_py_value(params.item(0));
-    g_print (PROG "received response %s %s\n", signal_name, pyobj(uid).str() );
+    gvar uid = params.item(0);
+    gvar args = params.item(1);
 
-    pyobj_ref args = gvariant_to_py_value(params.item(1));
+    std::string json = args.str();
 
-    pyobj_ref future = responses().get( pyobj(uid).str() );
+    g_print (PROG "response_handler has %s %s \n", uid.str(), json.c_str() );
+
+    pyobj_ref dict = from_json(json);
+
+    pyobj_ref result = pyobj(dict).member("result");
+    pyobj_ref ex = pyobj(dict).member("exception");
+
+    pyobj_ref future = responses().get( uid.str() );
 
     if(future.isValid())
     {
-        pyobj_ref ret = pyobj(future).invoke("set_result",args.ref());
+        g_print (PROG "response_handler has result \n" );
+        if(ex.isValid() && !pyobj(ex).isNone() )
+        {
+            g_print (PROG "response_handler has ex \n" );
+            pyobj_ref ret = pyobj(future).invoke("set_exception",ex.ref());
+        }
+        else
+        {
+            g_print (PROG "response_handler has result \n" );
+            if(py_error())
+            {
+                PyErr_Print();
+//                PyError err;
+  //              g_print (PROG "ex setting result %s \n", pyobj(err.pvalue).str() );
+            }            
+            pyobj_ref ret = pyobj(future).invoke("set_result",result.ref());
+            if(py_error())
+            {
+                PyErr_Print();
+//                PyError err;
+  //              g_print (PROG "ex setting result %s \n", pyobj(err.pvalue).str() );
+            }
+        }
     }
     else
     {
@@ -283,6 +434,10 @@ static void response_handler(GDBusConnection *connection,
 
 
 ///////////////////////////////////
+
+extern PyTypeObject future_objectType;
+extern PyTypeObject task_objectType;
+static PyObject* pywebkit_run_async(PyObject* self, PyObject* args);
 
 static void signal_handler(GDBusConnection *connection,
                         const gchar *sender_name,
@@ -298,25 +453,61 @@ static void signal_handler(GDBusConnection *connection,
 
     gvar params(parameters);
     int len = params.length();
-    if(len < 1)
+    if(len < 2)
     {
         g_print (PROG " received invalid signal %s %s\n", signal_name, g_variant_get_type_string (parameters));
         return;
     }
 
-    pyobj_ref uid = gvariant_to_py_value(params.item(0));
-    g_print (PROG "received signal %s %s\n", signal_name, pyobj(uid).str() );
+    gvar guid = params.item(0);
+//    pyobj_ref uid = gvariant_to_py_value(params.item(0));
+    g_print (PROG "received signal %s %s\n", signal_name, guid.str() );
 
-    if(len>1)
+//    PyObject* result = 0;
+    pyobj_ref result;
+
+    gvar gargs = params.item(1);
+    std::string data = gargs.str();
+    pyobj_ref args = from_json(data);
+
+    result = pyobj(cb).invoke_with_tuple(signal_name, args);
+
+    if(!py_error())
     {
-        pyobj_ref args = gvariant_to_py_value(params.item(1));
-        pyobj_ref ret = pyobj(cb).invoke_with_tuple(signal_name, args);
+        pyobj_ref tuple = ptuple(result.ref());
+        result = pywebkit_run_async(NULL,tuple);
+    }
+
+    if(py_error())
+    {
+        PyError err;
+        pyobj_ref msg = PyObject_Str(err.pvalue);
+        send_dbus_response(dbus,guid.str(),NULL,pyobj(msg).str() );
+
     }
     else
+    if(result.isValid())
     {
-        pyobj_ref ret = pyobj(cb).invoke(signal_name);
-    }
+        if( (Py_TYPE(result) == &future_objectType) || (Py_TYPE(result) == &task_objectType) )
+        {
+            g_print (PROG "signal handler result is future \n" );
+             
+            pyobj_ref handler = new_responseCB_object(guid.str());
+            pyobj_ref ret = pyobj(result).invoke("add_done_callback", handler.ref() );
 
+            if(PyErr_Occurred())
+            {
+                g_print (PROG "ERRRÖR\n");
+                PyErr_PrintEx(0);          
+            }             
+        }
+        else
+        {
+             g_print (PROG "signal handler result is not a future\n" );
+
+             send_dbus_response(dbus,guid.str(),result);
+        }
+    }
 }
 
 static void got_dbus (GObject *source_object, GAsyncResult *res, gpointer user_data)
@@ -351,11 +542,49 @@ static void got_dbus (GObject *source_object, GAsyncResult *res, gpointer user_d
 
 }
 
+static void send_dbus_response( GDBusConnection* dbus, const gchar* uid,  PyObject* val, const char* ex )
+{
+    pyobj value(val);
+
+    PyObject_Print(value.ref(), stdout,0);
+    printf("\n");
+
+    gvar_builder builder = gtuple();
+    builder.add(g_variant_new_string(uid));
+
+    pyobj_ref dict = PyDict_New();
+    pyobj(dict).member("result",Py_None);
+    pyobj(dict).member("exception",Py_None);
+
+    if(value.isValid())
+    {
+        pyobj(dict).member( "result", value.ref() );
+    }
+    if(ex != 0)
+    {
+        pyobj(dict).member("exception",PyUnicode_FromString(ex) );
+    }
+
+    std::string json = to_json(dict);
+    builder.add( g_variant_new_string( json.c_str() ) );
+
+    GVariant* parameters = builder.build();
+
+    g_print (PROG "send_dbus_response : %s %s\n", uid, g_variant_get_type_string (parameters));
+
+    g_dbus_connection_emit_signal(
+        dbus,
+        NULL,
+        dbus_object_path_send_res_path.c_str(),
+        dbus_interface.c_str(),
+        "response",
+        parameters,
+        NULL
+    );
+}
 
 static void send_dbus_signal( GDBusConnection* dbus, gchar* uid, std::string s, GVariant*  params)
 {
-//    gchar* uid = g_dbus_generate_guid();
-
     gvar_builder builder = gtuple();
     builder.add(g_variant_new_string(uid));
     if(params)
@@ -363,9 +592,6 @@ static void send_dbus_signal( GDBusConnection* dbus, gchar* uid, std::string s, 
         builder.add(params);
     }
     GVariant* parameters = builder.build();
-
-//    gchar* uid = g_dbus_generate_guid();
-//    g_free(uid);
 
     g_dbus_connection_emit_signal(
         dbus,
@@ -391,21 +617,18 @@ static PyObject* pywebkit_send_signal(PyObject* self, PyObject* args)
     pyobj_ref signal = pyobj(args).item(0);
     const char* signal_name = PyUnicode_AsUTF8(signal);
 
-    GVariant* params = 0;
-    if(len>1)
+    pyobj_ref tuple = PyTuple_New(len-1);
+    for( int i = 1; i < len; i++)
     {
-        auto builder = gtuple();
-        for( int i = 1; i < len; i++)
-        {
-            pyobj_ref arg = pyobj(args).item( i);
-            builder.add(make_variant(arg));
-        }
-        params = builder.build();
+        pyobj(tuple).item(i-1,pyobj(args).item(i));
     }
+
+    std::string json = to_json(tuple);
+    GVariant* param = g_variant_new_string(json.c_str());
     
     gchar* uid = g_dbus_generate_guid();
 
-    send_dbus_signal(dbus,uid,signal_name,params);
+    send_dbus_signal(dbus,uid,signal_name,param);
 
     PyObject* future = new_future_object();
 
@@ -521,6 +744,9 @@ PyMODINIT_FUNC PyInit_WebKitDBus(void)
         return 0;    
 
     if (PyType_Ready(&signals_objectType) < 0)
+        return 0;    
+
+    if (PyType_Ready(&responseCB_objectType) < 0)
         return 0;    
 
     // generate guid

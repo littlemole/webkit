@@ -107,6 +107,34 @@ public:
         return g_variant_get_child_value(v_,index);
     }
 
+    bool hasMember(const char* key)
+    {
+        bool res = false;
+
+        for_each( [&res,key](const char* k, GVariant* item)
+        {
+            if( strcmp(key,k) == 0)
+            {
+                res = true;
+            }
+        });
+        return res;
+    }
+
+    GVariant* member(const char* key)
+    {
+        GVariant* res = 0;
+
+        for_each( [&res,key](const char* k, GVariant* item)
+        {
+            if( strcmp(key,k) == 0)
+            {
+                res = item;
+            }
+        });
+        return res;
+    }
+
     void for_each(std::function<void(gchar*,GVariant*)> fun)
     {
         GVariantIter iter;

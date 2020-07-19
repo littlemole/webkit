@@ -11,7 +11,8 @@
 #include <gio/gio.h>
 #include <gdk/gdk.h>
 #include "pyglue.h"
-#include "marshal.h"
+#include "gvglue.h"
+//#include "marshal.h"
 
 /////////////////////////////////////////////
 // Future object 

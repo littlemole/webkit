@@ -186,11 +186,24 @@ inline bool is_async_function(JSContextRef context,JSValueRef jsObject)
     return ret;
 }
 
+inline JSValueRef js_to_string(JSContextRef context,JSValueRef jsObject)
+{
+    jstr scriptJS("return arguments[0].toString()");
+    JSObjectRef fn = JSObjectMakeFunction(context, NULL, 0, NULL, scriptJS.ref(), NULL, 1, NULL);
+    return JSObjectCallAsFunction(context, fn, NULL, 1, (JSValueRef*)&jsObject, NULL);
+   
+}
+
+
 class jsobj;
 
 class jsval 
 {
 public:
+
+    jsval()
+        : context_(0), value_(0)
+    {}
 
     jsval(JSContextRef context,JSValueRef value)
         : context_(context), value_(value)
@@ -201,6 +214,17 @@ public:
     {
     }
 
+    jsval& operator=( const jsval& rhs)
+    {
+        if( this == &rhs )
+        {
+            return *this;
+        }
+
+        context_ = rhs.context_;
+        value_ = rhs.value_;
+        return *this;
+    }
 
     bool isValid()
     {
@@ -570,6 +594,53 @@ public:
 private:
     JSContextRef context_;
 };
+
+inline std::string to_json(JSContextRef context,JSValueRef jsObject)
+{
+    jstr scriptJS("return JSON.stringify(arguments[0]) ");
+    JSObjectRef fn = JSObjectMakeFunction(context, NULL, 0, NULL, scriptJS.ref(), NULL, 1, NULL);
+    JSValueRef result = JSObjectCallAsFunction(context, fn, NULL, 1, (JSValueRef*)&jsObject, NULL);
+   
+    jstr s(context,result);
+    return s.str();
+}
+
+inline jsval from_json(JSContextRef context,const std::string& json)
+{
+    g_print ("JSON from_json:  %s \n", json.c_str() );
+
+    jstr s(json.c_str());
+
+    JSValueRef str = JSValueMakeString(context,s.ref());
+
+//    JSValueRef str = s.value();
+
+    g_print ("JSON from_json:  2 \n" );
+
+    JSValueRef ex = 0;
+
+    jstr scriptJS("return JSON.parse(arguments[0]) ");
+    JSObjectRef fn = JSObjectMakeFunction(context, NULL, 0, NULL, scriptJS.ref(), NULL, 1, &ex);
+    if(ex)
+    {
+        g_print ("JSON from_json:  ex \n" );
+        g_print ("JSON parse ex:  %s \n", js_to_string(context,ex) );
+    }
+
+    g_print ("JSON from_json:  3 \n" );
+
+    JSValueRef ret = JSObjectCallAsFunction(context, fn, NULL, 1, (JSValueRef*)&str, &ex);
+    if(ex)
+    {
+        g_print ("JSON from_json:  ex \n" );
+        g_print ("JSON parse ex:  %s \n", js_to_string(context,ex) );
+    }
+    g_print ("JSON from_json:  3.5 \n" );
+
+    g_print ("JSON from_json:  4 %s \n", jstr(context,js_to_string(context,ret)).str() );
+
+    return jsval(context,ret);
+}
 
 
 #endif

@@ -15,14 +15,24 @@ import json
 
 import WebKitDBus
 
+
+def onDone(f):
+    print("-------------------------------")
+    try:
+        print("XXX " + str(f.result()))
+    except BaseException as ex:
+        print("XXX " + str(ex))
+
+
 # controller gets signals from webview
 class Controller(object):
 
-    def sendData(self,data):
+    async def sendData(self,data):
         txt = json.dumps(data)
         print(txt)
         msg = json.loads(txt)
         WebKitDBus.View.recvData(msg)
+        return "lala"
 
     def openFile(self):
         print("OPEN")
@@ -44,7 +54,14 @@ class Controller(object):
 #        print(dir(dlg))
         response = dlg.run()
         #self.text.set_text(dlg.get_filename())
-        WebKitDBus.View.recvFilename(dlg.get_filename())
+        try:
+            print("################# dlg closed")
+            f = WebKitDBus.View.recvFilename(dlg.get_filename())
+            print("################# set done cb")
+            f.add_done_callback( onDone )
+        except BaseException as ex:
+            print("EX: " + str(ex))
+
         dlg.destroy()
 
 
@@ -53,8 +70,12 @@ async def onActivate(event):
     print(event.action_target_value)
     print("\n")
     #WebKitDBus.send_signal("recvData","partytime").add_done_callback( lambda x: print(x.result()) )
-    r = await WebKitDBus.send_signal("recvData","partytime")
-    print("###############" + str(r))
+    try :
+        r = await WebKitDBus.send_signal("recvData","partytime")
+        print("###############" + str(r))
+    except BaseException as ex:
+        print("1111111111ex!!!!!!!!!!!")
+        print(str(ex))
 
 # instantiate controller and bind signals
 controller = Controller()        
@@ -98,7 +119,7 @@ vbox.pack_start(scrolledwindow, True, True, 0)
 
 # main window
 win = Gtk.Window()     
-win.set_default_size(550, 350)   
+win.set_default_size(550, 450)   
 #win.add(scrolledwindow)
 win.add(vbox)
 win.connect("delete-event", Gtk.main_quit)

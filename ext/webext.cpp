@@ -8,8 +8,9 @@
 #include <gio/gio.h>
 #include <memory>
 #include <sstream>
-#include "marshal.h"
+//#include "marshal.h"
 #include "gvglue.h"
+#include "jsglue.h"
 
 #define PROG "[web_extension.so]"
 
@@ -75,7 +76,8 @@ static DBusCallback cb;
 static void send_response(
     const gchar* uid,
     JSContextRef ctx, 
-    const JSValueRef value
+    const JSValueRef value,
+    const JSValueRef ex = NULL
     ) 
 {
     jsctx js(ctx);
@@ -84,24 +86,54 @@ static void send_response(
 
     gvar_builder builder = gtuple();  
 
-    GVariant* guid = g_variant_new_string(uid);  
+    GVariant* guid = g_variant_new_string(uid);
     builder.add(guid);
 
-    jsval arg(ctx,value);
-    GVariant* data = make_variant(arg);
+    jsobj obj = js.object();
+
+    obj.set("result", js.undefined() );
+    obj.set("exception", js.undefined() );
+
+    if(value)
+    {
+        obj.set("result", value);
+    }
+    if(ex)
+    {
+        obj.set("exception", ex);
+    }
+
+    std::string json = to_json(ctx,obj.ref());
+    GVariant* data = g_variant_new_string(json.c_str());
+
     builder.add(data);
 
     GVariant* params = builder.build();
 
-    g_dbus_connection_emit_signal(
+    g_print (PROG "send_response cf: %s %s\n", uid, g_variant_get_type_string (params));
+    g_print (PROG "%s\n",g_variant_print (params,TRUE));
+   
+    GError* gerror = 0;
+
+    int r = g_dbus_connection_emit_signal(
         dbuscon,
         NULL,
         dbus_object_path_send_res_path.c_str(),
         dbus_interface.c_str(),
         "response",
         params,
-        NULL
+        &gerror
     );    
+
+    if(!r && gerror)
+    {
+        g_print (PROG "send_response error %s\n",gerror->message);
+       // g_error_free(gerror);
+    }
+    else
+    {
+        g_print (PROG "send_response sent %i\n",r);
+    }
 }
 
 
@@ -157,33 +189,26 @@ static JSValueRef send_signal(
 
     g_print (PROG " send_signal: %s \n", signal.c_str());
 
-    GVariant* params = 0;
+    gchar* uid = g_dbus_generate_guid();
+    GVariant* guid = g_variant_new_string(uid);
+    g_free(uid);
 
-    if(argumentCount > 1)
+    std::vector<JSValueRef> args;
+    for(size_t i = 1; i < argumentCount; i++)
     {
-        gvar_builder builder = gtuple();
-
-        for( size_t i = 1; i < argumentCount; i++)
-        {
-            jsval arg(ctx,arguments[i]);
-            GVariant* v = make_variant(arg);
-            builder.add(v);
-        }
-
-        params = builder.build();
+        args.push_back(arguments[i]);
     }
 
-    gchar* uid = g_dbus_generate_guid();
+    jsobj arr = js.array(args);
+    std::string json = to_json(ctx,arr.ref());
+
+    GVariant* param = g_variant_new_string(json.c_str());
 
     gvar_builder tuple = gtuple();
-    tuple.add(g_variant_new_string(uid));
-    if(params)
-    {
-        tuple.add(params);
-    }
-    GVariant* parameters = tuple.build();
+    tuple.add(guid);
+    tuple.add(param);
 
-    g_free(uid);
+    GVariant* parameters = tuple.build();
 
     g_dbus_connection_emit_signal(
         dbuscon,
@@ -233,6 +258,11 @@ static JSValueRef bind_signals(
 }
 ///////////////////////////////////////////////////
 
+struct ResponseCallbackData
+{
+    std::string uid;
+    bool isExHandler;
+};
 
 static JSValueRef ResponseCallback_callAsFunctionCallback(
     JSContextRef ctx, 
@@ -245,9 +275,9 @@ static JSValueRef ResponseCallback_callAsFunctionCallback(
     jsctx js(ctx);
     jsobj fun(ctx,function);
 
-    gchar* uid = (gchar*)fun.private_data();
+    ResponseCallbackData* data = (ResponseCallbackData*)fun.private_data();
 
-    g_print (PROG "ResponseCallback send_response  cf: %s \n", uid);
+    g_print (PROG "ResponseCallback send_response  cf: %s \n", data->uid.c_str() );
 
     JSValueRef result = js.undefined();
 
@@ -256,15 +286,22 @@ static JSValueRef ResponseCallback_callAsFunctionCallback(
         result = arguments[0];
     }
 
-    send_response(uid,ctx,result);
+    if(!data->isExHandler)
+    {
+        send_response(data->uid.c_str(),ctx,result);
+    }
+    else
+    {
+        send_response(data->uid.c_str(),ctx,NULL,result);
+    }
 
     return js.undefined();
 }
 
 static void ResponseCallback_object_class_finalize_cb(JSObjectRef object)
 {
-    gchar* c = (gchar*)JSObjectGetPrivate(object);
-    g_free(c);
+    ResponseCallbackData* data = (ResponseCallbackData*)JSObjectGetPrivate(object);
+    delete data;
 }
 
 
@@ -313,33 +350,26 @@ static JSValueRef Signal_callAsFunctionCallback(
 
     g_print (PROG " send_signal cf: %s \n", signal_name);
 
-    GVariant* params = 0;
-
-    if( argumentCount > 0)
+    std::vector<JSValueRef> args;
+    for( size_t i = 0; i < argumentCount; i++)
     {
-        gvar_builder builder = gtuple();
-
-        for( size_t i = 0; i < argumentCount; i++)
-        {
-            jsval arg(ctx,arguments[i]);
-            GVariant* v = make_variant(arg);
-            builder.add(v);
-        }
-
-        params = builder.build();
+        args.push_back(arguments[i]);
     }
+
+    jsobj arr = js.array(args);
+
+    std::string json = to_json(ctx,arr.ref());
+
+    GVariant* param = g_variant_new_string(json.c_str());
 
     gchar* uid = g_dbus_generate_guid();
 
     gvar_builder tuple = gtuple();
 
     tuple.add(g_variant_new_string(uid));
-    g_free(uid);
+    tuple.add(param);
 
-    if(params)
-    {
-        tuple.add(params);
-    }
+    g_free(uid);
 
     GVariant* parameters = tuple.build();
 
@@ -451,6 +481,8 @@ static void signal_handler(
     gpointer user_data
     )
 {
+    jsctx js(cb.obj.ctx());
+
     gvar params(parameters);
 
     if(!params.isTuple())
@@ -463,18 +495,33 @@ static void signal_handler(
 
     gvar uid = params.item(0);
     g_print (PROG "recevied signal with uid:  %s %s\n", signal_name,uid.str() );
-
-
-    std::vector<JSValueRef> arguments;
+    
+    jsval arr;  
 
     if(len>1)
     {
         gvar args = params.item(1);
+        std::string json = args.str();
 
-        arguments = gvariant_to_js_values( cb.obj.ctx(), args.value() );
+        g_print (PROG " JSON:  %s \n", json.c_str() );
+        arr = from_json(js.ctx(),json);
     }
 
+    g_print (PROG " arr:  %i \n", arr.isValid() );
+
+
+
+    std::vector<JSValueRef> arguments;
+    for( int i = 0; i < arr.obj().length(); i++)
+    {
+        arguments.push_back(arr.obj().item(i).ref());
+    }
+
+    g_print (PROG " ARGS size:  %i \n", arguments.size() );
+
     jsval member = cb.obj.member(signal_name);
+
+    g_print (PROG " ARGS size:  %i \n", arguments.size() );
 
     if(member.isUndefined())
     {
@@ -499,9 +546,11 @@ static void signal_handler(
                 {
                     g_print (PROG "houston, we have a promise %i\n", result.isValid());
 
-                    jsctx js(cb.obj.ctx());
-                    jsobj responseCB1 = js.object(ResponseCallback_class_def, g_strdup(uid.str()));
-                    jsobj responseCB2 = js.object(ResponseCallback_class_def, g_strdup(uid.str()));
+                    ResponseCallbackData* data = new ResponseCallbackData{ uid.str(), false  };
+                    jsobj responseCB1 = js.object(ResponseCallback_class_def, data);
+
+                    ResponseCallbackData* exData = new ResponseCallbackData{ uid.str(), true  };
+                    jsobj responseCB2 = js.object(ResponseCallback_class_def, exData);
                     jsval member = r.member("then");
                     jsobj then = member.obj();
 

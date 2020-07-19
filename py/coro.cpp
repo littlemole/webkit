@@ -1,5 +1,5 @@
 #include "pyglue.h"
-#include "marshal.h"
+//#include "marshal.h"
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -60,7 +60,12 @@ static PyObject* future_object_done(future_object* self, PyObject* args)
 
 static PyObject* future_object_set_result(future_object* self, PyObject* args)
 {
+    g_print (PROG "++++ future_object_set_result\n");
+
     Py_XDECREF(self->value);
+
+    PyObject_Print(args, stdout,0);
+    printf("\n");    
 
     int len = pyobj(args).length();
     if ( len < 1 )
@@ -75,8 +80,15 @@ static PyObject* future_object_set_result(future_object* self, PyObject* args)
 
     self->done = true;
 
+    g_print (PROG "++++ future_object_set_result done\n");
+
+    PyObject_Print(self->cb, stdout,0);
+    printf("\n");    
+
     if( self->cb != Py_None )
     {
+
+        g_print (PROG "++++ future_object_set_result initiate cb \n");
         pyobj_ref ret = pyobj(self->cb).call((PyObject*)self);
 
         Py_XDECREF(self->cb);
@@ -150,6 +162,14 @@ static PyObject* future_object_result(future_object* self, PyObject* args)
 {
     if(self->ex != Py_None)
     {
+        if(PyUnicode_Check(self->ex));
+        {
+            pyobj_ref ptype = PyObject_Type(self->ex);
+            PyErr_SetObject(ptype,self->ex);
+
+            PyErr_SetString( PyExc_RuntimeError,pyobj(self->ex).str() );
+            return NULL;
+        }
         pyobj_ref ptype = PyObject_Type(self->ex);
         PyErr_SetObject(ptype,self->ex);
         return NULL;
