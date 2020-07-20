@@ -30,6 +30,62 @@ std::map<const JSClassDefinition*,JSClassRef> jclass::map_;
 
 static GDBusConnection* dbuscon = 0;
 static std::string sid;
+static std::string rsid;
+
+struct ResponseData
+{
+    ResponseData(JSContextRef context, JSObjectRef res, JSObjectRef rej)
+        : ctx(context), resolve(res), reject(rej)
+    {
+        jsobj(ctx,resolve).protect();
+        jsobj(ctx,reject).protect();
+    }
+
+    ~ResponseData()
+    {
+        jsobj(ctx,resolve).unprotect();
+        jsobj(ctx,reject).unprotect();
+    }
+
+    JSContextRef ctx;
+    JSObjectRef resolve;
+    JSObjectRef reject;
+};
+
+class Responses
+{
+public:
+
+    void add(const char* uid, ResponseData* p)
+    {
+        pending_.insert( std::make_pair(std::string(uid),p) );
+
+        g_print (PROG "responses add %s\n", uid );
+    }
+
+    ResponseData* get(const char* uid)
+    {
+        g_print (PROG "responses get %s\n", uid );
+
+        if ( pending_.count(std::string(uid)) == 0)
+        {
+            return 0;
+        }
+        ResponseData* res = pending_[std::string(uid)];
+        pending_.erase(uid);
+        return res;
+    }
+
+private:
+
+    std::map<std::string,ResponseData*> pending_;
+};
+
+Responses& responses()
+{
+    static Responses r;
+    return r;
+}
 
 
 struct DBusCallback 
@@ -136,6 +192,68 @@ static void send_response(
     }
 }
 
+static void response_handler(GDBusConnection *connection,
+                        const gchar *sender_name,
+                        const gchar *object_path,
+                        const gchar *interface_name,
+                        const gchar *signal_name,
+                        GVariant *parameters,
+                        gpointer user_data)
+{
+    g_print (PROG " received response %s %s\n", signal_name, g_variant_get_type_string (parameters));
+
+    jsctx js(cb.obj.ctx());
+
+    gvar params(parameters);
+
+    int len = params.length();
+    if(len < 2)
+    {
+        g_print (PROG " received invalid response tuple %s %s\n", signal_name, g_variant_get_type_string (parameters));
+        return;
+    }
+
+    gvar uid = params.item(0);
+    gvar args = params.item(1);
+
+    std::string json = args.str();
+
+    g_print (PROG "response_handler has %s %s \n", uid.str(), json.c_str() );
+
+    jsobj dict = from_json(js.ctx(),json).obj();
+
+    JSValueRef result = js.undefined();
+    JSValueRef ex = js.undefined();
+
+    if ( dict.hasMember("result") )
+    {
+        result = dict.member("result").ref();
+    }
+    if ( dict.hasMember("exception") )
+    {
+        ex = jsobj(dict).member("exception").ref();
+    }
+
+    ResponseData* response_data = responses().get( uid.str() );
+
+    jsval e(js.ctx(),ex);
+
+    std::vector<JSValueRef> v;
+    if( !e.isUndefined() && !e.isNull() )
+    {
+        g_print (PROG "response_handler has ex \n" );
+        v.push_back(ex);
+        jsobj(js.ctx(),response_data->reject).invoke(v);
+    }
+    else 
+    {
+        g_print (PROG "response_handler has result \n" );
+        v.push_back(result);
+        jsobj(js.ctx(),response_data->resolve).invoke(v);
+    }
+
+    delete response_data;
+}
 
 static void signal_handler(
     GDBusConnection *connection,
@@ -167,6 +285,19 @@ static void got_dbus (
         NULL,
         NULL
     );
+
+    rsid = g_dbus_connection_signal_subscribe (
+        dbuscon, 
+        /*sender*/ NULL, 
+        dbus_interface.c_str(),
+        /*const gchar *member*/ NULL,
+        dbus_object_path_recv_res_path.c_str(),
+        NULL,
+        G_DBUS_SIGNAL_FLAGS_NONE,
+        &response_handler,
+        NULL,
+        NULL
+    );    
 }
 
 static JSValueRef send_signal(
@@ -191,7 +322,6 @@ static JSValueRef send_signal(
 
     gchar* uid = g_dbus_generate_guid();
     GVariant* guid = g_variant_new_string(uid);
-    g_free(uid);
 
     std::vector<JSValueRef> args;
     for(size_t i = 1; i < argumentCount; i++)
@@ -220,7 +350,17 @@ static JSValueRef send_signal(
         NULL
     );    
 
-    return js.undefined();
+    JSObjectRef resolve = 0;
+    JSObjectRef reject = 0;
+    JSValueRef ex = 0;
+    JSObjectRef promise = JSObjectMakeDeferredPromise( ctx, &resolve, &reject, &ex);
+
+    ResponseData* response_data = new ResponseData(ctx,resolve,reject);
+    responses().add(uid,response_data);
+
+    g_free(uid);
+
+    return promise;
 }
 
 
@@ -369,8 +509,6 @@ static JSValueRef Signal_callAsFunctionCallback(
     tuple.add(g_variant_new_string(uid));
     tuple.add(param);
 
-    g_free(uid);
-
     GVariant* parameters = tuple.build();
 
     g_print (PROG "send_signal cf: %s %s\n", signal_name, g_variant_get_type_string (parameters));
@@ -386,7 +524,17 @@ static JSValueRef Signal_callAsFunctionCallback(
     );    
 
 
-    return js.undefined();
+    JSObjectRef resolve = 0;
+    JSObjectRef reject = 0;
+    JSValueRef ex = 0;
+    JSObjectRef promise = JSObjectMakeDeferredPromise( ctx, &resolve, &reject, &ex);
+
+    ResponseData* response_data = new ResponseData(ctx,resolve,reject);
+    responses().add(uid,response_data);
+
+    g_free(uid);
+
+    return promise;
 }
 
 static void Signal_object_class_finalize_cb(JSObjectRef object)

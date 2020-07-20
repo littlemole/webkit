@@ -65,7 +65,8 @@ function onSubmit(form)
     form.on_signal.value = "";
    // Model.send_signal("sendData",json);
     //WebKit.Controller.sendData(json);
-    WebKit.send_signal("sendData",json)//.then(function(m){alert(m);});
+    //WebKit.send_signal("sendData",json).then(function(m){alert(m);},function(m){alert(m);});
+    WebKit.Controller.sendData(json).then(function(m){alert(m);},function(m){alert(m);});
     return false;
 }
 

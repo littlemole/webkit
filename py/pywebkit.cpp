@@ -120,6 +120,7 @@ static PyObject* responseCB_object_call(PyObject* self, PyObject* args, PyObject
 
         if(py_error())
         {
+//            PyErr_Print();
             PyError err;
             pyobj_ref msg = PyObject_Str(err.pvalue);
             send_dbus_response(dbus,that->uid.c_str(),NULL,pyobj(msg).str());
@@ -394,8 +395,17 @@ static void response_handler(GDBusConnection *connection,
 
     pyobj_ref dict = from_json(json);
 
-    pyobj_ref result = pyobj(dict).member("result");
-    pyobj_ref ex = pyobj(dict).member("exception");
+    pyobj_ref result;
+    if( pyobj(dict).hasMember("result") ) 
+    {
+        result = pyobj(dict).member("result");
+    }
+
+    pyobj_ref ex;
+    if( pyobj(dict).hasMember("exception") )
+    {
+        ex = pyobj(dict).member("exception");
+    }
 
     pyobj_ref future = responses().get( uid.str() );
 
@@ -405,6 +415,8 @@ static void response_handler(GDBusConnection *connection,
         if(ex.isValid() && !pyobj(ex).isNone() )
         {
             g_print (PROG "response_handler has ex \n" );
+    PyObject_Print(ex.ref(), stdout,0);
+    printf("\n");            
             pyobj_ref ret = pyobj(future).invoke("set_exception",ex.ref());
         }
         else

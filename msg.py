@@ -31,8 +31,10 @@ class Controller(object):
         txt = json.dumps(data)
         print(txt)
         msg = json.loads(txt)
-        WebKitDBus.View.recvData(msg)
-        return "lala"
+        r = await WebKitDBus.View.recvData(msg)
+        print("/////////////////" + r)
+        #return r
+        raise RuntimeError(str(r))
 
     def openFile(self):
         print("OPEN")
@@ -71,7 +73,9 @@ async def onActivate(event):
     print("\n")
     #WebKitDBus.send_signal("recvData","partytime").add_done_callback( lambda x: print(x.result()) )
     try :
-        r = await WebKitDBus.send_signal("recvData","partytime")
+        #r = await WebKitDBus.send_signal("recvData","partytime")
+        r = await WebKitDBus.View.recvData("partytime")
+
         print("###############" + str(r))
     except BaseException as ex:
         print("1111111111ex!!!!!!!!!!!")

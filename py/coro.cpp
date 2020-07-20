@@ -162,11 +162,14 @@ static PyObject* future_object_result(future_object* self, PyObject* args)
 {
     if(self->ex != Py_None)
     {
-        if(PyUnicode_Check(self->ex));
+        if(PyUnicode_Check(self->ex))
         {
-            pyobj_ref ptype = PyObject_Type(self->ex);
-            PyErr_SetObject(ptype,self->ex);
+            //pyobj_ref ptype = PyObject_Type(self->ex);
+            //PyErr_SetObject(ptype,self->ex);
 
+            g_print (PROG "++++ future_object_result ex is STrING %s \n",pyobj(self->ex).str());
+    PyObject_Print(self->ex, stdout,0);
+    printf("\n");
             PyErr_SetString( PyExc_RuntimeError,pyobj(self->ex).str() );
             return NULL;
         }
