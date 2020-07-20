@@ -9,12 +9,11 @@
 #include <functional>
 
 /*
- * deal with Javascript Strings. there are three ways to construct a 
+ * deal with Javascript Strings. there are two ways to construct a 
  * String:
  *
  * - from a JStringRef obtained elsewhere. the ref will NOT be released on destruction.
  * - from a C string (char*). the JSStringRef provided will be released on destruction.
- * - from a generic JSValueRef. the JSStringRef provided will be released on destruction.
  *
  * after initialization, jstr provides the referenced char as
  * - ref() which will provide a JStringRef representation of the string
@@ -27,30 +26,56 @@ class jstr
 {
 public:
     jstr(JSStringRef ref)
-        : value_(0), ref_(ref), str_(0)
+        : release_ref_(false), ref_(ref), str_(0)
     {
         get_str();
     }
 
     jstr(const gchar* str)
-        : value_((JSValueRef)1), ref_(0), str_(g_strdup(str))
+        : release_ref_(true), ref_(0), str_(g_strdup(str))
     {
         ref_ = JSStringCreateWithUTF8CString(str_);
     }
 
-    jstr(JSContextRef context,JSValueRef value)
-        :value_(value), ref_(0), str_(0)
+    jstr(const jstr& rhs)
+        : release_ref_(rhs.release_ref_), ref_(0), str_(g_strdup(rhs.str_) )
     {
-        JSValueRef ex = 0;
-        ref_ = JSValueToStringCopy(context,value,&ex);
-        get_str();
+        if(release_ref_)
+        {
+            ref_ = JSStringCreateWithUTF8CString(str_);        
+        }
+        else
+        {
+            ref_ = rhs.ref_;
+        }
+    }
+
+    jstr& operator=(const jstr& rhs)
+    {
+        if(this == &rhs)
+            return *this;
+        
+        release_ref_ = rhs.release_ref_;
+        str_ = g_strdup(rhs.str_);
+
+        if(release_ref_)
+        {
+            ref_ = JSStringCreateWithUTF8CString(str_);        
+        }
+        else
+        {
+            ref_ = rhs.ref_;
+        }
+
+        return *this;
     }
 
     ~jstr()
     {
-        if(value_)
+        if(release_ref_)
             JSStringRelease(ref_);       
-        g_free(str_); 
+        if(str_)
+            g_free(str_); 
     }
 
     gchar* str()
@@ -63,70 +88,35 @@ public:
         return ref_;
     }
 
-    JSValueRef value()
-    {
-        return value_;
-    }
-
 private:
 
     void get_str()
     {
+        if(str_)
+        {
+            g_free(str_); 
+        }
         size_t len = JSStringGetMaximumUTF8CStringSize(ref_);
         str_ = g_new(char, len);
         JSStringGetUTF8CString(ref_, str_, len);
     }
 
-    JSValueRef value_;
+    bool release_ref_;
     JSStringRef ref_;
     gchar* str_;
 };
 
 
-class jnum
-{
-public:
-    jnum(JSContextRef context,JSValueRef value)
-    {
-        JSValueRef ex = 0;
-        value_ = JSValueToNumber(context, value, &ex);           
-    }
-
-    int integer()
-    {
-        return (int)value_;
-    }
-
-    double number()
-    {
-        return value_;
-    }
-
-private:
-    double value_;
-};
-
-class jbool
-{
-public:
-    jbool(JSContextRef context,JSValueRef value)
-    {
-        value_ = JSValueToBoolean(context, value);           
-    }
-
-    bool boolean()
-    {
-        return value_;
-    }
-
-private:
-    bool value_ = false;
-};
-
 /*
  * deal with custom Javascript Classes. there are three ways to construct a 
  *
  */
+
+inline std::map<const JSClassDefinition*,JSClassRef>&  jsClassMap()
+{
+    static std::map<const JSClassDefinition*,JSClassRef> map;
+    return map;    
+}
 
 class jclass
 {
@@ -134,11 +124,11 @@ public:
 
     jclass(const JSClassDefinition* clazz)
     {
-        if( map_.count(clazz) == 0 )
+        if( jsClassMap().count(clazz) == 0 )
         {
-            map_.insert( std::make_pair(clazz,JSClassCreate(clazz)) );
+            jsClassMap().insert( std::make_pair(clazz,JSClassCreate(clazz)) );
         }
-        class_ = map_[clazz];
+        class_ = jsClassMap()[clazz];
     }
 
     ~jclass()
@@ -160,7 +150,6 @@ public:
     }
 
 private:
-    static std::map<const JSClassDefinition*,JSClassRef> map_;
     JSClassRef class_;
 };
 
@@ -295,18 +284,37 @@ public:
 
     std::string str()
     {
-         //return g_variant_new_string(jstr(context,argument).str());      
-        return jstr(context_,value_).str();
+        JSValueRef ex = 0;
+        JSStringRef ref = JSValueToStringCopy(context_,value_,&ex);
+        size_t len = JSStringGetMaximumUTF8CStringSize(ref);
+        gchar* str = g_new(char, len);
+        JSStringGetUTF8CString(ref, str, len);
+
+        std::string result(str,len);
+        JSStringRelease(ref);
+        g_free(str);
+        return result;
     }
 
     double number()
     {
-        return jnum(context_,value_).number();
+        JSValueRef ex = 0;
+        double result = JSValueToNumber(context_, value_, &ex);   
+        return result;
+    }
+
+    int integer()
+    {
+        JSValueRef ex = 0;
+        double result = JSValueToNumber(context_, value_, &ex);   
+        return (int)result;
     }
 
     bool boolean()
     {
-        return jbool(context_,value_).boolean();
+        bool value = JSValueToBoolean(context_, value_);     
+        return value;
+        //return jbool(context_,value_).boolean();
     }
 
 
@@ -319,7 +327,12 @@ class jskeys
 {
 public:
 
+    jskeys()
+        : context_(0),keys_(0)
+    {}
+
     jskeys(JSContextRef context,JSObjectRef obj)
+        : context_(context)
     {
         keys_ = JSObjectCopyPropertyNames(context, obj);        
     }
@@ -327,14 +340,37 @@ public:
     jskeys(jsobj& obj);
 
     jskeys(const jskeys& rhs)
-        : keys_(rhs.keys_)
+        : context_(rhs.context_),keys_(rhs.keys_)
     {
-        JSPropertyNameArrayRetain(keys_);
+        if(keys_)
+           JSPropertyNameArrayRetain(keys_);
+    }
+
+    jskeys& operator=(const jskeys& rhs)
+    {
+        if(this == &rhs)
+        {
+            return *this;
+        }
+
+        if(keys_)
+        {
+            JSPropertyNameArrayRelease(keys_);
+        }     
+        context_ = rhs.context_;
+
+        keys_ = rhs.keys_;
+        if(keys_)
+        {
+            JSPropertyNameArrayRetain(keys_);
+        }     
+        return *this;
     }
 
     ~jskeys()
     {
-        JSPropertyNameArrayRelease(keys_);
+        if(keys_)
+            JSPropertyNameArrayRelease(keys_);
     }
 
     JSStringRef item(int index)
@@ -348,6 +384,7 @@ public:
     }
 
 private:
+    JSContextRef context_;
     JSPropertyNameArrayRef keys_;
 };
 
@@ -440,6 +477,13 @@ public:
             &arguments[0], 
             &ex
         );
+
+        if(ex)
+        {
+            g_print ("invoke:  ex \n" );
+            g_print ("invoke ex:  %s \n", js_to_string(context_,ex) );
+        }
+
         return jsval(context_,result);
     }
 
@@ -454,7 +498,7 @@ public:
         jstr lengthPropertyName("length");
         JSValueRef length = JSObjectGetProperty(context_, value_, lengthPropertyName.ref(), &ex);
 
-        int len = jnum(context_,length).integer();
+        int len = jsval(context_,length).integer();
         return len;
     }
 
@@ -517,6 +561,7 @@ inline jsobj jsval::obj()
 inline jskeys::jskeys(jsobj& obj)
 {
     keys_ = JSObjectCopyPropertyNames(obj.ctx(), obj.ref());        
+    context_ = obj.ctx();
 }
 
 
@@ -548,9 +593,9 @@ public:
         return jsobj(context_,result);
     }
 
-    JSValueRef undefined()
+    jsval undefined()
     {
-        return JSValueMakeUndefined(context_);
+        return jsval(context_,JSValueMakeUndefined(context_));
     }
 
     jsobj array(std::vector<JSValueRef>& v)
@@ -601,7 +646,7 @@ inline std::string to_json(JSContextRef context,JSValueRef jsObject)
     JSObjectRef fn = JSObjectMakeFunction(context, NULL, 0, NULL, scriptJS.ref(), NULL, 1, NULL);
     JSValueRef result = JSObjectCallAsFunction(context, fn, NULL, 1, (JSValueRef*)&jsObject, NULL);
    
-    jstr s(context,result);
+    jsval s(context,result);
     return s.str();
 }
 
@@ -613,31 +658,17 @@ inline jsval from_json(JSContextRef context,const std::string& json)
 
     JSValueRef str = JSValueMakeString(context,s.ref());
 
-//    JSValueRef str = s.value();
-
-    g_print ("JSON from_json:  2 \n" );
-
     JSValueRef ex = 0;
 
     jstr scriptJS("return JSON.parse(arguments[0]) ");
     JSObjectRef fn = JSObjectMakeFunction(context, NULL, 0, NULL, scriptJS.ref(), NULL, 1, &ex);
-    if(ex)
-    {
-        g_print ("JSON from_json:  ex \n" );
-        g_print ("JSON parse ex:  %s \n", js_to_string(context,ex) );
-    }
-
-    g_print ("JSON from_json:  3 \n" );
-
     JSValueRef ret = JSObjectCallAsFunction(context, fn, NULL, 1, (JSValueRef*)&str, &ex);
+
     if(ex)
     {
         g_print ("JSON from_json:  ex \n" );
         g_print ("JSON parse ex:  %s \n", js_to_string(context,ex) );
     }
-    g_print ("JSON from_json:  3.5 \n" );
-
-    g_print ("JSON from_json:  4 %s \n", jstr(context,js_to_string(context,ret)).str() );
 
     return jsval(context,ret);
 }

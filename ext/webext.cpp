@@ -8,7 +8,6 @@
 #include <gio/gio.h>
 #include <memory>
 #include <sstream>
-//#include "marshal.h"
 #include "gvglue.h"
 #include "jsglue.h"
 
@@ -26,7 +25,7 @@ static std::string dbus_object_path_recv_req_path;
 static std::string dbus_object_path_send_res_path;
 static std::string dbus_object_path_recv_res_path; 
 
-std::map<const JSClassDefinition*,JSClassRef> jclass::map_;
+
 
 static GDBusConnection* dbuscon = 0;
 static std::string sid;
@@ -128,6 +127,35 @@ struct DBusCallback
 
 static DBusCallback cb;
 
+static GVariant* make_response(
+    JSContextRef ctx, 
+    const JSValueRef value,
+    const JSValueRef ex = NULL
+    ) 
+{
+    jsctx js(ctx);
+
+    g_print (PROG " make_response: \n");
+
+    jsobj obj = js.object();
+
+    obj.set("result", js.undefined().ref() );
+    obj.set("exception", js.undefined().ref() );
+
+    if(value)
+    {
+        obj.set("result", value);
+    }
+    if(ex)
+    {
+        obj.set("exception", ex);
+    }
+
+    std::string json = to_json(ctx,obj.ref());
+    GVariant* result = g_variant_new_string(json.c_str());
+
+    return result;
+}
 
 static void send_response(
     const gchar* uid,
@@ -145,23 +173,7 @@ static void send_response(
     GVariant* guid = g_variant_new_string(uid);
     builder.add(guid);
 
-    jsobj obj = js.object();
-
-    obj.set("result", js.undefined() );
-    obj.set("exception", js.undefined() );
-
-    if(value)
-    {
-        obj.set("result", value);
-    }
-    if(ex)
-    {
-        obj.set("exception", ex);
-    }
-
-    std::string json = to_json(ctx,obj.ref());
-    GVariant* data = g_variant_new_string(json.c_str());
-
+    GVariant* data = make_response(ctx,value,ex);
     builder.add(data);
 
     GVariant* params = builder.build();
@@ -222,33 +234,35 @@ static void response_handler(GDBusConnection *connection,
 
     jsobj dict = from_json(js.ctx(),json).obj();
 
-    JSValueRef result = js.undefined();
-    JSValueRef ex = js.undefined();
+    jsval result = js.undefined();
+    jsval ex = js.undefined();
 
     if ( dict.hasMember("result") )
     {
-        result = dict.member("result").ref();
+        result = dict.member("result");
     }
     if ( dict.hasMember("exception") )
     {
-        ex = jsobj(dict).member("exception").ref();
+        ex = jsobj(dict).member("exception");
     }
 
     ResponseData* response_data = responses().get( uid.str() );
-
-    jsval e(js.ctx(),ex);
+    if(!response_data)
+    {
+        return;
+    }
 
     std::vector<JSValueRef> v;
-    if( !e.isUndefined() && !e.isNull() )
+    if( !ex.isUndefined() && !ex.isNull() )
     {
         g_print (PROG "response_handler has ex \n" );
-        v.push_back(ex);
+        v.push_back(ex.ref());
         jsobj(js.ctx(),response_data->reject).invoke(v);
     }
     else 
     {
         g_print (PROG "response_handler has result \n" );
-        v.push_back(result);
+        v.push_back(result.ref());
         jsobj(js.ctx(),response_data->resolve).invoke(v);
     }
 
@@ -313,10 +327,10 @@ static JSValueRef send_signal(
 
     if(argumentCount<1) 
     {
-        return js.undefined();
+        return js.undefined().ref();
     }
 
-    std::string signal = jstr(ctx,arguments[0]).str();
+    std::string signal = jsval(ctx,arguments[0]).str();
 
     g_print (PROG " send_signal: %s \n", signal.c_str());
 
@@ -378,14 +392,14 @@ static JSValueRef bind_signals(
     if(argumentCount<1) 
     {
         g_print (PROG " error: less than 1 args \n");
-        return js.undefined();   
+        return js.undefined().ref();   
     }
 
     jsval arg(ctx,arguments[0]);
     if(!arg.isObject())
     {
         g_print (PROG " error: first arg is not a obj \n");
-       return js.undefined();
+       return js.undefined().ref();
     }    
 
     jsobj obj = arg.obj();
@@ -394,7 +408,7 @@ static JSValueRef bind_signals(
 
     g_print (PROG " bind signals \n");
 
-    return js.undefined();
+    return js.undefined().ref();
 }
 ///////////////////////////////////////////////////
 
@@ -419,7 +433,7 @@ static JSValueRef ResponseCallback_callAsFunctionCallback(
 
     g_print (PROG "ResponseCallback send_response  cf: %s \n", data->uid.c_str() );
 
-    JSValueRef result = js.undefined();
+    JSValueRef result = js.undefined().ref();
 
     if(arguments>0)
     {
@@ -435,7 +449,7 @@ static JSValueRef ResponseCallback_callAsFunctionCallback(
         send_response(data->uid.c_str(),ctx,NULL,result);
     }
 
-    return js.undefined();
+    return js.undefined().ref();
 }
 
 static void ResponseCallback_object_class_finalize_cb(JSObjectRef object)
