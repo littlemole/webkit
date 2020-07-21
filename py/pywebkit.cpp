@@ -98,13 +98,9 @@ static void send_dbus_response( GDBusConnection* dbus, const gchar* uid,  PyObje
 
 static PyObject* responseCB_object_call(PyObject* self, PyObject* args, PyObject* kargs)
 {
-    g_print (PROG "responseCB_object_call \n" );
-
     responseCB_object* that = (responseCB_object*)self;
 
     int len = pyobj(args).length();
-
-    g_print (PROG "responseCB_object_call %i \n" ,len);
 
     if(len==0)
     {
@@ -120,7 +116,6 @@ static PyObject* responseCB_object_call(PyObject* self, PyObject* args, PyObject
 
         if(py_error())
         {
-//            PyErr_Print();
             PyError err;
             pyobj_ref msg = PyObject_Str(err.pvalue);
             send_dbus_response(dbus,that->uid.c_str(),NULL,pyobj(msg).str());
@@ -373,7 +368,7 @@ static void response_handler(GDBusConnection *connection,
                         GVariant *parameters,
                         gpointer user_data)
 {
-    g_print (PROG " received response %s %s\n", signal_name, g_variant_get_type_string (parameters));
+    //g_print (PROG " received response %s %s\n", signal_name, g_variant_get_type_string (parameters));
 
     PyGlobalInterpreterLock lock;
 
@@ -390,8 +385,6 @@ static void response_handler(GDBusConnection *connection,
     gvar args = params.item(1);
 
     std::string json = args.str();
-
-    g_print (PROG "response_handler has %s %s \n", uid.str(), json.c_str() );
 
     pyobj_ref dict = from_json(json);
 
@@ -411,29 +404,22 @@ static void response_handler(GDBusConnection *connection,
 
     if(future.isValid())
     {
-        g_print (PROG "response_handler has result \n" );
         if(ex.isValid() && !pyobj(ex).isNone() )
         {
-            g_print (PROG "response_handler has ex \n" );
-    PyObject_Print(ex.ref(), stdout,0);
-    printf("\n");            
             pyobj_ref ret = pyobj(future).invoke("set_exception",ex.ref());
         }
         else
         {
-            g_print (PROG "response_handler has result \n" );
             if(py_error())
             {
                 PyErr_Print();
-//                PyError err;
-  //              g_print (PROG "ex setting result %s \n", pyobj(err.pvalue).str() );
             }            
+
             pyobj_ref ret = pyobj(future).invoke("set_result",result.ref());
+
             if(py_error())
             {
                 PyErr_Print();
-//                PyError err;
-  //              g_print (PROG "ex setting result %s \n", pyobj(err.pvalue).str() );
             }
         }
     }
@@ -459,7 +445,7 @@ static void signal_handler(GDBusConnection *connection,
                         GVariant *parameters,
                         gpointer user_data)
 {
-    g_print (PROG " received signal %s %s\n", signal_name, g_variant_get_type_string (parameters));
+    //g_print (PROG " received signal %s %s\n", signal_name, g_variant_get_type_string (parameters));
 
     PyGlobalInterpreterLock lock;
 
@@ -472,10 +458,6 @@ static void signal_handler(GDBusConnection *connection,
     }
 
     gvar guid = params.item(0);
-//    pyobj_ref uid = gvariant_to_py_value(params.item(0));
-    g_print (PROG "received signal %s %s\n", signal_name, guid.str() );
-
-//    PyObject* result = 0;
     pyobj_ref result;
 
     gvar gargs = params.item(1);
@@ -502,21 +484,16 @@ static void signal_handler(GDBusConnection *connection,
     {
         if( (Py_TYPE(result) == &future_objectType) || (Py_TYPE(result) == &task_objectType) )
         {
-            g_print (PROG "signal handler result is future \n" );
-             
             pyobj_ref handler = new_responseCB_object(guid.str());
             pyobj_ref ret = pyobj(result).invoke("add_done_callback", handler.ref() );
 
             if(PyErr_Occurred())
             {
-                g_print (PROG "ERRRÖR\n");
                 PyErr_PrintEx(0);          
             }             
         }
         else
         {
-             g_print (PROG "signal handler result is not a future\n" );
-
              send_dbus_response(dbus,guid.str(),result);
         }
     }
@@ -558,8 +535,8 @@ static void send_dbus_response( GDBusConnection* dbus, const gchar* uid,  PyObje
 {
     pyobj value(val);
 
-    PyObject_Print(value.ref(), stdout,0);
-    printf("\n");
+    //PyObject_Print(value.ref(), stdout,0);
+    //printf("\n");
 
     gvar_builder builder = gtuple();
     builder.add(g_variant_new_string(uid));
@@ -582,7 +559,7 @@ static void send_dbus_response( GDBusConnection* dbus, const gchar* uid,  PyObje
 
     GVariant* parameters = builder.build();
 
-    g_print (PROG "send_dbus_response : %s %s\n", uid, g_variant_get_type_string (parameters));
+    // g_print (PROG "send_dbus_response : %s %s\n", uid, g_variant_get_type_string (parameters));
 
     g_dbus_connection_emit_signal(
         dbus,
@@ -751,6 +728,7 @@ void add_task_obj_def(pyobj_ref& m);
 
 PyMODINIT_FUNC PyInit_WebKitDBus(void) 
 {
+    /*
     // ready guards
     if (PyType_Ready(&signal_objectType) < 0)
         return 0;    
@@ -758,6 +736,9 @@ PyMODINIT_FUNC PyInit_WebKitDBus(void)
     if (PyType_Ready(&signals_objectType) < 0)
         return 0;    
 
+    if (PyType_Ready(&responseCB_objectType) < 0)
+        return 0;    
+*/
     if (PyType_Ready(&responseCB_objectType) < 0)
         return 0;    
 
@@ -803,7 +784,7 @@ PyMODINIT_FUNC PyInit_WebKitDBus(void)
     add_task_obj_def(m);
     
     pyobj_ref signalsObject = new_signals_object();
-    pyobj(m).addObject("View", signalsObject);
+    pyobj(m).addObject("WebView", signalsObject);
 
     return m.incr();
 }

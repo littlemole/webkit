@@ -9,6 +9,7 @@ clean:
 	cd ext && make clean 
 	cd webkit && make clean
 	-rm pygtk/WebKitDBus.so
+	-find -name "__pycache__" -exec rm -rf {} \;
 proto:
 	-rm build/gdbus.o
 	g++ -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -g -c gdbus.cpp -o build/gdbus.o

@@ -481,7 +481,7 @@ public:
         if(ex)
         {
             g_print ("invoke:  ex \n" );
-            g_print ("invoke ex:  %s \n", js_to_string(context_,ex) );
+            g_print ("invoke ex:  %s \n", jsval(context_,js_to_string(context_,ex)).str().c_str() );
         }
 
         return jsval(context_,result);
@@ -667,7 +667,7 @@ inline jsval from_json(JSContextRef context,const std::string& json)
     if(ex)
     {
         g_print ("JSON from_json:  ex \n" );
-        g_print ("JSON parse ex:  %s \n", js_to_string(context,ex) );
+        g_print ("JSON parse ex:  %s \n", jsval(context,js_to_string(context,ex)).str().c_str() );
     }
 
     return jsval(context,ret);

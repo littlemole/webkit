@@ -38,49 +38,53 @@ content-length: 0
 <script type="text/javascript">
 
 
-let View = {
-
-    recvResponse : function(response) {
-
-        document.theForm.response.value = String(response);
-    }
-};
-
-async function onSubmit(e)
-{
-    e.preventDefault();
-
-    var form = document.forms.theForm;
-    var request = {
-        host    : form.host.value,
-        port    : form.port.value,
-        payload : form.request.value
-    };
-    form.response.value = "";
-    //window.send_signal("HelloSignal","ragnaröck");
-    var response = await WebKit.Controller.sendRequest(request);
-//    .then(function(response){ document.theForm.response.value = String(response); })
-    document.theForm.response.value = String(response);
-    return false;
-}
-
-function dokeyup(txt)
-{
-    var a = txt.value.split(/\n\n/,2);
-    if ( a.length < 2 )
-        return;
-    var len = a[1].length;
-    document.getElementById("bodySize").innerHTML = len;
-}
-
-WebKit.bind(View);
-
-document.forms.theForm.onsubmit = onSubmit;
-
 window.onerror = function(e) {
     alert(e);
 }
 
+document.addEventListener("DOMContentLoaded", function(e)
+{
+    let View = {
+
+        recvResponse : function(response) {
+
+            document.theForm.response.value = String(response);
+        }
+    };
+
+    async function onSubmit(e)
+    {
+        e.preventDefault();
+
+        var form = document.forms.theForm;
+        var request = {
+            host    : form.host.value,
+            port    : form.port.value,
+            payload : form.request.value
+        };
+        form.response.value = "";
+        //window.send_signal("HelloSignal","ragnaröck");
+        var response = await WebKit.Host.sendRequest(request);
+    //    .then(function(response){ document.theForm.response.value = String(response); })
+        document.theForm.response.value = String(response);
+        return false;
+    }
+
+    function dokeyup(e)
+    {
+        var txt = document.forms.theForm.request;
+        var a = txt.value.split(/\n\n/,2);
+        if ( a.length < 2 )
+            return;
+        var len = a[1].length;
+        document.getElementById("bodySize").innerHTML = len;
+    }
+
+    WebKit.bind(View);
+
+    document.forms.theForm.onsubmit = onSubmit;
+    document.forms.theForm.request.onkeyup = dokeyup;
+});
 
 </script>
 </body>

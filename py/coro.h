@@ -12,7 +12,6 @@
 #include <gdk/gdk.h>
 #include "pyglue.h"
 #include "gvglue.h"
-//#include "marshal.h"
 
 /////////////////////////////////////////////
 // Future object 

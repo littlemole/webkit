@@ -16,7 +16,8 @@ import types
 #import asyncio
 #from asyncio import coroutines
 #import exceptions
-import WebKitDBus
+#import WebKitDBus
+import pygtk.WebKitDBus as WebKitDBus
 
 class Worker(threading.Thread):
 

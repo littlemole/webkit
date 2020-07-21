@@ -16,6 +16,17 @@
 G_DEFINE_TYPE (PywebkitWebview, pywebkit_webview, WEBKIT_TYPE_WEB_VIEW   )
  
 
+
+static gboolean on_context_menu (
+    WebKitWebView       *web_view,
+    WebKitContextMenu   *context_menu,
+    GdkEvent            *event,
+    WebKitHitTestResult *hit_test_result,
+    gpointer             user_data)
+{
+    return TRUE;
+}
+
 static void init_ext(WebKitWebContext *context, gpointer user_data)
 {
     PywebkitWebview *web = (PywebkitWebview*) user_data;
@@ -42,6 +53,8 @@ static void pywebkit_webview_init(PywebkitWebview *web)
 
     WebKitWebContext* ctx = webkit_web_context_get_default();
     g_signal_connect( G_OBJECT (ctx), "initialize-web-extensions", G_CALLBACK(init_ext), web);
+   // g_signal_connect( G_OBJECT (web), "context-menu", G_CALLBACK(on_context_menu), web);
+
 }
 
 static void pywebkit_webview_finalize(GObject *object)

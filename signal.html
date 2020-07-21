@@ -5,6 +5,7 @@
 </head>
 <body>
 
+    <a href="curl.html">curl</a>
  <form name="theForm" action="#" onSubmit="return onSubmit(this);">
 
   <table>
@@ -36,80 +37,85 @@
 
 <script type="text/javascript">
 
-let View = {
+document.addEventListener("DOMContentLoaded", function(e)
+{
+    let View = {
 
-    recvData : async function(json) {
+        recvData : async function(json) {
 
+            let msg = JSON.stringify(json);
+            document.theForm.on_signal.value = msg;
+            //throw ("new error");
+            return "Response: recvData";
+        },
+
+        setFilename : function(fn) {
+            document.theForm.on_signal.value = fn;
+            return "Response: recvFilename";
+        }
+    };
+
+    function onOpen(b) {
+        WebKit.Host.openFile();
+        return false;
+    }
+
+    async function onSubmit(e)
+    {
+        e.preventDefault();
+
+        let form = document.forms.theForm;
+        let msg = form.send_signal.value;
+    //    alert(msg);
+        let json = JSON.parse(msg);
+        form.on_signal.value = "";
+
+        let r = await WebKit.Host.sendData(json)//.then(function(m){alert(m);},function(m){alert(m);});
+        let response = JSON.stringify(r);
+        form.on_signal.value = response;
+    }
+
+    function onFullscreen()
+    {
+        alert(document.webkitFullscreenEnabled );
+
+        if(document.webkitFullscreenElement)
+        {
+            document.exitFullscreen();
+        }
+        else
+        {
+            let el = document.getElementById("helloWorld");
+            alert(el.webkitRequestFullscreen);
+            el.webkitRequestFullscreen();
+        }
+        return false;
+    }
+
+    WebKit.bind(View);
+    document.forms.theForm.onsubmit = onSubmit;
+    document.forms.theForm.open.onclick = onOpen;
+    document.forms.theForm.fullscreen.onclick = onFullscreen;
+
+    /*
+    Model.on_signal("recvData", function(json) 
+    {
+        //alert("recvData!!!");
         let msg = JSON.stringify(json);
+        //alert(msg);
         document.theForm.on_signal.value = msg;
-        //throw ("new error");
-        return "Response: recvData";
-    },
-
-    recvFilename : function(fn) {
-        document.theForm.on_signal.value = fn;
-        return "Response: recvFilename";
+    });
+    */
+    window.onerror=function(e) {
+    alert(e.prototype);
+    alert(e);
     }
-};
 
-function onOpen(b) {
-    WebKit.Controller.openFile();
-    return false;
-}
-
-function onSubmit(form)
-{
-    let msg = document.theForm.send_signal.value;
-//    alert(msg);
-    let json = JSON.parse(msg);
-    form.on_signal.value = "";
-   // Model.send_signal("sendData",json);
-    //WebKit.Controller.sendData(json);
-    //WebKit.send_signal("sendData",json).then(function(m){alert(m);},function(m){alert(m);});
-    WebKit.Controller.sendData(json).then(function(m){alert(m);},function(m){alert(m);});
-    return false;
-}
-
-function onFullscreen()
-{
-    alert(document.webkitFullscreenEnabled );
-
-    if(document.webkitFullscreenElement)
-    {
-        document.exitFullscreen();
+    function isAsync(f) {
+        let a = Object.getPrototypeOf(async function(){}).constructor;
+        return f.constructor == a;
     }
-    else
-    {
-        let el = document.getElementById("helloWorld");
-        alert(el.webkitRequestFullscreen);
-        el.webkitRequestFullscreen();
-    }
-    return false;
-}
-
-WebKit.bind(View);
-
-/*
-Model.on_signal("recvData", function(json) 
-{
-    //alert("recvData!!!");
-    let msg = JSON.stringify(json);
-    //alert(msg);
-    document.theForm.on_signal.value = msg;
 });
-*/
-window.onerror=function(e) {
-  alert(e.prototype);
-  alert(e);
-}
-
-function isAsync(f) {
-    let a = Object.getPrototypeOf(async function(){}).constructor;
-    return f.constructor == a;
-}
-document.write(Object.getPrototypeOf(async function(){}).constructor);
-document.write("recvData: " + isAsync(View.recvData) + "<br>" );
-document.write("recvData: " + isAsync(View.recvFilename) + "<br>" );
 </script>
 </body>
 </html>

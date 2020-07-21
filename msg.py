@@ -13,9 +13,11 @@ import pprint
 import sys
 import json
 
-import WebKitDBus
+#import WebKitDBus
 from pygtk.menumaker import MenuMaker
+import pygtk.WebKitDBus as WebKitDBus
 
+mainmenu = None
 
 def onDone(f):
     print("-------------------------------")
@@ -32,15 +34,10 @@ class Controller(object):
         txt = json.dumps(data)
         print(txt)
         msg = json.loads(txt)
-        r = await WebKitDBus.View.recvData(msg)
-        print("/////////////////" + r)
-        #return r
-        raise RuntimeError(str(r))
+        return msg
 
     def openFile(self,*args):
         print("OPEN")
-#        print(dir(Gtk.FileChooserDialog))
-        #dlg = Gtk.FileChooserDialog("Open..", None, Gtk.FILE_CHOOSER_ACTION_OPEN,(Gtk.STOCK_CANCEL, Gtk.RESPONSE_CANCEL, Gtk.STOCK_OPEN, Gtk.RESPONSE_OK))
         dlg = Gtk.FileChooserDialog(
             title = "Please choose a file",
             parent = win,
@@ -55,79 +52,93 @@ class Controller(object):
         )
 
 #        print(dir(dlg))
+
+        dlg.set_default_response(Gtk.ButtonsType.OK)
         response = dlg.run()
         #self.text.set_text(dlg.get_filename())
         try:
-            print("################# dlg closed")
-            f = WebKitDBus.View.recvFilename(dlg.get_filename())
-            print("################# set done cb")
-            f.add_done_callback( onDone )
+            if ( response == Gtk.ButtonsType.OK) :
+                print("################# dlg closed" + str(response))
+                f = WebKitDBus.WebView.setFilename(dlg.get_filename())
+                print("################# set done cb")
+                f.add_done_callback( onDone )
         except BaseException as ex:
             print("EX: " + str(ex))
 
         dlg.destroy()
 
 
-async def onActivate(event):
-    print ("ACtiVE ")
-    print(event.action_target_value)
-    print("\n")
-    #WebKitDBus.send_signal("recvData","partytime").add_done_callback( lambda x: print(x.result()) )
-    try :
-        #r = await WebKitDBus.send_signal("recvData","partytime")
-        r = await WebKitDBus.View.recvData("partytime")
+    async def onActivate(self,event):
+        print ("ACtiVE ")
+        print(event.action_target_value)
+        print("\n")
+        try :
+            r = await WebKitDBus.WebView.setFilename("partytime")
+            print("###############" + str(r))
+        except BaseException as ex:
+            print("1111111111ex!!!!!!!!!!!")
+            print(str(ex))
 
-        print("###############" + str(r))
-    except BaseException as ex:
-        print("1111111111ex!!!!!!!!!!!")
-        print(str(ex))
+    def sendRequest(self,req):
+        return json.dumps(req)
+
+    def goCurl(self,w):
+        url = "file://" + os.path.dirname(os.path.realpath(__file__)) + "/curl.html"
+        web.load_uri(url)
+
+    def goSignal(self,w):
+        url = "file://" + os.path.dirname(os.path.realpath(__file__)) + "/signal.html"
+        web.load_uri(url)        
+
+    def onContext(self,web,menue,event,hit,*args):
+        #pprint.pprint(args)
+        print("OnContext")
+        #Gtk.Menu.popup_at_pointer(mm.menu("File"),event)    
+        mainmenu.popup("File",event)
+        return True
 
 # instantiate controller and bind signals
 controller = Controller()        
 WebKitDBus.bind(controller)
 
 # create html widget
-# this is the same as Gtk.WebView
+# this is similar to Gtk.WebView
 web = Pywebkit.Webview() 
+web.connect("context-menu", controller.onContext )
 url = "file://" + os.path.dirname(os.path.realpath(__file__)) + "/signal.html"
 web.load_uri(url)
 print(web.uid)
 
-# form here on just standard python gtk
+# main menue
+menu_data = {
+    "File" : [
+        [ "New", controller.onActivate ],
+        [ "Open", controller.openFile ],
+    ],
+    "View" : [
+        [ "Curl", controller.goCurl ],
+        [ "Signal", controller.goSignal ],
+    ]
+}
+
+mainmenu = MenuMaker(menu_data)
+menubar = Gtk.MenuBar()
+mainmenu.populate(menubar)
+
+# from here on just standard python gtk
+
 # make resizable
 scrolledwindow = Gtk.ScrolledWindow()
 scrolledwindow.add(web)
 
-
-#menu_data = {
-#    "File" : [
-#        [ "New", "onNewFile" ],
-#        [ "Open", "onOpenFile" ],
-#    ]
-#}
-
-menu_data = {
-    "File" : [
-        [ "New", lambda w : WebKitDBus.run_async(onActivate(w)) ],
-        [ "Open", controller.openFile ],
-    ]
-}
-
-mm = MenuMaker(menu_data)
-#mm.connect("onNewFile",  )
-#mm.connect("onOpenFile",  )
-
-#menuBar.append(file)
-
+# pack HTML widget and menue into an VBox
 vbox = Gtk.VBox(False, 2)
-vbox.pack_start(mm.menuBar, False, False, 0)
+vbox.pack_start(menubar, False, False, 0)
 vbox.pack_start(scrolledwindow, True, True, 0)
-
 
 # main window
 win = Gtk.Window()     
 win.set_default_size(550, 450)   
-#win.add(scrolledwindow)
 win.add(vbox)
 win.connect("delete-event", Gtk.main_quit)
 win.show_all()

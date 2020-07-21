@@ -1,5 +1,4 @@
 #include "pyglue.h"
-//#include "marshal.h"
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -45,7 +44,7 @@ static int future_object_init(future_object *self, PyObject *args, PyObject *kwd
 
 static void future_object_dealloc(future_object* self)
 {
-    g_print (PROG "++++ NO FUTURE\n");
+    //g_print (PROG "++++ NO FUTURE\n");
 
     decr(self->value, self->ex, self->cb,self->_asyncio_future_blocking);
 
@@ -60,12 +59,9 @@ static PyObject* future_object_done(future_object* self, PyObject* args)
 
 static PyObject* future_object_set_result(future_object* self, PyObject* args)
 {
-    g_print (PROG "++++ future_object_set_result\n");
+    //g_print (PROG "++++ future_object_set_result\n");
 
     Py_XDECREF(self->value);
-
-    PyObject_Print(args, stdout,0);
-    printf("\n");    
 
     int len = pyobj(args).length();
     if ( len < 1 )
@@ -80,15 +76,9 @@ static PyObject* future_object_set_result(future_object* self, PyObject* args)
 
     self->done = true;
 
-    g_print (PROG "++++ future_object_set_result done\n");
-
-    PyObject_Print(self->cb, stdout,0);
-    printf("\n");    
-
     if( self->cb != Py_None )
     {
 
-        g_print (PROG "++++ future_object_set_result initiate cb \n");
         pyobj_ref ret = pyobj(self->cb).call((PyObject*)self);
 
         Py_XDECREF(self->cb);
@@ -164,15 +154,10 @@ static PyObject* future_object_result(future_object* self, PyObject* args)
     {
         if(PyUnicode_Check(self->ex))
         {
-            //pyobj_ref ptype = PyObject_Type(self->ex);
-            //PyErr_SetObject(ptype,self->ex);
-
-            g_print (PROG "++++ future_object_result ex is STrING %s \n",pyobj(self->ex).str());
-    PyObject_Print(self->ex, stdout,0);
-    printf("\n");
             PyErr_SetString( PyExc_RuntimeError,pyobj(self->ex).str() );
             return NULL;
         }
+
         pyobj_ref ptype = PyObject_Type(self->ex);
         PyErr_SetObject(ptype,self->ex);
         return NULL;
@@ -293,7 +278,7 @@ static int future_iter_object_init(future_iter_object *self, PyObject *args, PyO
 
 static void future_iter_object_dealloc(future_iter_object* self)
 {
-    g_print (PROG "++++ NO FUTURE ITER\n");
+    //g_print (PROG "++++ NO FUTURE ITER\n");
 
     Py_XDECREF(self->future);
     py_dealloc(self);
@@ -464,7 +449,7 @@ static int task_object_init(task_object *self, PyObject *args, PyObject *kwds)
 
 static void task_object_dealloc(task_object* self)
 {
-    g_print (PROG "++++ NO TASK\n");
+    //g_print (PROG "++++ NO TASK\n");
 
     future_object* super = &self->super;
 
@@ -488,7 +473,7 @@ gboolean task_do_step(gpointer user_data)
     StepStruct* step = (StepStruct*)user_data;
 
     PyObject* self = step->self.ref();
-    PyObject* ex = step->ex.ref();
+    //PyObject* ex = step->ex.ref(); TODO: pass incoming ex
 
     task_object* task = (task_object*)self;
     future_object* super = &task->super;
@@ -497,7 +482,7 @@ gboolean task_do_step(gpointer user_data)
     {
         PyErr_SetString(PyExc_RuntimeError,"task is already done!");
         delete step;
-        return NULL;
+        return false;
     }
 
     PyObject* res = 0; 

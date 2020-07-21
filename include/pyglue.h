@@ -422,6 +422,9 @@ public:
 
     void addObject( const char* name, PyTypeObject* type)
     {
+        if (PyType_Ready(type) < 0)
+            return;   
+
         Py_INCREF(type); // AddObject steals if successful
         if(PyModule_AddObject(ref_, name, (PyObject *)type) < 0 )
         {
