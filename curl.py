@@ -4,38 +4,25 @@ gi.require_versions({
     'Pywebkit': '0.1'
 })
 
-from gi.repository import Gtk, GObject, Pywebkit, WebKit2, GLib
+from gi.repository import Gtk, Pywebkit
 
-import os
-import socket
-import threading
-import pprint
-import sys
-#import dbus
-#import dbus.mainloop.glib
-import WebKitDBus
+import os,sys,socket,json
+#import WebKitDBus
+import pygtk.WebKitDBus as WebKitDBus
+from pygtk.worker import Worker
 
-class Worker(threading.Thread):
+class request_task(object):
 
-    def __init__(self,sock,msg,size):
-        threading.Thread.__init__(self) 
-        self.sock = sock
-        self.msg  = msg
-        self.size = size
+    def __init__(self,msg,host,port):
+        self.msg = msg
+        self.host = host
+        self.port = int(port)
+        self.size = len(msg)
+       
+    def __call__(self):
 
-
-    def run(self):
-
-        self.send_request()
-        response = self.recv_response()
-
-        # call back into javascript on the main thread
-        #GObject.idle_add(self.cb,response)
-
-        WebKitDBus.View.recvResponse(response)
-
-
-    def send_request(self):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.connect((self.host,self.port))
 
         totalsent = 0
         while totalsent < self.size:
@@ -43,9 +30,6 @@ class Worker(threading.Thread):
             if sent == 0:
                 raise RuntimeError("socket connection broken")
             totalsent = totalsent + sent
-
-
-    def recv_response(self):
 
         response = bytearray() 
         recv = bytearray()
@@ -66,8 +50,7 @@ class Worker(threading.Thread):
 
 class Controller(object):
 
-
-    def sendRequest(self,req):
+    async def sendRequest(self,req):
 
         msg = req["payload"]
         # unix2dos for dummies. this is a hack to support proper http
@@ -76,13 +59,13 @@ class Controller(object):
         msg = msg.replace("\r","")
         msg = msg.replace("\n","\r\n")
         msg = msg.encode()
-        size = len(msg)
-       
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((req["host"],int(req["port"])))
 
-        self.worker = Worker(sock,msg,size)
-        self.worker.start()
+        host = req["host"]
+        port = req["port"]
+
+        # run async on background thread
+        r = await Worker.schedule(request_task(msg,host,port))
+        return r
 
 
 # global main.controller accessed from javascript
@@ -106,7 +89,6 @@ win.connect("delete-event", Gtk.main_quit)
 win.show_all()
 
 # start the GUI event main loop
-#GObject.threads_init()
 Gtk.main()
 
         

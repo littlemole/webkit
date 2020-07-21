@@ -4,7 +4,7 @@
 </head>
 <body>
 
- <form name="theForm" action="#" onSubmit="return onSubmit(this);">
+ <form name="theForm" action="#">
 
   <table>
    <tr>
@@ -46,8 +46,11 @@ let View = {
     }
 };
 
-function onSubmit(form)
+async function onSubmit(e)
 {
+    e.preventDefault();
+
+    var form = document.forms.theForm;
     var request = {
         host    : form.host.value,
         port    : form.port.value,
@@ -55,7 +58,9 @@ function onSubmit(form)
     };
     form.response.value = "";
     //window.send_signal("HelloSignal","ragnaröck");
-    WebKit.Controller.sendRequest(request);
+    var response = await WebKit.Controller.sendRequest(request);
+//    .then(function(response){ document.theForm.response.value = String(response); })
+    document.theForm.response.value = String(response);
     return false;
 }
 
@@ -69,6 +74,12 @@ function dokeyup(txt)
 }
 
 WebKit.bind(View);
+
+document.forms.theForm.onsubmit = onSubmit;
+
+window.onerror = function(e) {
+    alert(e);
+}
 
 
 </script>
