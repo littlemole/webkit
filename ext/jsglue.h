@@ -679,7 +679,7 @@ inline std::string to_json(JSContextRef context,JSValueRef jsObject)
 
 inline jsval from_json(JSContextRef context,const std::string& json)
 {
-    g_print ("JSON from_json:  %s \n", json.c_str() );
+    //g_print ("JSON from_json:  %s \n", json.c_str() );
 
     jstr s(json.c_str());
 

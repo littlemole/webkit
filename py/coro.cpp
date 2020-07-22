@@ -194,46 +194,18 @@ PyAsyncMethods future_AsyncMethods = {
     NULL
 };
 
-PyTypeObject future_objectType = {
-    PyVarObject_HEAD_INIT(NULL,0)
-    "WebKitDBus.Future",       /*tp_name*/
-    sizeof(future_object),     /*tp_basicsize*/
-    0,                         /*tp_itemsize*/
-    (destructor)future_object_dealloc,  /*tp_dealloc*/
-    0,                         /*tp_print*/
-    0,                         /*tp_getattr*/
-    0,                         /*tp_setattr*/
-    &future_AsyncMethods,      /*tp_compare tp_as_async */
-    0,                         /*tp_repr*/
-    0,                         /*tp_as_number*/
-    0,                         /*tp_as_sequence*/
-    0,                         /*tp_as_mapping*/
-    0,                         /*tp_hash */
-    0,                         /*tp_call*/
-    0,                         /*tp_str*/
-    0,                         /*tp_getattro*/
-    0,                         /*tp_setattro*/
-    0,                         /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE ,        /*tp_flags*/
-    "future object",           /* tp_doc */
-    0,		                   /* tp_traverse */
-    0,		                   /* tp_clear */
-    0,		                   /* tp_richcompare */
-    0,		                   /* tp_weaklistoffset */
-    0,		                   /* tp_iter */
-    0,		                   /* tp_iternext */
-    future_methods,            /* tp_methods */
-    future_members,            /* tp_members */
-    0,                         /* tp_getset */
-    0,                         /* tp_base */
-    0,                         /* tp_dict */
-    0,                         /* tp_descr_get */
-    0,                         /* tp_descr_set */
-    0,                         /* tp_dictoffset */
-    (initproc)future_object_init, /* tp_init */
-    0,                         /* tp_alloc */
-    PyType_GenericNew          /* tp_new */
-};
+PythonTypeObject future_objectType( [](PyTypeObject& clazz)
+{
+    clazz.tp_name = "WebKitDBus.Future";
+    clazz.tp_basicsize = sizeof(future_object);
+    clazz.tp_init = (initproc)future_object_init;
+    clazz.tp_dealloc = (destructor)future_object_dealloc;
+    clazz.tp_as_async = &future_AsyncMethods;
+    clazz.tp_doc = "future object";
+    clazz.tp_flags = Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE;
+    clazz.tp_members = future_members;
+    clazz.tp_methods = future_methods;
+});
 
 extern "C" PyObject* new_future_object()
 {
@@ -246,8 +218,8 @@ extern "C" PyObject* new_future_object()
 
 void add_future_obj_def(pyobj_ref& m)
 {
-    if (PyType_Ready(&future_objectType) < 0)
-        return;    
+//    if (PyType_Ready(&future_objectType) < 0)
+//        return;    
 
     pyobj(m).addObject("Future",&future_objectType);
 }
@@ -339,47 +311,18 @@ static PyObject* future_iter_next(PyObject* myself)
     return NULL;
 }
 
+PythonTypeObject future_iter_objectType( [](PyTypeObject& clazz)
+{
+    clazz.tp_name = "WebKitDBus._FutureIter";
+    clazz.tp_basicsize = sizeof(future_iter_object);
+    clazz.tp_init = (initproc)future_iter_object_init;
+    clazz.tp_dealloc = (destructor)future_iter_object_dealloc;
+    clazz.tp_doc = "future iterator object";
+    clazz.tp_flags = Py_TPFLAGS_DEFAULT;
+    clazz.tp_iter = future_iter_iter;
+    clazz.tp_iternext = future_iter_next;
+});
 
-PyTypeObject future_iter_objectType = {
-    PyVarObject_HEAD_INIT(NULL,0)
-    "WebKitDBus._FutureIter",  /*tp_name*/
-    sizeof(future_iter_object),/*tp_basicsize*/
-    0,                         /*tp_itemsize*/
-    (destructor)future_iter_object_dealloc,  /*tp_dealloc*/
-    0,                         /*tp_print*/
-    0,                         /*tp_getattr*/
-    0,                         /*tp_setattr*/
-    0,                         /*tp_compare tp_as_async */
-    0,                         /*tp_repr*/
-    0,                         /*tp_as_number*/
-    0,                         /*tp_as_sequence*/
-    0,                         /*tp_as_mapping*/
-    0,                         /*tp_hash */
-    0,                         /*tp_call*/
-    0,                         /*tp_str*/
-    0,                         /*tp_getattro*/
-    0,                         /*tp_setattro*/
-    0,                         /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT,        /*tp_flags*/
-    "future iterator object",  /* tp_doc */
-    0,		                   /* tp_traverse */
-    0,		                   /* tp_clear */
-    0,		                   /* tp_richcompare */
-    0,		                   /* tp_weaklistoffset */
-    future_iter_iter,		   /* tp_iter */
-    future_iter_next,		   /* tp_iternext */
-    0,                         /* tp_methods */
-    0,                         /* tp_members */
-    0,                         /* tp_getset */
-    0,                         /* tp_base */
-    0,                         /* tp_dict */
-    0,                         /* tp_descr_get */
-    0,                         /* tp_descr_set */
-    0,                         /* tp_dictoffset */
-    (initproc)future_iter_object_init, /* tp_init */
-    0,                         /* tp_alloc */
-    PyType_GenericNew          /* tp_new */
-};
 
 extern "C" PyObject* new_future_iter_object(PyObject* future)
 {
@@ -393,8 +336,8 @@ extern "C" PyObject* new_future_iter_object(PyObject* future)
 
 void add_future_iter_obj_def(pyobj_ref& m)
 {
-    if (PyType_Ready(&future_iter_objectType) < 0)
-        return;    
+//    if (PyType_Ready(&future_iter_objectType) < 0)
+//        return;    
 
     pyobj(m).addObject("_FutureIter",&future_iter_objectType);
 }
@@ -597,46 +540,16 @@ static PyMethodDef task_methods[] = {
     {NULL}  /* Sentinel */
 };
 
-PyTypeObject task_objectType = {
-    PyVarObject_HEAD_INIT(NULL,0)
-    "WebKitDBus.Task",         /*tp_name*/
-    sizeof(task_object),       /*tp_basicsize*/
-    0,                         /*tp_itemsize*/
-    (destructor)task_object_dealloc,  /*tp_dealloc*/
-    0,                         /*tp_print*/
-    0,                         /*tp_getattr*/
-    0,                         /*tp_setattr*/
-    0,                         /*tp_compare tp_as_async */
-    0,                         /*tp_repr*/
-    0,                         /*tp_as_number*/
-    0,                         /*tp_as_sequence*/
-    0,                         /*tp_as_mapping*/
-    0,                         /*tp_hash */
-    0,                         /*tp_call*/
-    0,                         /*tp_str*/
-    0,                         /*tp_getattro*/
-    0,                         /*tp_setattro*/
-    0,                         /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE,        /*tp_flags*/
-    "task object",             /* tp_doc */
-    0,		                   /* tp_traverse */
-    0,		                   /* tp_clear */
-    0,		                   /* tp_richcompare */
-    0,		                   /* tp_weaklistoffset */
-    0,		                   /* tp_iter */
-    0,		                   /* tp_iternext */
-    task_methods,              /* tp_methods */
-    0,                         /* tp_members */
-    0,                         /* tp_getset */
-    0,                         /* tp_base */
-    0,                         /* tp_dict */
-    0,                         /* tp_descr_get */
-    0,                         /* tp_descr_set */
-    0,                         /* tp_dictoffset */
-    (initproc)task_object_init,/* tp_init */
-    0,                         /* tp_alloc */
-    PyType_GenericNew          /* tp_new */
-};
+PythonTypeObject task_objectType( [](PyTypeObject& clazz)
+{
+    clazz.tp_name = "WebKitDBus.Task";
+    clazz.tp_basicsize = sizeof(task_object);
+    clazz.tp_init = (initproc)task_object_init;
+    clazz.tp_dealloc = (destructor)task_object_dealloc;
+    clazz.tp_doc = "task object";
+    clazz.tp_flags = Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE;
+    clazz.tp_methods = task_methods;
+});
 
 
 extern "C" PyObject* new_task_object(PyObject* coro)
@@ -653,8 +566,8 @@ void add_task_obj_def(pyobj_ref& m)
 {
     task_objectType.tp_base = &future_objectType;
 
-    if (PyType_Ready(&task_objectType) < 0)
-        return;    
+//    if (PyType_Ready(&task_objectType) < 0)
+//        return;    
 
     pyobj(m).addObject("Task",&task_objectType);
 }

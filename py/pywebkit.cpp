@@ -37,12 +37,12 @@ public:
         pyobj(p).incr();
         pending_.insert( std::make_pair(std::string(uid),p) );
 
-        g_print (PROG "responses add %s\n", uid );
+        //g_print (PROG "responses add %s\n", uid );
     }
 
     PyObject* get(const char* uid)
     {
-        g_print (PROG "responses get %s\n", uid );
+        //g_print (PROG "responses get %s\n", uid );
 
         if ( pending_.count(std::string(uid)) == 0)
         {
@@ -125,52 +125,23 @@ static PyObject* responseCB_object_call(PyObject* self, PyObject* args, PyObject
             send_dbus_response(dbus,that->uid.c_str(),r);
         }
 
-        g_print (PROG "done responseCB_object_call %i \n" ,len);
+        //g_print (PROG "done responseCB_object_call %i \n" ,len);
     }
     
     Py_RETURN_NONE;
 }
 
-PyTypeObject responseCB_objectType = {
-    PyVarObject_HEAD_INIT(NULL,0)
-    "WebKitDBus.responseCB_object", /*tp_name*/
-    sizeof(responseCB_object),     /*tp_basicsize*/
-    0,                         /*tp_itemsize*/
-    (destructor)responseCB_object_dealloc,  /*tp_dealloc*/
-    0,                         /*tp_print*/
-    0,                         /*tp_getattr*/
-    0,                         /*tp_setattr*/
-    0,                         /*tp_compare*/
-    0,                         /*tp_repr*/
-    0,                         /*tp_as_number*/
-    0,                         /*tp_as_sequence*/
-    0,                         /*tp_as_mapping*/
-    0,                         /*tp_hash */
-    responseCB_object_call,        /*tp_call*/
-    0,                         /*tp_str*/
-    0,                         /*tp_getattro*/
-    0,                         /*tp_setattro*/
-    0,                         /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT,        /*tp_flags*/
-    "response callback wrapper objects",  /* tp_doc */
-    0,		                   /* tp_traverse */
-    0,		                   /* tp_clear */
-    0,		                   /* tp_richcompare */
-    0,		                   /* tp_weaklistoffset */
-    0,		                   /* tp_iter */
-    0,		                   /* tp_iternext */
-    0,                         /* tp_methods */
-    0,                         /* tp_members */
-    0,                         /* tp_getset */
-    0,                         /* tp_base */
-    0,                         /* tp_dict */
-    0,                         /* tp_descr_get */
-    0,                         /* tp_descr_set */
-    0,                         /* tp_dictoffset */
-    (initproc)responseCB_object_init, /* tp_init */
-    0,                         /* tp_alloc */
-    PyType_GenericNew          /* tp_new */
-};
+
+PythonTypeObject responseCB_objectType( [](PyTypeObject& clazz)
+{
+    clazz.tp_name = "WebKitDBus.responseCB_object";
+    clazz.tp_basicsize = sizeof(responseCB_object);
+    clazz.tp_init = (initproc)responseCB_object_init;
+    clazz.tp_dealloc = (destructor)responseCB_object_dealloc;
+    clazz.tp_call = (ternaryfunc)responseCB_object_call;
+    clazz.tp_doc = "response callback wrapper objects";
+});
+
 
 
 extern "C" PyObject* new_responseCB_object(const char* uid)
@@ -235,47 +206,15 @@ static PyObject* signal_object_call(PyObject* self, PyObject* args, PyObject* ka
     return future;
 }
 
-PyTypeObject signal_objectType = {
-    PyVarObject_HEAD_INIT(NULL,0)
-    "WebKitDBus.SignalObject", /*tp_name*/
-    sizeof(signal_object),     /*tp_basicsize*/
-    0,                         /*tp_itemsize*/
-    (destructor)signal_object_dealloc,  /*tp_dealloc*/
-    0,                         /*tp_print*/
-    0,                         /*tp_getattr*/
-    0,                         /*tp_setattr*/
-    0,                         /*tp_compare*/
-    0,                         /*tp_repr*/
-    0,                         /*tp_as_number*/
-    0,                         /*tp_as_sequence*/
-    0,                         /*tp_as_mapping*/
-    0,                         /*tp_hash */
-    signal_object_call,        /*tp_call*/
-    0,                         /*tp_str*/
-    0,                         /*tp_getattro*/
-    0,                         /*tp_setattro*/
-    0,                         /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT,        /*tp_flags*/
-    "signal wrapper objects",  /* tp_doc */
-    0,		                   /* tp_traverse */
-    0,		                   /* tp_clear */
-    0,		                   /* tp_richcompare */
-    0,		                   /* tp_weaklistoffset */
-    0,		                   /* tp_iter */
-    0,		                   /* tp_iternext */
-    0,                         /* tp_methods */
-    0,                         /* tp_members */
-    0,                         /* tp_getset */
-    0,                         /* tp_base */
-    0,                         /* tp_dict */
-    0,                         /* tp_descr_get */
-    0,                         /* tp_descr_set */
-    0,                         /* tp_dictoffset */
-    (initproc)signal_object_init, /* tp_init */
-    0,                         /* tp_alloc */
-    PyType_GenericNew          /* tp_new */
-};
-
+PythonTypeObject signal_objectType( [](PyTypeObject& clazz)
+{
+    clazz.tp_name = "WebKitDBus.SignalObject";
+    clazz.tp_basicsize = sizeof(signal_object);
+    clazz.tp_init = (initproc)signal_object_init;
+    clazz.tp_dealloc = (destructor)signal_object_dealloc;
+    clazz.tp_call = (ternaryfunc)signal_object_call;
+    clazz.tp_doc = "signal wrapper objects";
+});
 
 extern "C" PyObject* new_signal_object(const char* name)
 {
@@ -295,62 +234,30 @@ typedef struct {
     PyObject_HEAD
 } webview_object;
 
-static int webview_object_init(signals_object *self, PyObject *args, PyObject *kwds)
+static int webview_object_init(webview_object *self, PyObject *args, PyObject *kwds)
 {
     return 0;
 }
 
-static void webview_object_dealloc(signals_object* self)
+static void webview_object_dealloc(webview_object* self)
 {
    py_dealloc(self);
 }
 
-static PyObject * webview_object_getattr(signals_object* self, char* name)
+static PyObject * webview_object_getattr(webview_object* self, char* name)
 {
     return new_signal_object(name);
 }
- 
 
-PyTypeObject webview_objectType = {
-    PyVarObject_HEAD_INIT(NULL,0)
-    "WebKitDBus.WebView",      /*tp_name*/
-    sizeof(signals_object),    /*tp_basicsize*/
-    0,                         /*tp_itemsize*/
-    (destructor)signals_object_dealloc,  /*tp_dealloc*/
-    0,                         /*tp_print*/
-    (getattrfunc)signals_object_getattr, /*tp_getattr*/
-    0,                         /*tp_setattr*/
-    0,                         /*tp_compare*/
-    0,                         /*tp_repr*/
-    0,                         /*tp_as_number*/
-    0,                         /*tp_as_sequence*/
-    0,                         /*tp_as_mapping*/
-    0,                         /*tp_hash */
-    0,                         /*tp_call*/
-    0,                         /*tp_str*/
-    0,                         /*tp_getattro*/
-    0,                         /*tp_setattro*/
-    0,                         /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT,        /*tp_flags*/
-    "signals objects",         /* tp_doc */
-    0,		                   /* tp_traverse */
-    0,		                   /* tp_clear */
-    0,		                   /* tp_richcompare */
-    0,		                   /* tp_weaklistoffset */
-    0,		                   /* tp_iter */
-    0,		                   /* tp_iternext */
-    0,                         /* tp_methods */
-    0,                         /* tp_members */
-    0,                         /* tp_getset */
-    0,                         /* tp_base */
-    0,                         /* tp_dict */
-    0,                         /* tp_descr_get */
-    0,                         /* tp_descr_set */
-    0,                         /* tp_dictoffset */
-    (initproc)signals_object_init, /* tp_init */
-    0,                         /* tp_alloc */
-    PyType_GenericNew,         /* tp_new */
-};
+PythonTypeObject webview_objectType( [](PyTypeObject& clazz)
+{
+    clazz.tp_name = "WebKitDBus.WebView";
+    clazz.tp_basicsize = sizeof(webview_object);
+    clazz.tp_init = (initproc)webview_object_init;
+    clazz.tp_dealloc = (destructor)webview_object_dealloc;
+    clazz.tp_getattr = (getattrfunc)webview_object_getattr;
+    clazz.tp_doc = "webview object";
+});
 
 extern "C" PyObject* new_webview_object()
 {
@@ -631,7 +538,7 @@ static PyObject* pywebkit_bind(PyObject* self, PyObject* args)
 {
     int len = pyobj(args).length();
 
-    g_print (PROG "on signal \n");
+    //g_print (PROG "on signal \n");
 
     if(len<1)
     {
@@ -696,7 +603,6 @@ static PyObject* pywebkit_run_async(PyObject* self, PyObject* args)
             pyobj_ref ret = pyobj(task).invoke("add_done_callback", done_cb.ref());
             if(PyErr_Occurred())
             {
-                g_print (PROG "ERRRÖR\n");
                 PyErr_PrintEx(0);          
             }
         }
@@ -712,15 +618,13 @@ static PyMethodDef pywebkit_module_methods[] = {
 };
 
 
+static PythonModuleDef moduledef( [](PyModuleDef& module)
+{
+    module.m_name = "WebKitDBus";
+    module.m_doc = "dbus interface";
+    module.m_methods = pywebkit_module_methods;
+});
 
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "WebKitDBus",
-    "dbus interface",
-    -1,
-    pywebkit_module_methods,
-    NULL,NULL,NULL,NULL
-};
 
 void add_future_obj_def(pyobj_ref& m);
 void add_future_iter_obj_def(pyobj_ref& m);
@@ -777,7 +681,7 @@ PyMODINIT_FUNC PyInit_WebKitDBus(void)
     pyobj(m).addString( "uid", sid.c_str());
 
     pyobj(m).addObject("SignalObject", &signal_objectType);
-    pyobj(m).addObject("WebView", &new_webview_object);
+    pyobj(m).addObject("WebView", &webview_objectType);
 
     add_future_obj_def(m);
     add_future_iter_obj_def(m);    

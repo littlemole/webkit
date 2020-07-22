@@ -42,7 +42,7 @@ static JSValueRef bind_signals(
 
     theCallback = DBusCallback(obj);
 
-    g_print (PROG " bind signals \n");
+    //g_print (PROG " bind signals \n");
 
     return js.undefined().ref();
 }

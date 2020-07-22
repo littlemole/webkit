@@ -28,27 +28,127 @@ private:
 
 };
 
-/*
-inline int length(PyObject* obj)
+struct PythonTypeObject : public PyTypeObject 
 {
-    return PySequence_Size(obj);
-}
+    PythonTypeObject( std::function<void(PyTypeObject&)> fun)
+    {
 
-inline PyObject* item(PyObject* obj, int index)
+#ifdef Py_TRACE_REFS
+        _ob_next = 0;
+        _ob_prev = 0;
+#endif
+        ((PyObject*)(this))->ob_refcnt = 1;
+        ((PyObject*)(this))->ob_type = 0;
+        ((PyVarObject*)(this))->ob_size = 0;
+
+        tp_name = 0; /* For printing, in format "<module>.<name>" */
+        tp_basicsize = 0;
+        tp_itemsize = 0; /* For allocation */
+
+        /* Methods to implement standard operations */
+
+        tp_dealloc = 0;
+        tp_vectorcall_offset = 0;
+        tp_getattr = 0;
+        tp_setattr = 0;
+        tp_as_async = 0; /* formerly known as tp_compare (Python 2)
+                                    or tp_reserved (Python 3) */
+        tp_repr = 0;
+
+        /* Method suites for standard classes */
+
+        tp_as_number = 0;
+        tp_as_sequence = 0;
+        tp_as_mapping = 0;
+
+        /* More standard operations (here for binary compatibility) */
+
+        tp_hash = 0;
+        tp_call = 0;
+        tp_str = 0;
+        tp_getattro = 0;
+        tp_setattro = 0;
+
+        /* Functions to access object as input/output buffer */
+        tp_as_buffer = 0;
+
+        /* Flags to define presence of optional/expanded features */
+        tp_flags = Py_TPFLAGS_DEFAULT;
+
+        tp_doc = ""; /* Documentation string */
+
+        /* call function for all accessible objects */
+        tp_traverse = 0;
+
+        /* delete references to contained objects */
+        tp_clear = 0;
+
+        /* rich comparisons */
+        tp_richcompare = 0;
+
+        /* weak reference enabler */
+        tp_weaklistoffset = 0;
+
+        /* Iterators */
+        tp_iter = 0;
+        tp_iternext = 0;
+
+        /* Attribute descriptor and subclassing stuff */
+        tp_methods = 0;
+        tp_members = 0;
+        tp_getset = 0;
+        tp_base = 0;
+        tp_dict = 0;
+        tp_descr_get = 0;
+        tp_descr_set = 0;
+        tp_dictoffset = 0;
+        tp_init = 0;
+        tp_alloc = 0;
+        tp_new = PyType_GenericNew;
+        tp_free = 0; /* Low-level free-memory routine */
+        tp_is_gc = 0; /* For PyObject_IS_GC */
+        tp_bases = 0;
+        tp_mro = 0; /* method resolution order */
+        tp_cache = 0;
+        tp_subclasses = 0;
+        tp_weaklist = 0;
+        tp_del = 0;
+
+        /* Type attribute cache version tag. Added in version 2.6 */
+        tp_version_tag = 0;
+        tp_finalize = 0;
+
+        fun(*this);
+    }
+};
+
+struct PythonModuleDef : public PyModuleDef
 {
-    return PySequence_GetItem(obj,index);
-}
+    PythonModuleDef( std::function<void(PyModuleDef&)> fun )
+    {
+#ifdef Py_TRACE_REFS
+        _ob_next = 0;
+        _ob_prev = 0;
+#endif
+        ((PyObject*)(this))->ob_refcnt = 1;
+        ((PyObject*)(this))->ob_type = 0;
 
-template<class ...Args>
-PyObject* ptuple(Args*... args);
+        m_base.m_init = 0;
+        m_base.m_index = 0;
+        m_base.m_copy = 0;
 
+        m_name = "dummy name";
+        m_doc = "dummy doc";
+        m_size = -1;
+        m_methods = 0;
+        m_slots = 0;
+        m_traverse = 0;
+        m_clear = 0;
+        m_free = 0;
 
-template<class ...Args>
-PyObject* invoke(PyObject* self, const char* name, Args* ... args);
-
-template<class ...Args>
-PyObject* call(PyObject* self, Args* ... args);
-*/
+        fun(*this);
+    }
+};
 
 inline bool py_error()
 {
@@ -68,14 +168,14 @@ public:
     pyobj_ref(PyObject* ref)
         : ref_(ref)
     {}
-/*
-    pyobj_ref(const PyObjectRef& ref)
+
+    pyobj_ref(const pyobj_ref& ref)
         : ref_(ref.ref_)
     {
         if(ref_)
-            Py_DECREF(ref_);
+            Py_INCREF(ref_);
     }
-*/
+
     ~pyobj_ref()
     {
         if(ref_)
@@ -242,7 +342,7 @@ public:
             Py_RETURN_NONE;
         }
 
-        int len = pyobj(args).length();// ::length(args);
+        int len = pyobj(args).length();
 
         pyobj_ref tuple = PyTuple_New(len+1);
         pyobj(tuple).item(0,ref_);
@@ -478,53 +578,6 @@ void py_dealloc(T* self)
     Py_TYPE(self)->tp_free((PyObject*)self);    
 }
 
-/*
-inline void for_each(PyObject* obj, std::function<void(int,pyobj_ref&)> fun)
-{
-    int len = length(obj);
-    for( int i = 0; i < len; i++)
-    {
-        pyobj_ref value = item(obj,i);
-        fun(i,value);
-    }
-}
-
-inline void for_each(pyobj_ref& obj, std::function<void(const char*,pyobj_ref&)> fun)
-{
-    auto members = obj.keys();
-    for( auto& key: members)
-    {
-        pyobj_ref member = obj.member(key);
-        fun( key.c_str(), member);
-    }
-}
-
-
-template<class ...Args>
-PyObject* invoke(PyObject* self, const char* name, Args* ... args)
-{
-    pyobj_ref member = PyUnicode_FromString(name);
-    PyObject* ret = PyObject_CallMethodObjArgs(self,member,args...,NULL);
-    return ret;
-}
-
-
-template<class ...Args>
-PyObject* call(PyObject* self, Args* ... args)
-{
-    std::vector<PyObject*> v{args...};
-    int len = v.size();
-
-    pyobj_ref tuple = PyTuple_New(len);
-    for( int i = 0; i < len; i++)
-    {
-        tuple.item( i, v[i] );
-    }
-    // call python!
-    PyObject* ret = PyObject_CallObject(self,tuple);
-    return ret;
-}
-*/
 
 class PyError
 {
