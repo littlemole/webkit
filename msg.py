@@ -19,6 +19,20 @@ import pygtk.WebKitDBus as WebKitDBus
 
 mainmenu = None
 
+def showDlg(*args):
+
+    dlg = Gtk.Dialog(title="TestDialog", transient_for=win, flags=0)
+    dlg.add_buttons(
+        Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OK, Gtk.ResponseType.OK
+    )
+    dlg.set_default_size(150,100)
+    label = Gtk.Label(label="Hello World")
+    dlg.get_content_area().add(label)
+    dlg.show_all()
+    r = dlg.run()
+    print(str(r))
+    dlg.destroy()
+
 def onDone(f):
     print("-------------------------------")
     try:
@@ -118,6 +132,9 @@ menu_data = {
     "View" : [
         [ "Curl", controller.goCurl ],
         [ "Signal", controller.goSignal ],
+    ],
+    "Dialog" : [
+        [ "Run" , showDlg ]
     ]
 }
 
