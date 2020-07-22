@@ -15,7 +15,7 @@ static GVariant* make_response(
 {
     jsctx js(ctx);
 
-    g_print (PROG " make_response: \n");
+    //g_print (PROG " make_response: \n");
 
     jsobj obj = js.object();
 
@@ -46,7 +46,7 @@ void send_response(
 {
     jsctx js(ctx);
 
-    g_print (PROG " send_response: %s \n", uid);
+    //g_print (PROG " send_response: %s \n", uid);
 
     gvar_builder builder = gtuple();  
 
@@ -57,9 +57,6 @@ void send_response(
     builder.add(data);
 
     GVariant* params = builder.build();
-
-    g_print (PROG "send_response cf: %s %s\n", uid, g_variant_get_type_string (params));
-    g_print (PROG "%s\n",g_variant_print (params,TRUE));
    
     GError* gerror = 0;
 
@@ -76,11 +73,10 @@ void send_response(
     if(!r && gerror)
     {
         g_print (PROG "send_response error %s\n",gerror->message);
-       // g_error_free(gerror);
     }
     else
     {
-        g_print (PROG "send_response sent %i\n",r);
+        // g_print (PROG "send_response sent %i\n",r);
     }
 }
 
@@ -92,7 +88,7 @@ static void response_handler(GDBusConnection *connection,
                         GVariant *parameters,
                         gpointer user_data)
 {
-    g_print (PROG " received response %s %s\n", signal_name, g_variant_get_type_string (parameters));
+    //g_print (PROG " received response %s %s\n", signal_name, g_variant_get_type_string (parameters));
 
     jsctx js(theCallback.obj.ctx());
 
@@ -109,8 +105,6 @@ static void response_handler(GDBusConnection *connection,
     gvar args = params.item(1);
 
     std::string json = args.str();
-
-    g_print (PROG "response_handler has %s %s \n", uid.str(), json.c_str() );
 
     jsobj dict = from_json(js.ctx(),json).obj();
 
@@ -135,13 +129,11 @@ static void response_handler(GDBusConnection *connection,
     std::vector<JSValueRef> v;
     if( !ex.isUndefined() && !ex.isNull() )
     {
-        g_print (PROG "response_handler has ex \n" );
         v.push_back(ex.ref());
         jsobj(js.ctx(),response_data->reject).invoke(v);
     }
     else 
     {
-        g_print (PROG "response_handler has result \n" );
         v.push_back(result.ref());
         jsobj(js.ctx(),response_data->resolve).invoke(v);
     }
@@ -176,7 +168,7 @@ static void signal_handler(
     int len = params.length();
 
     gvar uid = params.item(0);
-    g_print (PROG "recevied signal with uid:  %s %s\n", signal_name,uid.str() );
+    //g_print (PROG "recevied signal with uid:  %s %s\n", signal_name,uid.str() );
     
     jsval arr;  
 
@@ -284,3 +276,4 @@ void got_dbus (
         NULL
     );    
 }
+

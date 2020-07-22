@@ -289,31 +289,31 @@ extern "C" PyObject* new_signal_object(const char* name)
 }
 
 /////////////////////
-// signals object is a helper to invoke signals
+// WebView object is a helper to invoke bound JS functions
 
 typedef struct {
     PyObject_HEAD
-} signals_object;
+} webview_object;
 
-static int signals_object_init(signals_object *self, PyObject *args, PyObject *kwds)
+static int webview_object_init(signals_object *self, PyObject *args, PyObject *kwds)
 {
     return 0;
 }
 
-static void signals_object_dealloc(signals_object* self)
+static void webview_object_dealloc(signals_object* self)
 {
    py_dealloc(self);
 }
 
-static PyObject * signals_object_getattr(signals_object* self, char* name)
+static PyObject * webview_object_getattr(signals_object* self, char* name)
 {
     return new_signal_object(name);
 }
  
 
-PyTypeObject signals_objectType = {
+PyTypeObject webview_objectType = {
     PyVarObject_HEAD_INIT(NULL,0)
-    "WebKitDBus.SignalsObject",/*tp_name*/
+    "WebKitDBus.WebView",      /*tp_name*/
     sizeof(signals_object),    /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)signals_object_dealloc,  /*tp_dealloc*/
@@ -352,9 +352,9 @@ PyTypeObject signals_objectType = {
     PyType_GenericNew,         /* tp_new */
 };
 
-extern "C" PyObject* new_signals_object()
+extern "C" PyObject* new_webview_object()
 {
-    signals_object* self = py_alloc<signals_object>(&signals_objectType);
+    webview_object* self = py_alloc<webview_object>(&webview_objectType);
 
     return (PyObject*)self;
 }
@@ -777,14 +777,14 @@ PyMODINIT_FUNC PyInit_WebKitDBus(void)
     pyobj(m).addString( "uid", sid.c_str());
 
     pyobj(m).addObject("SignalObject", &signal_objectType);
-    pyobj(m).addObject("SignalsObject", &signals_objectType);
+    pyobj(m).addObject("WebView", &new_webview_object);
 
     add_future_obj_def(m);
     add_future_iter_obj_def(m);    
     add_task_obj_def(m);
     
-    pyobj_ref signalsObject = new_signals_object();
-    pyobj(m).addObject("WebView", signalsObject);
+    pyobj_ref webview = new_webview_object();
+    pyobj(m).addObject("WebView", webview);
 
     return m.incr();
 }

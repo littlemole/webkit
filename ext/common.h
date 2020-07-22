@@ -17,9 +17,13 @@
 
 #define PROG "[web_extension.so]"
 
-extern const JSClassDefinition ResponseCallback_class_def;
-extern const JSClassDefinition Signal_class_def;
-extern const JSClassDefinition Controller_class_def;
+//extern const JSClassDefinition ResponseCallback_class_def;
+//extern const JSClassDefinition Signal_class_def;
+//extern const JSClassDefinition Controller_class_def;
+
+extern const jsclassdef ResponseCallback_class_def;
+extern const jsclassdef Signal_class_def;
+extern const jsclassdef Controller_class_def;
 
 void send_response(
     const gchar* uid,
@@ -83,12 +87,12 @@ public:
     {
         pending_.insert( std::make_pair(std::string(uid),p) );
 
-        g_print (PROG "responses add %s\n", uid );
+        //g_print (PROG "responses add %s\n", uid );
     }
 
     ResponseData* get(const char* uid)
     {
-        g_print (PROG "responses get %s\n", uid );
+        //g_print (PROG "responses get %s\n", uid );
 
         if ( pending_.count(std::string(uid)) == 0)
         {

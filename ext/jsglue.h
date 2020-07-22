@@ -118,6 +118,33 @@ inline std::map<const JSClassDefinition*,JSClassRef>&  jsClassMap()
     return map;    
 }
 
+class jsclassdef : public JSClassDefinition
+{
+public:
+    jsclassdef(std::function<void(JSClassDefinition&)> fun)
+    {
+        version = 0;
+        attributes = kJSClassAttributeNone;
+        className = "dummy clazz name";
+        parentClass = NULL;
+        staticValues = NULL;
+        staticFunctions = NULL;
+        initialize = NULL;
+        finalize = NULL;
+        hasProperty = NULL;
+        getProperty = NULL;
+        setProperty = NULL;
+        deleteProperty = NULL;
+        getPropertyNames = NULL;
+        callAsFunction = NULL;
+        callAsConstructor = NULL;
+        hasInstance = NULL;
+        convertToType = NULL;
+
+        fun(*this);
+    }
+};
+
 class jclass
 {
 public:

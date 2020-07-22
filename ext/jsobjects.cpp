@@ -15,7 +15,7 @@ static JSValueRef ResponseCallback_callAsFunctionCallback(
 
     ResponseCallbackData* data = (ResponseCallbackData*)fun.private_data();
 
-    g_print (PROG "ResponseCallback send_response  cf: %s \n", data->uid.c_str() );
+    //g_print (PROG "ResponseCallback send_response  cf: %s \n", data->uid.c_str() );
 
     JSValueRef result = js.undefined().ref();
 
@@ -47,29 +47,13 @@ static void ResponseCallback_object_class_init_cb(JSContextRef ctx,JSObjectRef o
 {
 }
 
-
-const JSClassDefinition ResponseCallback_class_def =
+const jsclassdef ResponseCallback_class_def( [] (JSClassDefinition& clazz)
 {
-    0,                     // version
-    kJSClassAttributeNone, // attributes
-    "ResponseCallback",    // className
-    NULL,                  // parentClass
-    NULL,                  // staticValues
-    NULL,                  // staticFunctions
-    ResponseCallback_object_class_init_cb, // initialize
-    ResponseCallback_object_class_finalize_cb, // finalize
-    NULL,                  // hasProperty
-    NULL,                  // getProperty
-    NULL,                  // setProperty
-    NULL,                  // deleteProperty
-    NULL,                  // getPropertyNames
-    ResponseCallback_callAsFunctionCallback, // callAsFunction
-    NULL,                  // callAsConstructor
-    NULL,                  // hasInstance  
-    NULL                   // convertToType
-};
-
-
+    clazz.className = "ResponseCallback";
+    clazz.initialize = ResponseCallback_object_class_init_cb;
+    clazz.finalize = ResponseCallback_object_class_finalize_cb;
+    clazz.callAsFunction = ResponseCallback_callAsFunctionCallback;
+});
 
 ///////////////////////////////////////////////////
 
@@ -87,7 +71,7 @@ static JSValueRef Signal_callAsFunctionCallback(
 
     gchar* signal_name = (gchar*)fun.private_data();
 
-    g_print (PROG " send_signal cf: %s \n", signal_name);
+    //g_print (PROG " send_signal cf: %s \n", signal_name);
 
     std::vector<JSValueRef> args;
     for( size_t i = 0; i < argumentCount; i++)
@@ -110,7 +94,7 @@ static JSValueRef Signal_callAsFunctionCallback(
 
     GVariant* parameters = tuple.build();
 
-    g_print (PROG "send_signal cf: %s %s\n", signal_name, g_variant_get_type_string (parameters));
+    //g_print (PROG "send_signal cf: %s %s\n", signal_name, g_variant_get_type_string (parameters));
 
     g_dbus_connection_emit_signal(
         dbuscon,
@@ -147,27 +131,14 @@ static void Signal_object_class_init_cb(JSContextRef ctx,JSObjectRef object)
 {
 }
 
-const JSClassDefinition Signal_class_def =
-{
-    0,                     // version
-    kJSClassAttributeNone, // attributes
-    "Signal",              // className
-    NULL,                  // parentClass
-    NULL,                  // staticValues
-    NULL,                  // staticFunctions
-    Signal_object_class_init_cb, // initialize
-    Signal_object_class_finalize_cb, // finalize
-    NULL,                  // hasProperty
-    NULL,                  // getProperty
-    NULL,                  // setProperty
-    NULL,                  // deleteProperty
-    NULL,                  // getPropertyNames
-    Signal_callAsFunctionCallback, // callAsFunction
-    NULL,                  // callAsConstructor
-    NULL,                  // hasInstance  
-    NULL                   // convertToType
-};
 
+const jsclassdef Signal_class_def( [] (JSClassDefinition& clazz)
+{
+    clazz.className = "Signal";
+    clazz.initialize = Signal_object_class_init_cb;
+    clazz.finalize = Signal_object_class_finalize_cb;
+    clazz.callAsFunction = Signal_callAsFunctionCallback;
+});
 
 /////////////////////////////////////////////////////////////
 
@@ -193,27 +164,12 @@ static JSValueRef Controller_getPropertyCallback(JSContextRef context, JSObjectR
 }
 
 
-const JSClassDefinition Controller_class_def =
+const jsclassdef Controller_class_def( [] (JSClassDefinition& clazz)
 {
-    0,                     // version
-    kJSClassAttributeNone, // attributes
-    "Controller",          // className
-    NULL,                  // parentClass
-    NULL,                  // staticValues
-    NULL,                  // staticFunctions
-    NULL,                  // initialize
-    NULL,                  // finalize
-    Controller_hasPropertyCallback,   // hasProperty
-    Controller_getPropertyCallback,   // getProperty
-    NULL,                  // setProperty
-    NULL,                  // deleteProperty
-    NULL,                  // getPropertyNames
-    NULL,                  // callAsFunction
-    NULL,                  // callAsConstructor
-    NULL,                  // hasInstance  
-    NULL                   // convertToType
-};
-
+    clazz.className = "Controller";
+    clazz.hasProperty = Controller_hasPropertyCallback;
+    clazz.getProperty = Controller_getPropertyCallback;
+});
 
 ////////////////////////////////////////////////////////
 
