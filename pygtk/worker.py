@@ -27,3 +27,25 @@ class Worker(threading.Thread):
 
     def done(self,r):
         self.future.set_result(r)
+
+
+def background(func):
+
+    def decorator(*vargs):
+
+        f = WebKitDBus.Future()
+
+        def set_result(f,r):
+            f.set_result(r)
+
+        def wrapper(*args):
+
+            r = func(*args)
+            GLib.idle_add(set_result,f,r)
+
+        t = threading.Thread(target=wrapper, args=vargs )
+        t.start()
+
+        return f        
+
+    return decorator

@@ -21,7 +21,8 @@ static std::string dbus_object_path_recv_res_path;
 static GDBusConnection* dbus = 0;
 static std::string sid;
 static std::string rsid;
-static pyobj_ref cb;
+//static pyobj_ref cb;
+static PyObject* module;
 
 /////////////////////////////////////////////
 // forwards
@@ -371,7 +372,11 @@ static void signal_handler(GDBusConnection *connection,
     std::string data = gargs.str();
     pyobj_ref args = from_json(data);
 
-    result = pyobj(cb).invoke_with_tuple(signal_name, args);
+    //result = pyobj(cb).invoke_with_tuple(signal_name, args);
+
+//    pyobj_ref bound = pyobj(module).attr("callback");
+    pyobj_ref bound = pyobj(PyModule_GetDict(module)).member("callback");
+    result = pyobj(bound).invoke_with_tuple(signal_name, args);
 
     if(!py_error())
     {
@@ -546,7 +551,11 @@ static PyObject* pywebkit_bind(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    cb = pyobj(args).item(0);
+//    cb = pyobj(args).item(0);
+
+    //pyobj(module).attr("callback",pyobj(args).item(0));
+
+    pyobj(PyModule_GetDict(module)).member("callback", pyobj(args).item(0) );
 
     Py_RETURN_NONE;
 }
@@ -689,7 +698,13 @@ PyMODINIT_FUNC PyInit_WebKitDBus(void)
     
     pyobj_ref webview = new_webview_object();
     pyobj(m).addObject("WebView", webview);
+    
+    pyobj_ref cb = Py_None;
+    cb.incr();
 
+    pyobj(m).addObject("callback", cb);
+
+    module = m;//.incr();
     return m.incr();
 }
 

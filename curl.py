@@ -4,50 +4,64 @@ gi.require_versions({
     'Pywebkit': '0.1'
 })
 
-from gi.repository import Gtk, Pywebkit
+from gi.repository import Gtk, Pywebkit, GLib
 
-import os,sys,socket,json
+import os,sys,socket,json,threading,pprint
 #import WebKitDBus
 import pygtk.WebKitDBus as WebKitDBus
 from pygtk.worker import Worker
-
-class request_task(object):
-
-    def __init__(self,msg,host,port):
-        self.msg = msg
-        self.host = host
-        self.port = int(port)
-        self.size = len(msg)
-       
-    def __call__(self):
-
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((self.host,self.port))
-
-        totalsent = 0
-        while totalsent < self.size:
-            sent = self.sock.send(self.msg[totalsent:])
-            if sent == 0:
-                raise RuntimeError("socket connection broken")
-            totalsent = totalsent + sent
-
-        response = bytearray() 
-        recv = bytearray()
-        while True:
-            recv = self.sock.recv(4096)
-            if len(recv) == 0 :
-                break;
-            response = response + recv
-
-        # convert response to unicode
-        try:
-            response = response.decode("UTF-8")
-        except:
-            response = response.decode("ISO-8859-1")
-
-        return response
+from pygtk.worker import background
 
 
+
+@background       
+def request_task(msg,host,port):
+
+    print("request_task")
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((host,int(port)))
+
+    size = len(msg)
+    totalsent = 0
+    while totalsent < size:
+        sent = sock.send(msg[totalsent:])
+        if sent == 0:
+            raise RuntimeError("socket connection broken")
+        totalsent = totalsent + sent
+
+    response = bytearray() 
+    recv = bytearray()
+    while True:
+        recv = sock.recv(4096)
+        if len(recv) == 0 :
+            break
+        response = response + recv
+
+    # convert response to unicode
+    try:
+        response = response.decode("UTF-8")
+    except:
+        response = response.decode("ISO-8859-1")
+
+    return response
+
+def bind(clazz):
+    class wrapper():
+
+        def __init__(self,*args):
+            print("init")
+            self.that = clazz(*args)
+
+        def __call__(self,*args):
+            print("call")
+            self.that = clazz(*args)
+
+        def __attr__(self,key):
+            print("attr")
+            return getattr(self.that,key)
+    return wrapper
+
+@bind
 class Controller(object):
 
     async def sendRequest(self,req):
@@ -64,13 +78,16 @@ class Controller(object):
         port = req["port"]
 
         # run async on background thread
-        r = await Worker.schedule(request_task(msg,host,port))
+        #r = await Worker.schedule(request_task(msg,host,port))
+        r = await request_task(msg,host,port) #run_in_background(request_task,msg,host,port)
         return r
 
 
 # global main.controller accessed from javascript
 controller = Controller()        
-WebKitDBus.bind(controller)
+pprint.pprint(controller)
+#WebKitDBus.bind(controller)
+WebKitDBus.callback = controller
 
 # create html widget
 web = Pywebkit.Webview() 
