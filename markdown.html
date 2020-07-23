@@ -1,0 +1,132 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script src="js/showdown.js"></script>
+  <style type="text/css">
+
+    body {
+        background-color: gray;
+        padding:0px;
+        margin:0px;
+    }
+
+    textarea.markdown {
+        width:98%;
+        height:100%;
+        resize:none;
+        margin: 0px 2% 0px 0px;
+        background-color:white;
+        padding:0px;
+    }
+
+    div.main {
+        height:100%;
+        width:100%;
+        background-color: green;
+        display: flex;
+        flex-direction: row;    
+        padding:0px;   
+    }
+
+    div.markdown {
+        width:49%;
+        min-width:5%;
+        height:auto;
+        padding:0px;
+        resize:horizontal;
+        background-color: #EEE;
+        overflow: scroll;
+        flex-grow: 1;        
+    }
+    div.html {
+        width:49%;
+        height:auto;
+        padding:0px;
+        background-color:white;        
+        flex-grow: 1;        
+        overflow: scroll;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="main">
+   <div class="markdown">
+        <textarea id="markdown" class="markdown" >markdown</textarea>
+   </div>
+   <div id="html" class="html">html</div>
+  </div>
+
+<script type="text/javascript">
+
+
+window.onerror = function(e) {
+    alert(e);
+}
+
+document.addEventListener("DOMContentLoaded", function(e)
+{
+    let View = {
+
+        onFileLoaded : function(markdown) {
+
+            document.getElementById("markdown").value = markdown;
+            View.onConvert(markdown);
+        },
+
+        onSaveFile : function(markdown) {
+
+            txt = document.getElementById("markdown").value;
+            return txt;
+        },
+
+        onConvert : function(markdown) {
+
+            let converter = new showdown.Converter();
+            let html = converter.makeHtml(markdown);
+            document.getElementById("html").innerHTML = html;
+        },
+
+        recvResponse : function(response) {
+
+            document.theForm.response.value = String(response);
+        },
+
+        onSubmit : async function (e)
+        {
+            if(e && e.preventDefault)
+                e.preventDefault();
+
+            var form = document.forms.theForm;
+            var request = {
+                host    : form.host.value,
+                port    : form.port.value,
+                payload : form.request.value
+            };
+            form.response.value = "";
+            //window.send_signal("HelloSignal","ragnaröck");
+            var response = await WebKit.Host.sendRequest(request);
+        //    .then(function(response){ document.theForm.response.value = String(response); })
+            document.theForm.response.value = String(response);
+            return false;
+        }
+    }
+
+    function dokeyup(e)
+    {
+        //alert("keyup");
+        var txt = document.getElementById("markdown").value;
+
+        View.onConvert(txt);
+    }
+
+    WebKit.bind(View);
+
+    document.getElementById("markdown").onkeyup = dokeyup;
+//    document.forms.theForm.request.onkeyup = dokeyup;
+});
+
+</script>
+</body>
+</html>
+
