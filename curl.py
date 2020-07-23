@@ -4,14 +4,14 @@ gi.require_versions({
     'Pywebkit': '0.1'
 })
 
-from gi.repository import Gtk, Pywebkit, GLib
+from gi.repository import Gtk, Pywebkit, GLib 
 
 import os,sys,socket,json,threading,pprint
-#import WebKitDBus
 import pygtk.WebKitDBus as WebKitDBus
 from pygtk.worker import Worker
 from pygtk.worker import background
-
+from pygtk.bind import bind
+from pygtk.bind import synced
 
 
 @background       
@@ -45,21 +45,7 @@ def request_task(msg,host,port):
 
     return response
 
-def bind(clazz):
-    class wrapper():
 
-        def __init__(self,*args):
-            print("init")
-            self.that = clazz(*args)
-
-        def __call__(self,*args):
-            print("call")
-            self.that = clazz(*args)
-
-        def __attr__(self,key):
-            print("attr")
-            return getattr(self.that,key)
-    return wrapper
 
 @bind
 class Controller(object):
@@ -82,12 +68,22 @@ class Controller(object):
         r = await request_task(msg,host,port) #run_in_background(request_task,msg,host,port)
         return r
 
+    @synced
+    async def onRequest(self,*args):
+
+        r = await WebKitDBus.WebView.onSubmit()
+        print(r)
+
+
+    @synced
+    async def onExit(self,*args):
+        Gtk.main_quit()
 
 # global main.controller accessed from javascript
 controller = Controller()        
 pprint.pprint(controller)
 #WebKitDBus.bind(controller)
-WebKitDBus.callback = controller
+#WebKitDBus.callback = controller
 
 # create html widget
 web = Pywebkit.Webview() 
@@ -95,14 +91,24 @@ url = "file://" + os.path.dirname(os.path.realpath(__file__)) + "/curl.html"
 web.load_uri(url)
 
 # make resizable
-scrolledwindow = Gtk.ScrolledWindow()
-scrolledwindow.add(web)
+#scrolledwindow = Gtk.ScrolledWindow()
+#scrolledwindow.add(web)
 
 # main window
-win = Gtk.Window()     
-win.set_default_size(550, 350)   
-win.add(scrolledwindow)
-win.connect("delete-event", Gtk.main_quit)
+#win = Gtk.Window()     
+#win.set_default_size(550, 350)   
+#win.add(scrolledwindow)
+#win.connect("delete-event", Gtk.main_quit)
+#win.show_all()
+
+builder = Gtk.Builder()
+builder.add_from_file("curl.ui.xml")
+builder.connect_signals(controller)
+
+scrollWindow = builder.get_object("scrollWindow")
+scrollWindow.add(web)
+
+win = builder.get_object("mainWindow")
 win.show_all()
 
 # start the GUI event main loop

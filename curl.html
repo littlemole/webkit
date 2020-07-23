@@ -49,25 +49,26 @@ document.addEventListener("DOMContentLoaded", function(e)
         recvResponse : function(response) {
 
             document.theForm.response.value = String(response);
+        },
+
+        onSubmit : async function (e)
+        {
+            if(e && e.preventDefault)
+                e.preventDefault();
+
+            var form = document.forms.theForm;
+            var request = {
+                host    : form.host.value,
+                port    : form.port.value,
+                payload : form.request.value
+            };
+            form.response.value = "";
+            //window.send_signal("HelloSignal","ragnaröck");
+            var response = await WebKit.Host.sendRequest(request);
+        //    .then(function(response){ document.theForm.response.value = String(response); })
+            document.theForm.response.value = String(response);
+            return false;
         }
-    };
-
-    async function onSubmit(e)
-    {
-        e.preventDefault();
-
-        var form = document.forms.theForm;
-        var request = {
-            host    : form.host.value,
-            port    : form.port.value,
-            payload : form.request.value
-        };
-        form.response.value = "";
-        //window.send_signal("HelloSignal","ragnaröck");
-        var response = await WebKit.Host.sendRequest(request);
-    //    .then(function(response){ document.theForm.response.value = String(response); })
-        document.theForm.response.value = String(response);
-        return false;
     }
 
     function dokeyup(e)
@@ -82,7 +83,7 @@ document.addEventListener("DOMContentLoaded", function(e)
 
     WebKit.bind(View);
 
-    document.forms.theForm.onsubmit = onSubmit;
+    document.forms.theForm.onsubmit = View.onSubmit;
     document.forms.theForm.request.onkeyup = dokeyup;
 });
 

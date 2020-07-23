@@ -16,22 +16,11 @@ import json
 #import WebKitDBus
 from pygtk.menumaker import MenuMaker
 import pygtk.WebKitDBus as WebKitDBus
+from pygtk.bind import bind
+from pygtk.bind import synced
 
-mainmenu = None
+#mainmenu = None
 
-def showDlg(*args):
-
-    dlg = Gtk.Dialog(title="TestDialog", transient_for=win, flags=0)
-    dlg.add_buttons(
-        Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OK, Gtk.ResponseType.OK
-    )
-    dlg.set_default_size(150,100)
-    label = Gtk.Label(label="Hello World")
-    dlg.get_content_area().add(label)
-    dlg.show_all()
-    r = dlg.run()
-    print(str(r))
-    dlg.destroy()
 
 def onDone(f):
     print("-------------------------------")
@@ -43,6 +32,15 @@ def onDone(f):
 
 # controller gets signals from webview
 class Controller(object):
+
+    def showDlg(self,*args):
+
+        dlg = builder.get_object("HelloWorldDialog")
+
+        dlg.show_all()
+        r = dlg.run()
+        print(str(r))
+        dlg.hide()
 
     async def sendData(self,data):
         txt = json.dumps(data)
@@ -81,12 +79,12 @@ class Controller(object):
 
         dlg.destroy()
 
-
+    @synced
     async def onActivate(self,event):
         print ("ACtiVE ")
-        print(event.action_target_value)
-        print("\n")
         try :
+            #print(event.action_target_value)
+            print("\n")
             r = await WebKitDBus.WebView.setFilename("partytime")
             print("###############" + str(r))
         except BaseException as ex:
@@ -111,6 +109,9 @@ class Controller(object):
         mainmenu.popup("File",event)
         return True
 
+    def onExit(self,*args):
+        Gtk.main_quit()
+
 # instantiate controller and bind signals
 controller = Controller()        
 WebKitDBus.bind(controller)
@@ -123,41 +124,16 @@ url = "file://" + os.path.dirname(os.path.realpath(__file__)) + "/signal.html"
 web.load_uri(url)
 print(web.uid)
 
-# main menue
-menu_data = {
-    "File" : [
-        [ "New", controller.onActivate ],
-        [ "Open", controller.openFile ],
-    ],
-    "View" : [
-        [ "Curl", controller.goCurl ],
-        [ "Signal", controller.goSignal ],
-    ],
-    "Dialog" : [
-        [ "Run" , showDlg ]
-    ]
-}
-
-mainmenu = MenuMaker(menu_data)
-menubar = Gtk.MenuBar()
-mainmenu.populate(menubar)
 
 # from here on just standard python gtk
+builder = Gtk.Builder()
+builder.add_from_file("signal.ui.xml")
+builder.connect_signals(controller)
 
-# make resizable
-scrolledwindow = Gtk.ScrolledWindow()
-scrolledwindow.add(web)
+scrollWindow = builder.get_object("scrollWindow")
+scrollWindow.add(web)
 
-# pack HTML widget and menue into an VBox
-vbox = Gtk.VBox(False, 2)
-vbox.pack_start(menubar, False, False, 0)
-vbox.pack_start(scrolledwindow, True, True, 0)
-
-# main window
-win = Gtk.Window()     
-win.set_default_size(550, 450)   
-win.add(vbox)
-win.connect("delete-event", Gtk.main_quit)
+win = builder.get_object("mainWindow")
 win.show_all()
 
 # start the GUI event main loop
