@@ -29,6 +29,21 @@ and/or use gtk-doc annotations.  -->
           <type name="Webview" c:type="PywebkitWebview*"/>
         </return-value>
       </constructor>
+      <method name="load_local_uri"
+              c:identifier="pywebkit_webview_load_local_uri">
+        <source-position filename="pywebkit.h" line="45"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="web" transfer-ownership="none">
+            <type name="Webview" c:type="PywebkitWebview*"/>
+          </instance-parameter>
+          <parameter name="localpath" transfer-ownership="none">
+            <type name="utf8" c:type="const gchar*"/>
+          </parameter>
+        </parameters>
+      </method>
       <field name="parent">
         <type name="WebKit2.WebView" c:type="WebKitWebView"/>
       </field>

@@ -87,43 +87,17 @@ document.addEventListener("DOMContentLoaded", function(e)
             document.getElementById("html").innerHTML = html;
         },
 
-        recvResponse : function(response) {
-
-            document.theForm.response.value = String(response);
-        },
-
-        onSubmit : async function (e)
+        dokeyup : function(e)
         {
-            if(e && e.preventDefault)
-                e.preventDefault();
-
-            var form = document.forms.theForm;
-            var request = {
-                host    : form.host.value,
-                port    : form.port.value,
-                payload : form.request.value
-            };
-            form.response.value = "";
-            //window.send_signal("HelloSignal","ragnaröck");
-            var response = await WebKit.Host.sendRequest(request);
-        //    .then(function(response){ document.theForm.response.value = String(response); })
-            document.theForm.response.value = String(response);
-            return false;
+            var txt = document.getElementById("markdown").value;
+            View.onConvert(txt);
         }
-    }
 
-    function dokeyup(e)
-    {
-        //alert("keyup");
-        var txt = document.getElementById("markdown").value;
-
-        View.onConvert(txt);
     }
 
     WebKit.bind(View);
 
-    document.getElementById("markdown").onkeyup = dokeyup;
-//    document.forms.theForm.request.onkeyup = dokeyup;
+    document.getElementById("markdown").onkeyup = View.dokeyup;
 });
 
 </script>

@@ -704,7 +704,10 @@ PyMODINIT_FUNC PyInit_WebKitDBus(void)
 
     pyobj(m).addObject("callback", cb);
 
-    module = m;//.incr();
+    pyobj_ref json = PyUnicode_FromString("json");
+    PyImport_Import(json);
+
+    module = m;
     return m.incr();
 }
 
