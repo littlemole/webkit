@@ -47,16 +47,42 @@ static void pywebkit_webview_init(PywebkitWebview *web)
 {
     g_print(PROG "pywebkit_webview_init\n");
 
-    web->uid = "dummy uid"
+    // generate guid
+    gchar* c = g_dbus_generate_guid();
+    //sid = std::string(c);
+    web->uid = g_strdup (c);
+    g_free(c);
+
+//    web->uid = "dummy uid"
 
     pyobj_ref n = PyUnicode_FromString("pygtk.WebKitDBus");
     pyobj_ref m = PyImport_GetModule(n);
 
     if(m.isValid())
     {
-        pyobj_ref uid = PyObject_GetAttrString(m,"uid");
-        const char* c = PyUnicode_AsUTF8(uid);
-        web->uid = g_strdup (c);
+        g_print(PROG "lookup cb \n");
+        //pyobj_ref cb = PyObject_GetAttrString(m,"callback");
+        pyobj_ref cb = pyobj(PyModule_GetDict(m)).member("callback");
+         PyObject_Print(cb, stdout, Py_PRINT_RAW);
+        printf("\n");
+
+        if( pyobj(cb).isValid() && !pyobj(cb).isNone() )
+        {
+            g_print(PROG "bind controller cb\n");
+            pyobj_ref bind = pyobj(m).attr("bind");
+         PyObject_Print(bind, stdout, Py_PRINT_RAW);
+        printf("\n");
+            pyobj_ref str = PyUnicode_FromString(web->uid);
+            pyobj_ref r = pyobj(bind).call( str.ref(), cb.ref());
+
+            if(py_error())
+            {
+                PyErr_Print();
+            }              
+        }
+
+        //const char* c = PyUnicode_AsUTF8(uid);
+        //web->uid = g_strdup (c);
 
     }
 

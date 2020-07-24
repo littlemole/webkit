@@ -1,6 +1,13 @@
 #include "coro.h"
 
 /////////////////////////////////////////////
+// externs
+
+extern PyTypeObject future_objectType;
+extern PyTypeObject task_objectType;
+extern "C" PyObject* new_task_object(PyObject* coro);
+
+/////////////////////////////////////////////
 // globals
 
 #define PROG "[pydbus]"
@@ -10,24 +17,147 @@ static const std::string dbus_object_path_send_req_prefix = "/org/oha7/webkit/We
 static const std::string dbus_object_path_recv_req_prefix = "/org/oha7/webkit/WebKitDBus/view/request/";
 static const std::string dbus_object_path_send_res_prefix = "/org/oha7/webkit/WebKitDBus/controller/response/";
 static const std::string dbus_object_path_recv_res_prefix = "/org/oha7/webkit/WebKitDBus/view/response/";
-
+/*
 static std::string dbus_object_path_send_req_path;
 static std::string dbus_object_path_recv_req_path; 
 
 static std::string dbus_object_path_send_res_path;
 static std::string dbus_object_path_recv_res_path; 
-
+*/
 
 static GDBusConnection* dbus = 0;
-static std::string sid;
-static std::string rsid;
+//static std::string sid;
+//static std::string rsid;
 //static pyobj_ref cb;
 static PyObject* module;
 
 /////////////////////////////////////////////
 // forwards
 
-static void send_dbus_signal( GDBusConnection* dbus, gchar* uid, std::string s, GVariant*  params);
+class Channel;
+
+static PyObject* pywebkit_run_async(
+    PyObject* self, 
+    PyObject* args
+);
+
+static void response_handler(
+    GDBusConnection *connection,
+    const gchar *sender_name,
+    const gchar *object_path,
+    const gchar *interface_name,
+    const gchar *signal_name,
+    GVariant *parameters,
+    gpointer user_data
+);
+
+static void signal_handler(
+    GDBusConnection *connection,
+    const gchar *sender_name,
+    const gchar *object_path,
+    const gchar *interface_name,
+    const gchar *signal_name,
+    GVariant *parameters,
+    gpointer user_data
+);
+
+static void send_dbus_signal( 
+    GDBusConnection* dbus, 
+    Channel* channel,
+    gchar* uid, 
+    std::string s, 
+    GVariant*  params
+);
+
+static void send_dbus_response( 
+    GDBusConnection* dbus, 
+    Channel* channel, 
+    const gchar* uid,  
+    PyObject*  value, 
+    const char* ex = NULL
+);
+
+/////////////////////////////////////////////
+// Channel
+
+class Channel
+{
+public:
+    Channel(const std::string& guid, PyObject* bind)
+        : uid(guid), bound(bind)
+    {
+        Py_XINCREF(bound);
+
+        // assemble channel config
+        std::ostringstream oss_send;
+        oss_send << dbus_object_path_send_req_prefix << uid;
+        dbus_object_path_send_req_path = oss_send.str();
+
+        std::ostringstream oss_recv;
+        oss_recv << dbus_object_path_recv_req_prefix << uid;
+        dbus_object_path_recv_req_path = oss_recv.str();
+
+        std::ostringstream oss_res_send;
+        oss_res_send << dbus_object_path_send_res_prefix << uid;
+        dbus_object_path_send_res_path = oss_res_send.str();
+
+        std::ostringstream oss_res_recv;
+        oss_res_recv << dbus_object_path_recv_res_prefix << uid;
+        dbus_object_path_recv_res_path = oss_res_recv.str();
+
+        g_print (PROG "Interface; %s.\n", dbus_interface.c_str());
+        g_print (PROG "Send; %s.\n", dbus_object_path_send_req_path.c_str());
+        g_print (PROG "Recv; %s.\n", dbus_object_path_recv_req_path.c_str());
+
+        sid = g_dbus_connection_signal_subscribe (
+            dbus, 
+            /*sender*/ NULL, 
+            dbus_interface.c_str(),
+            /*const gchar *member*/ NULL,
+            dbus_object_path_recv_req_path.c_str(),
+            NULL,
+            G_DBUS_SIGNAL_FLAGS_NONE,
+            &signal_handler,
+            this,
+            NULL
+        );    
+
+        rsid = g_dbus_connection_signal_subscribe (
+            dbus, 
+            /*sender*/ NULL, 
+            dbus_interface.c_str(),
+            /*const gchar *member*/ NULL,
+            dbus_object_path_recv_res_path.c_str(),
+            NULL,
+            G_DBUS_SIGNAL_FLAGS_NONE,
+            &response_handler,
+            this,
+            NULL
+        );   
+    }
+
+    std::string dbus_object_path_send_req_path; 
+    std::string dbus_object_path_recv_req_path; 
+
+    std::string dbus_object_path_send_res_path;
+    std::string dbus_object_path_recv_res_path; 
+
+    std::string uid;
+    std::string sid;
+    std::string rsid;
+
+    PyObject* bound;
+};
+
+std::map<std::string,Channel*>& channels()
+{
+    static std::map<std::string,Channel*> map;
+    return map;
+}
+
+/////////////////////////////////////////////
+// forwards
+
 
 class Responses
 {
@@ -72,6 +202,7 @@ Responses& responses()
 typedef struct {
     PyObject_HEAD
     std::string uid;
+    Channel* channel;
 } responseCB_object;
 
 static int responseCB_object_init(responseCB_object *self, PyObject *args, PyObject *kwds)
@@ -87,6 +218,7 @@ static int responseCB_object_init(responseCB_object *self, PyObject *args, PyObj
     
     pyobj_ref uid = arguments.item(0);
     self->uid = std::string(pyobj(uid).str());
+    self->channel = 0;
     return 0;
 }
 
@@ -95,7 +227,6 @@ static void responseCB_object_dealloc(responseCB_object* self)
     py_dealloc(self);
 }
 
-static void send_dbus_response( GDBusConnection* dbus, const gchar* uid,  PyObject*  value, const char* ex = NULL);
 
 static PyObject* responseCB_object_call(PyObject* self, PyObject* args, PyObject* kargs)
 {
@@ -107,7 +238,7 @@ static PyObject* responseCB_object_call(PyObject* self, PyObject* args, PyObject
     {
         pyobj_ref none(Py_None);
         none.incr(); // hack
-        send_dbus_response(dbus,that->uid.c_str(),none);
+        send_dbus_response(dbus,that->channel,that->uid.c_str(),none);
     }
     else
     {
@@ -119,11 +250,11 @@ static PyObject* responseCB_object_call(PyObject* self, PyObject* args, PyObject
         {
             PyError err;
             pyobj_ref msg = PyObject_Str(err.pvalue);
-            send_dbus_response(dbus,that->uid.c_str(),NULL,pyobj(msg).str());
+            send_dbus_response(dbus,that->channel,that->uid.c_str(),NULL,pyobj(msg).str());
         }
         else
         {
-            send_dbus_response(dbus,that->uid.c_str(),r);
+            send_dbus_response(dbus,that->channel,that->uid.c_str(),r);
         }
 
         //g_print (PROG "done responseCB_object_call %i \n" ,len);
@@ -145,7 +276,7 @@ PythonTypeObject responseCB_objectType( [](PyTypeObject& clazz)
 
 
 
-extern "C" PyObject* new_responseCB_object(const char* uid)
+extern "C" PyObject* new_responseCB_object(const char* uid, Channel* channel)
 {
     responseCB_object* self = py_alloc<responseCB_object>(&responseCB_objectType);
 
@@ -153,6 +284,9 @@ extern "C" PyObject* new_responseCB_object(const char* uid)
     pyobj_ref tuple = ptuple(id.ref());
 
     responseCB_object_init(self,tuple.ref(),(PyObject*)NULL);
+    
+    self->channel = channel;
+
     return (PyObject*)self;
 }
 
@@ -167,6 +301,7 @@ extern "C" PyObject* new_responseCB_object(const char* uid)
 typedef struct {
     PyObject_HEAD
     std::string signal_name;
+    Channel* channel;
 } signal_object;
 
 static int signal_object_init(signal_object *self, PyObject *args, PyObject *kwds)
@@ -180,6 +315,7 @@ static int signal_object_init(signal_object *self, PyObject *args, PyObject *kwd
     
     pyobj_ref signal = arguments.item(0);
     self->signal_name = pyobj(signal).str();
+    self->channel = 0;
     return 0;
 }
 
@@ -196,8 +332,9 @@ static PyObject* signal_object_call(PyObject* self, PyObject* args, PyObject* ka
     GVariant* param = g_variant_new_string(json.c_str());
 
     gchar* uid = g_dbus_generate_guid();
+    Channel* c = that->channel;
 
-    send_dbus_signal(dbus,uid,that->signal_name,param);
+    send_dbus_signal(dbus,c,uid,that->signal_name,param);
     
     PyObject* future = new_future_object();
     responses().add(uid,future);
@@ -217,7 +354,7 @@ PythonTypeObject signal_objectType( [](PyTypeObject& clazz)
     clazz.tp_doc = "signal wrapper objects";
 });
 
-extern "C" PyObject* new_signal_object(const char* name)
+extern "C" PyObject* new_signal_object(const char* name, Channel* c)
 {
     signal_object* self = py_alloc<signal_object>(&signal_objectType);
 
@@ -225,11 +362,60 @@ extern "C" PyObject* new_signal_object(const char* name)
     pyobj_ref tuple = ptuple(signal.ref());
 
     signal_object_init(self,tuple,NULL);
+
+    self->channel = c;
+
     return (PyObject*)self;
 }
 
 /////////////////////
-// WebView object is a helper to invoke bound JS functions
+// WebViewCtrl object is a helper to invoke a signal 
+
+typedef struct {
+    PyObject_HEAD
+    Channel* channel;
+} webviewctrl_object;
+
+static int webviewctrl_object_init(webviewctrl_object *self, PyObject *args, PyObject *kwds)
+{
+    return 0;
+}
+
+static void webviewctrl_object_dealloc(webviewctrl_object* self)
+{
+   py_dealloc(self);
+}
+
+static PyObject * webviewctrl_object_getattr(webviewctrl_object* self, char* name)
+{
+    g_print (PROG " webviewctrl_object_getattr %s %i\n", name, (void*)self->channel);
+
+    return new_signal_object(name,self->channel);
+}
+
+PythonTypeObject webviewctrl_objectType( [](PyTypeObject& clazz)
+{
+    clazz.tp_name = "WebKitDBus.WebViewCtrl";
+    clazz.tp_basicsize = sizeof(webviewctrl_object);
+    clazz.tp_init = (initproc)webviewctrl_object_init;
+    clazz.tp_dealloc = (destructor)webviewctrl_object_dealloc;
+    clazz.tp_getattr = (getattrfunc)webviewctrl_object_getattr;
+    clazz.tp_doc = "webview ctrl object";
+});
+
+extern "C" PyObject* new_webviewctrl_object(Channel* channel)
+{
+    g_print (PROG " new_webviewctrl_object  %i\n",  (void*)channel);
+
+    webviewctrl_object* self = py_alloc<webviewctrl_object>(&webviewctrl_objectType);
+
+    self->channel = channel;
+
+    return (PyObject*)self;
+}
+
+/////////////////////
+// WebView object is a helper to wrap a webview 
 
 typedef struct {
     PyObject_HEAD
@@ -245,9 +431,28 @@ static void webview_object_dealloc(webview_object* self)
    py_dealloc(self);
 }
 
-static PyObject * webview_object_getattr(webview_object* self, char* name)
+
+static PyObject* webview_object_call(PyObject* self, PyObject* args, PyObject* kargs)
 {
-    return new_signal_object(name);
+    webview_object* that = (webview_object*)self;
+
+    pyobj arguments(args);
+    if(arguments.length()<1)
+    {
+        PyErr_SetString(PyExc_RuntimeError,"webview_object_call excpets a single webview param");
+        return NULL;
+    }
+
+    pyobj_ref web = arguments.item(0);
+    pyobj_ref uid = pyobj(web).attr("uid");
+
+    g_print (PROG " webview_object_call uid: %s\n", pyobj(uid).str() );
+
+    Channel* channel = channels()[pyobj(uid).str()];
+
+    g_print (PROG " webview_object_call %i\n", (void*)channel);
+
+    return new_webviewctrl_object(channel);
 }
 
 PythonTypeObject webview_objectType( [](PyTypeObject& clazz)
@@ -256,7 +461,7 @@ PythonTypeObject webview_objectType( [](PyTypeObject& clazz)
     clazz.tp_basicsize = sizeof(webview_object);
     clazz.tp_init = (initproc)webview_object_init;
     clazz.tp_dealloc = (destructor)webview_object_dealloc;
-    clazz.tp_getattr = (getattrfunc)webview_object_getattr;
+    clazz.tp_call = (ternaryfunc)webview_object_call;    
     clazz.tp_doc = "webview object";
 });
 
@@ -266,6 +471,7 @@ extern "C" PyObject* new_webview_object()
 
     return (PyObject*)self;
 }
+
 ///////////////////////////////////
 
 static void response_handler(GDBusConnection *connection,
@@ -276,6 +482,8 @@ static void response_handler(GDBusConnection *connection,
                         GVariant *parameters,
                         gpointer user_data)
 {
+    Channel* channel = (Channel*)user_data;
+
     //g_print (PROG " received response %s %s\n", signal_name, g_variant_get_type_string (parameters));
 
     PyGlobalInterpreterLock lock;
@@ -341,9 +549,6 @@ static void response_handler(GDBusConnection *connection,
 
 ///////////////////////////////////
 
-extern PyTypeObject future_objectType;
-extern PyTypeObject task_objectType;
-static PyObject* pywebkit_run_async(PyObject* self, PyObject* args);
 
 static void signal_handler(GDBusConnection *connection,
                         const gchar *sender_name,
@@ -354,6 +559,8 @@ static void signal_handler(GDBusConnection *connection,
                         gpointer user_data)
 {
     //g_print (PROG " received signal %s %s\n", signal_name, g_variant_get_type_string (parameters));
+
+    Channel* channel = (Channel*)user_data;
 
     PyGlobalInterpreterLock lock;
 
@@ -375,8 +582,11 @@ static void signal_handler(GDBusConnection *connection,
     //result = pyobj(cb).invoke_with_tuple(signal_name, args);
 
 //    pyobj_ref bound = pyobj(module).attr("callback");
-    pyobj_ref bound = pyobj(PyModule_GetDict(module)).member("callback");
-    result = pyobj(bound).invoke_with_tuple(signal_name, args);
+
+//todo callback from channel
+//    pyobj_ref bound = pyobj(PyModule_GetDict(module)).member("callback");
+
+    result = pyobj(channel->bound).invoke_with_tuple(signal_name, args);
 
     if(!py_error())
     {
@@ -388,7 +598,7 @@ static void signal_handler(GDBusConnection *connection,
     {
         PyError err;
         pyobj_ref msg = PyObject_Str(err.pvalue);
-        send_dbus_response(dbus,guid.str(),NULL,pyobj(msg).str() );
+        send_dbus_response(dbus,channel,guid.str(),NULL,pyobj(msg).str() );
 
     }
     else
@@ -396,7 +606,7 @@ static void signal_handler(GDBusConnection *connection,
     {
         if( (Py_TYPE(result) == &future_objectType) || (Py_TYPE(result) == &task_objectType) )
         {
-            pyobj_ref handler = new_responseCB_object(guid.str());
+            pyobj_ref handler = new_responseCB_object(guid.str(),channel);
             pyobj_ref ret = pyobj(result).invoke("add_done_callback", handler.ref() );
 
             if(PyErr_Occurred())
@@ -406,7 +616,7 @@ static void signal_handler(GDBusConnection *connection,
         }
         else
         {
-             send_dbus_response(dbus,guid.str(),result);
+             send_dbus_response(dbus,channel,guid.str(),result);
         }
     }
 }
@@ -415,35 +625,11 @@ static void got_dbus (GObject *source_object, GAsyncResult *res, gpointer user_d
 {
     dbus =  g_bus_get_finish (res, NULL);    
 
-    sid = g_dbus_connection_signal_subscribe (
-        dbus, 
-        /*sender*/ NULL, 
-         dbus_interface.c_str(),
-        /*const gchar *member*/ NULL,
-        dbus_object_path_recv_req_path.c_str(),
-        NULL,
-        G_DBUS_SIGNAL_FLAGS_NONE,
-        &signal_handler,
-        NULL,
-        NULL
-    );    
-
-    rsid = g_dbus_connection_signal_subscribe (
-        dbus, 
-        /*sender*/ NULL, 
-         dbus_interface.c_str(),
-        /*const gchar *member*/ NULL,
-        dbus_object_path_recv_res_path.c_str(),
-        NULL,
-        G_DBUS_SIGNAL_FLAGS_NONE,
-        &response_handler,
-        NULL,
-        NULL
-    );    
+ 
 
 }
 
-static void send_dbus_response( GDBusConnection* dbus, const gchar* uid,  PyObject* val, const char* ex )
+static void send_dbus_response( GDBusConnection* dbus, Channel* channel, const gchar* uid,  PyObject* val, const char* ex )
 {
     pyobj value(val);
 
@@ -476,7 +662,7 @@ static void send_dbus_response( GDBusConnection* dbus, const gchar* uid,  PyObje
     g_dbus_connection_emit_signal(
         dbus,
         NULL,
-        dbus_object_path_send_res_path.c_str(),
+        channel->dbus_object_path_send_res_path.c_str(),
         dbus_interface.c_str(),
         "response",
         parameters,
@@ -484,7 +670,7 @@ static void send_dbus_response( GDBusConnection* dbus, const gchar* uid,  PyObje
     );
 }
 
-static void send_dbus_signal( GDBusConnection* dbus, gchar* uid, std::string s, GVariant*  params)
+static void send_dbus_signal( GDBusConnection* dbus, Channel* channel, gchar* uid, std::string s, GVariant*  params)
 {
     gvar_builder builder = gtuple();
     builder.add(g_variant_new_string(uid));
@@ -497,7 +683,7 @@ static void send_dbus_signal( GDBusConnection* dbus, gchar* uid, std::string s, 
     g_dbus_connection_emit_signal(
         dbus,
         NULL,
-        dbus_object_path_send_req_path.c_str(),
+        channel->dbus_object_path_send_req_path.c_str(),
         dbus_interface.c_str(),
         s.c_str(),
         parameters,
@@ -505,39 +691,7 @@ static void send_dbus_signal( GDBusConnection* dbus, gchar* uid, std::string s, 
     );
 }
 
-static PyObject* pywebkit_send_signal(PyObject* self, PyObject* args)
-{
-    int len = pyobj(args).length();
 
-    if(len<1)
-    {
-        PyErr_SetString(PyExc_RuntimeError, "less than one arg for call to send_signal!");
-        return NULL;
-    }
-    
-    pyobj_ref signal = pyobj(args).item(0);
-    const char* signal_name = PyUnicode_AsUTF8(signal);
-
-    pyobj_ref tuple = PyTuple_New(len-1);
-    for( int i = 1; i < len; i++)
-    {
-        pyobj(tuple).item(i-1,pyobj(args).item(i));
-    }
-
-    std::string json = to_json(tuple);
-    GVariant* param = g_variant_new_string(json.c_str());
-    
-    gchar* uid = g_dbus_generate_guid();
-
-    send_dbus_signal(dbus,uid,signal_name,param);
-
-    PyObject* future = new_future_object();
-
-    responses().add(uid,future);
-
-    g_free(uid);
-    return future;
-}
 
 static PyObject* pywebkit_bind(PyObject* self, PyObject* args)
 {
@@ -545,22 +699,32 @@ static PyObject* pywebkit_bind(PyObject* self, PyObject* args)
 
     //g_print (PROG "on signal \n");
 
-    if(len<1)
+    if(len<2)
     {
-        PyErr_SetString(PyExc_RuntimeError, "less than one args for call to on_signal!");
+        PyErr_SetString(PyExc_RuntimeError, "less than two args for call to on_signal!");
         return NULL;
     }
 
 //    cb = pyobj(args).item(0);
 
     //pyobj(module).attr("callback",pyobj(args).item(0));
+    //pyobj_ref web = pyobj(args).item(0);
+    //pyobj_ref ctrl = pyobj(args).item(1);
+    pyobj_ref uid = pyobj(args).item(0);
+    pyobj_ref ctrl = pyobj(args).item(1);
+    
+     g_print (PROG "pywebkit_bind: %s %i.\n", pyobj(uid).str(), (void*)ctrl.ref());
 
-    pyobj(PyModule_GetDict(module)).member("callback", pyobj(args).item(0) );
+//    pyobj_ref uid = pyobj(web).attr("uid");
+
+    Channel* channel = new Channel( pyobj(uid).str(), ctrl );
+
+    channels().insert( std::make_pair( pyobj(uid).str(), channel ));
+//    pyobj(PyModule_GetDict(module)).member("callback", pyobj(args).item(0) );
 
     Py_RETURN_NONE;
 }
 
-extern "C" PyObject* new_task_object(PyObject* coro);
 
 struct run_async_cb_struct 
 {
@@ -620,7 +784,6 @@ static PyObject* pywebkit_run_async(PyObject* self, PyObject* args)
 }
 
 static PyMethodDef pywebkit_module_methods[] = {
-    {"send_signal",  pywebkit_send_signal, METH_VARARGS, "Send a signal to webview child process via dbus."},
     {"bind",  pywebkit_bind, METH_VARARGS, "register listening for signal via dbus."},
     {"run_async",  pywebkit_run_async, METH_VARARGS, "run a coroutine."},
     {NULL}  /* Sentinel */
@@ -655,13 +818,18 @@ PyMODINIT_FUNC PyInit_WebKitDBus(void)
     if (PyType_Ready(&responseCB_objectType) < 0)
         return 0;    
 
+    if (PyType_Ready(&webviewctrl_objectType) < 0)
+        return 0;    
+
+/*
     // generate guid
     gchar* c = g_dbus_generate_guid();
     sid = std::string(c);
     g_free(c);
-
+*/
     // assemble module config
-    std::ostringstream oss_send;
+
+/*    std::ostringstream oss_send;
     oss_send << dbus_object_path_send_req_prefix << sid;
     dbus_object_path_send_req_path = oss_send.str();
 
@@ -680,14 +848,16 @@ PyMODINIT_FUNC PyInit_WebKitDBus(void)
     g_print (PROG "Interface; %s.\n", dbus_interface.c_str());
     g_print (PROG "Send; %s.\n", dbus_object_path_send_req_path.c_str());
     g_print (PROG "Recv; %s.\n", dbus_object_path_recv_req_path.c_str());
-
+*/
     // acquire dbus session
-    g_bus_get(G_BUS_TYPE_SESSION, NULL, &got_dbus,NULL);
+    //g_bus_get(G_BUS_TYPE_SESSION, NULL, &got_dbus,NULL);
+
+    dbus = g_bus_get_sync( G_BUS_TYPE_SESSION, NULL, NULL);
 
     // create and populate module
     pyobj_ref m = PyModule_Create(&moduledef);
 
-    pyobj(m).addString( "uid", sid.c_str());
+    //pyobj(m).addString( "uid", sid.c_str());
 
     pyobj(m).addObject("SignalObject", &signal_objectType);
     pyobj(m).addObject("WebView", &webview_objectType);

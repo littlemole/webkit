@@ -9,15 +9,43 @@ from gi.repository import Gtk
 import pygtk.WebKitDBus as WebKitDBus
 import functools
 
-def bind(clazz):
+uis = []
+webs = []
 
-    @functools.wraps(clazz)
-    def wrapper(*args,**kargs):
-        obj = clazz(*args,**kargs)
-        WebKitDBus.bind(obj)
-        return obj
+def bind(*args,**kargs):
+    
+    ui = False
+#    if 'ui' in kargs:
+
+#        ui = True
+
+    web = False
+#    if 'web' in kargs:
+
+ #       web = True
+    for arg in args:
+        if arg is UI:
+            ui = True
+        if arg is WebKitDBus:
+            web = True
+
+    def wrapper(clazz):
+
+        def wrap(*args,**kargs):
+
+            obj = clazz(*args,*kargs)
+
+            if not ui is None:
+                uis.append(obj)
+
+            if not web is None:
+                WebKitDBus.callback = obj
+
+            return obj 
+        return wrap
 
     return wrapper
+
 
 def synced(func):
 
@@ -30,10 +58,12 @@ def synced(func):
         return r
     return wrapper
 
+
 class UI(object):
 
-    def __init__(self,builder):
-        self.builder = builder
+    def __init__(self,xml):
+        self.builder = Gtk.Builder()
+        self.builder.add_from_file(xml)
 
 
     def __getitem__(self,key):
@@ -41,7 +71,17 @@ class UI(object):
 
 
     def show(self,mainWindow):
+        for ui in uis:
+            self.bind(ui)
+
+#        for web in webs:
+#            WebKitDBus.bind(WebKitDBus.callback,web)
+
         self.builder.get_object(mainWindow).show_all()
+
+
+    def bind(self,controller):
+        self.builder.connect_signals(controller)
 
 
     def showFileDialog(self,action,title):
@@ -72,6 +112,7 @@ class UI(object):
         dlg.destroy()
         return result
 
+
 def ui(*args,**kargs):
 
     def wrapper(clazz):
@@ -82,8 +123,14 @@ def ui(*args,**kargs):
         @functools.wraps(clazz)
         def wrap(*args,**kargs):
 
-            controller = clazz( UI(builder),*args,**kargs)
+            controller = object.__new__(clazz, *args, **kargs)
+
+            WebKitDBus.callback = controller
+
+            controller.__init__( UI(builder), *args, **kargs)
+
             builder.connect_signals(controller)
+
             return controller
 
         return wrap

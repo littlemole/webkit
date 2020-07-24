@@ -7,42 +7,33 @@ gi.require_versions({
 })
 
 from gi.repository import Gtk, Pywebkit
-from pygtk.bind import bind,synced,ui
+from pygtk.bind import bind,synced,UI
 import pygtk.WebKitDBus as WebKitDBus
 
 
-@bind
-@ui(xml="markdown.ui.xml")
+#@bind
+#@ui(xml="markdown.ui.xml")
+#@bind(ui=ui)
+#@bind(ui=UI)
+#@bind(web=Pywebkit)
+@bind(UI,WebKitDBus)
 class Controller(object):
-
-    def __init__(self,ui):
-
-        # create html widget
-        web = Pywebkit.Webview() 
-        web.connect("context-menu", self.onContext )
-        web.load_local_uri("markdown.html")
-        self.web = web
-
-        ui["scrollWindow"].add(web)
-        ui.show("mainWindow")
-        self.gui = ui
-
 
     def onFileOpen(self,*args):
 
-        response = self.gui.showFileDialog(Gtk.FileChooserAction.OPEN,"Please choose a markdown file")
+        response = ui.showFileDialog(Gtk.FileChooserAction.OPEN,"Please choose a markdown file")
 
         if not response is None:
             
             txt = Path(response).read_text()
-            WebKitDBus.WebView.onFileLoaded(txt)
+            WebKitDBus.WebView(web).onFileLoaded(txt)
 
 
 
     @synced
     async def saveFile(self,fn):
 
-        txt = await WebKitDBus.WebView.onSaveFile()
+        txt = await WebKitDBus.WebView(web).onSaveFile()
 
         with open(fn, "w") as file:
             print(txt, file=file)
@@ -50,7 +41,7 @@ class Controller(object):
 
     def onFileSave(self,*args):
 
-        response = self.gui.showFileDialog(Gtk.FileChooserAction.SAVE,"Please choose a markdown file to save to")
+        response = ui.showFileDialog(Gtk.FileChooserAction.SAVE,"Please choose a markdown file to save to")
 
         if not response is None:
             self.saveFile(response)
@@ -58,7 +49,7 @@ class Controller(object):
 
     def onContext(self,web,menue,event,hit,*args):
 
-        m = self.gui["ActionSubMenu"]
+        m = ui["ActionSubMenu"]
         Gtk.Menu.popup_at_pointer(m,event) 
         return True
 
@@ -67,6 +58,21 @@ class Controller(object):
 
 #create controller
 controller = Controller()        
+
+ui = UI("markdown.ui.xml")
+
+# create html widget
+web = Pywebkit.Webview() 
+web.connect("context-menu", controller.onContext )
+web.load_local_uri("markdown.html")
+
+ui["scrollWindow"].add(web)
+
+#WebKitDBus.bind(web.uid,controller)
+#ui.bind(controller)
+
+#show main window
+ui.show("mainWindow")
 
 # start the GUI event main loop
 Gtk.main()
