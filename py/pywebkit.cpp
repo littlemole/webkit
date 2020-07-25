@@ -878,6 +878,9 @@ PyMODINIT_FUNC PyInit_WebKitDBus(void)
     PyImport_Import(json);
 
     module = m;
+
+    g_print(PROG "PyInit_WebKitDBus ++++++++++++++++++++++++\n");
+
     return m.incr();
 }
 

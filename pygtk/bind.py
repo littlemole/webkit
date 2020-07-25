@@ -10,19 +10,12 @@ import pygtk.WebKitDBus as WebKitDBus
 import functools
 
 uis = []
-webs = []
 
 def bind(*args,**kargs):
     
     ui = False
-#    if 'ui' in kargs:
-
-#        ui = True
-
     web = False
-#    if 'web' in kargs:
 
- #       web = True
     for arg in args:
         if arg is UI:
             ui = True
@@ -64,7 +57,7 @@ class UI(object):
     def __init__(self,xml):
         self.builder = Gtk.Builder()
         self.builder.add_from_file(xml)
-
+        self.main = None
 
     def __getitem__(self,key):
         return self.builder.get_object(key)
@@ -74,10 +67,8 @@ class UI(object):
         for ui in uis:
             self.bind(ui)
 
-#        for web in webs:
-#            WebKitDBus.bind(WebKitDBus.callback,web)
-
-        self.builder.get_object(mainWindow).show_all()
+        self.main = self.builder.get_object(mainWindow)
+        self.main.show_all()
 
 
     def bind(self,controller):
@@ -90,7 +81,7 @@ class UI(object):
 
         dlg = Gtk.FileChooserDialog(
             title = title,
-            parent = self.builder.get_object("mainWindow"),
+            parent = self.main,
             action = action,
             buttons =
             (
@@ -113,26 +104,21 @@ class UI(object):
         return result
 
 
-def ui(*args,**kargs):
+    def alert(self,msg,**kargs):
 
-    def wrapper(clazz):
+        if not "buttons" in kargs:
+            kargs["buttons"] = Gtk.ButtonsType.OK
 
-        builder = Gtk.Builder()
-        builder.add_from_file(kargs["xml"])
+        messagedialog = Gtk.MessageDialog( self.main, message_format=msg, **kargs )
+        messagedialog.set_default_response(Gtk.ButtonsType.OK)
+        response = messagedialog.run()
+        messagedialog.hide()
+        return response
 
-        @functools.wraps(clazz)
-        def wrap(*args,**kargs):
+#messagedialog = Gtk.MessageDialog(None,
+#    flags=Gtk.DialogFlags.MODAL,
+#    type=Gtk.MessageType.WARNING,
+#    buttons=Gtk.ButtonsType.OK_CANCEL,
+#    message_format="This action will cause the universe to stop existing.")
 
-            controller = object.__new__(clazz, *args, **kargs)
 
-            WebKitDBus.callback = controller
-
-            controller.__init__( UI(builder), *args, **kargs)
-
-            builder.connect_signals(controller)
-
-            return controller
-
-        return wrap
-
-    return wrapper

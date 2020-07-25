@@ -6,16 +6,28 @@ gi.require_versions({
     'Pywebkit': '0.1'
 })
 
+#import json
 from gi.repository import Gtk, Pywebkit
 from pygtk.bind import bind,synced,UI
 import pygtk.WebKitDBus as WebKitDBus
+from gi.repository.Pywebkit import Webview #as Webview
+
+#d = WebKitDBus
+#w = Pywebkit.Webview
+
+#messagedialog = Gtk.MessageDialog(None,
+#    flags=Gtk.DialogFlags.MODAL,
+#    type=Gtk.MessageType.WARNING,
+#    buttons=Gtk.ButtonsType.OK_CANCEL,
+#    message_format="This action will cause the universe to stop existing.")
+
+# connect the response (of the button clicked) to the function
+# dialog_response()
+#messagedialog.connect("response", self.dialog_response)
+# show the messagedialog
+#messagedialog.run()
 
 
-#@bind
-#@ui(xml="markdown.ui.xml")
-#@bind(ui=ui)
-#@bind(ui=UI)
-#@bind(web=Pywebkit)
 @bind(UI,WebKitDBus)
 class Controller(object):
 
@@ -59,20 +71,25 @@ class Controller(object):
 #create controller
 controller = Controller()        
 
-ui = UI("markdown.ui.xml")
+#d = WebKitDBus
+#w = Pywebkit.Webview
 
+ui = UI("markdown.ui.xml")
 # create html widget
-web = Pywebkit.Webview() 
+#web = Pywebkit.Webview() 
+web = ui["web"]
 web.connect("context-menu", controller.onContext )
 web.load_local_uri("markdown.html")
 
-ui["scrollWindow"].add(web)
+#ui["scrollWindow"].add(web)
 
 #WebKitDBus.bind(web.uid,controller)
 #ui.bind(controller)
 
 #show main window
 ui.show("mainWindow")
+
+ui.alert("Hello World")#,buttons=Gtk.ButtonsType.OK)
 
 # start the GUI event main loop
 Gtk.main()
