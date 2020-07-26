@@ -46,7 +46,8 @@ def synced(*args,**kargs):
     if "result" in kargs:
         result = kargs["result"]
 
-    def wrapper(func):
+    def wrapper(func,*args):
+        print("###################"+str(args))
         @functools.wraps(func)
         def wrap(*args,**kargs):
             r = func(*args,**kargs)

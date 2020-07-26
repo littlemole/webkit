@@ -14,6 +14,7 @@ from pygtk.worker import Worker
 from pygtk.worker import background
 from pygtk.bind import bind
 from pygtk.bind import synced
+from pygtk.menumaker import MenuMaker
 
 
 @background       
@@ -48,8 +49,6 @@ def request_task(msg,host,port):
     return response
 
 
-
-#@bind
 class Controller(object):
 
     async def sendRequest(self,req):
@@ -70,21 +69,17 @@ class Controller(object):
         r = await request_task(msg,host,port) #run_in_background(request_task,msg,host,port)
         return r
 
-    @synced
+    @synced()
     async def onRequest(self,*args):
 
         r = await WebKit.JavaScript(web).onSubmit()
         print(r)
 
-
-    @synced
-    async def onExit(self,*args):
+    def onExit(self,*args):
         Gtk.main_quit()
 
-# global main.controller accessed from javascript
+# create controller
 controller = Controller()        
-pprint.pprint(controller)
-#WebKitDBus.callback = controller
 
 # create html widget
 web = Pywebkit.Webview() 
@@ -94,24 +89,32 @@ web.load_uri(url)
 WebKit.bind(web,controller)
 
 # make resizable
-#scrolledwindow = Gtk.ScrolledWindow()
-#scrolledwindow.add(web)
+scrolledwindow = Gtk.ScrolledWindow()
+scrolledwindow.add(web)
+
+# main menu
+menu = {
+    "Action" : [
+        ["Execute", controller.onRequest],
+        ["Quit", controller.onExit]
+    ]
+}
+
+menubar = Gtk.MenuBar()
+mm = MenuMaker(menu)
+mm.populate(menubar)
+
+vbox = Gtk.VBox(False, 2)
+vbox.pack_start(menubar, False, False, 0)
+vbox.add(scrolledwindow)
 
 # main window
-#win = Gtk.Window()     
-#win.set_default_size(550, 350)   
-#win.add(scrolledwindow)
-#win.connect("delete-event", Gtk.main_quit)
-#win.show_all()
+win = Gtk.Window()     
+win.set_default_size(550, 350)   
+win.add(vbox)
+win.connect("delete-event", controller.onExit)
+win.show_all()
 
-builder = Gtk.Builder()
-builder.add_from_file("curl.ui.xml")
-builder.connect_signals(controller)
-
-scrollWindow = builder.get_object("scrollWindow")
-scrollWindow.add(web)
-
-win = builder.get_object("mainWindow")
 win.show_all()
 
 # start the GUI event main loop

@@ -6,22 +6,13 @@ gi.require_versions({
 
 from gi.repository import Gtk, Pywebkit
 
-import os
-import socket
-import threading
-import pprint
-import sys
-import json
+import os,sys,socket,json,threading,pprint
 
-#import WebKitDBus
-from gi.repository.Pywebkit import Webview #as Webview
+from gi.repository.Pywebkit import Webview 
 import pygtk.WebKit as WebKit
-from pygtk.bind import bind
-from pygtk.bind import synced
+import pygtk.WebKit as WebKit
+from pygtk.bind import bind,synced
 from pygtk.menumaker import MenuMaker
-import pygtk.WebKit as WebKit
-
-#mainmenu = None
 
 
 def onDone(f):
@@ -81,14 +72,14 @@ class Controller(object):
 
         dlg.destroy()
 
-    @synced
+    @synced()
     async def onActivate(self,event):
         print ("ACtiVE ")
         try :
             #print(event.action_target_value)
             print("\n")
             r = await WebKit.JavaScript(web).setFilename("partytime")
-            print("###############" + str(r))
+            print("###############+++" + str(r))
         except BaseException as ex:
             print("1111111111ex!!!!!!!!!!!")
             print(str(ex))
@@ -105,10 +96,9 @@ class Controller(object):
         web.load_uri(url)        
 
     def onContext(self,web,menue,event,hit,*args):
-        #pprint.pprint(args)
         print("OnContext")
-        #Gtk.Menu.popup_at_pointer(mm.menu("File"),event)    
-        mainmenu.popup("File",event)
+        m = builder.get_object("ActionSubMenu")
+        Gtk.Menu.popup_at_pointer(m,event)    
         return True
 
     def onExit(self,*args):

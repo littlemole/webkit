@@ -38,8 +38,7 @@ class Controller(object):
         WebKit.JavaScript(web).setMarkup(txt)
 
 
-    @synced(result=False)
-    async def saveFile(self,fn):
+    def saveFile(self,fn):
 
         txt = self.getText()
 
@@ -63,6 +62,7 @@ class Controller(object):
 
     def onExit(self,*args):
         Gtk.main_quit()
+
 
 #create controller
 controller = Controller()        
