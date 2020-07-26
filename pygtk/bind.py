@@ -40,17 +40,22 @@ def bind(*args,**kargs):
     return wrapper
 
 
-def synced(func):
+def synced(*args,**kargs):
 
-    @functools.wraps(func)
-    def wrapper(*args,**kargs):
-        r = func(*args,**kargs)
-        WebKit.run_async(r)
-        if isinstance(r,WebKit.Future) or isinstance(r,WebKit.Task):
-            return False
-        return r
+    result = None
+    if "result" in kargs:
+        result = kargs["result"]
+
+    def wrapper(func):
+        @functools.wraps(func)
+        def wrap(*args,**kargs):
+            r = func(*args,**kargs)
+            WebKit.run_async(r)
+            if isinstance(r,WebKit.Future) or isinstance(r,WebKit.Task):
+                return result
+            return r
+        return wrap
     return wrapper
-
 
 class UI(object):
 
