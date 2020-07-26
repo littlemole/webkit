@@ -69,43 +69,34 @@ static JSValueRef Signal_callAsFunctionCallback(
     jsctx js(ctx);
     jsobj fun(ctx,function);
 
+    gchar* uid = g_dbus_generate_guid();
     gchar* signal_name = (gchar*)fun.private_data();
 
     //g_print (PROG " send_signal cf: %s \n", signal_name);
 
-    std::vector<JSValueRef> args;
-    for( size_t i = 0; i < argumentCount; i++)
-    {
-        args.push_back(arguments[i]);
-    }
+    jsobj obj = js.object();
 
-    jsobj arr = js.array(args);
+    obj.set("request", js.string(uid) );
+    obj.set("method", js.string(signal_name) );
+ 
+    jsobj arr = js.array(argumentCount,arguments);
+    obj.set("parameters", arr.ref() );    
 
-    std::string json = to_json(ctx,arr.ref());
+    std::string json = to_json(ctx,obj.ref());
 
-    GVariant* param = g_variant_new_string(json.c_str());
-
-    gchar* uid = g_dbus_generate_guid();
-
-    gvar_builder tuple = gtuple();
-
-    tuple.add(g_variant_new_string(uid));
-    tuple.add(param);
-
-    GVariant* parameters = tuple.build();
+    GVariant* params = g_variant_new_string(json.c_str());
 
     //g_print (PROG "send_signal cf: %s %s\n", signal_name, g_variant_get_type_string (parameters));
 
-    g_dbus_connection_emit_signal(
-        dbuscon,
+    WebKitUserMessage* msg = webkit_user_message_new( "request", params);
+
+    webkit_web_page_send_message_to_view(
+        thePage,
+        msg,
         NULL,
-        dbus_object_path_send_req_path.c_str(),
-        dbus_interface.c_str(),
-        signal_name,
-        parameters,
+        NULL,
         NULL
     );    
-
 
     JSObjectRef resolve = 0;
     JSObjectRef reject = 0;

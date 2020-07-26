@@ -64,7 +64,7 @@ document.addEventListener("DOMContentLoaded", function(e)
             };
             form.response.value = "";
             //window.send_signal("HelloSignal","ragnaröck");
-            var response = await WebKit.Host.sendRequest(request);
+            var response = await WebKit.Python.sendRequest(request);
         //    .then(function(response){ document.theForm.response.value = String(response); })
             document.theForm.response.value = String(response);
             return false;

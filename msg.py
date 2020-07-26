@@ -14,10 +14,12 @@ import sys
 import json
 
 #import WebKitDBus
-from pygtk.menumaker import MenuMaker
-import pygtk.WebKitDBus as WebKitDBus
+from gi.repository.Pywebkit import Webview #as Webview
+import pygtk.WebKit as WebKit
 from pygtk.bind import bind
 from pygtk.bind import synced
+from pygtk.menumaker import MenuMaker
+import pygtk.WebKit as WebKit
 
 #mainmenu = None
 
@@ -71,7 +73,7 @@ class Controller(object):
         try:
             if ( response == Gtk.ButtonsType.OK) :
                 print("################# dlg closed" + str(response))
-                f = WebKitDBus.WebView.setFilename(dlg.get_filename())
+                f = WebKit.JavaScript(web).setFilename(dlg.get_filename())
                 print("################# set done cb")
                 f.add_done_callback( onDone )
         except BaseException as ex:
@@ -85,7 +87,7 @@ class Controller(object):
         try :
             #print(event.action_target_value)
             print("\n")
-            r = await WebKitDBus.WebView.setFilename("partytime")
+            r = await WebKit.JavaScript(web).setFilename("partytime")
             print("###############" + str(r))
         except BaseException as ex:
             print("1111111111ex!!!!!!!!!!!")
@@ -114,7 +116,6 @@ class Controller(object):
 
 # instantiate controller and bind signals
 controller = Controller()        
-WebKitDBus.bind(controller)
 
 # create html widget
 # this is similar to Gtk.WebView
@@ -124,6 +125,7 @@ url = "file://" + os.path.dirname(os.path.realpath(__file__)) + "/signal.html"
 web.load_uri(url)
 print(web.uid)
 
+WebKit.bind(web,controller)
 
 # from here on just standard python gtk
 builder = Gtk.Builder()

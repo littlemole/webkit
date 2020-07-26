@@ -550,6 +550,16 @@ public:
         return JSValueIsArray(context_,value_);
     }
 
+    std::vector<JSValueRef> vector()
+    {
+        std::vector<JSValueRef> v;
+        for( int i = 0; i < length(); i++)
+        {
+            v.push_back(item(i).ref());
+        }
+        return v;
+    }
+
     void for_each( std::function<void(int index, jsval&)> fun)
     {
         int len = length();
@@ -630,6 +640,13 @@ public:
         JSValueRef ex = 0;
         return jsobj(context_,JSObjectMakeArray(context_, v.size(), &v[0], &ex));        
     }
+
+    jsobj array( size_t argumentCount, const JSValueRef arguments[] )
+    {
+        JSValueRef ex = 0;
+        return jsobj(context_,JSObjectMakeArray(context_, argumentCount, arguments, &ex));        
+    }
+
 
     jsobj object()
     {

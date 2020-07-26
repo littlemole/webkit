@@ -2,28 +2,26 @@
 #ifndef __MO_WEBKIT_JS_WEBKIT_EXT_COMMON_H__
 #define __MO_WEBKIT_JS_WEBKIT_EXT_COMMON_H__
 
-#include <stdlib.h>
-#include <string.h>
-#include <webkit2/webkit-web-extension.h>
-#include <glib.h>
 #include <string>
 #include <vector>
-#include <map>
-#include <gio/gio.h>
 #include <memory>
 #include <sstream>
+#include <map>
+#include <glib.h>
+#include <gio/gio.h>
+#include <webkit2/webkit-web-extension.h>
+
 #include "gvglue.h"
 #include "jsglue.h"
 
 #define PROG "[web_extension.so]"
 
-//extern const JSClassDefinition ResponseCallback_class_def;
-//extern const JSClassDefinition Signal_class_def;
-//extern const JSClassDefinition Controller_class_def;
-
 extern const jsclassdef ResponseCallback_class_def;
 extern const jsclassdef Signal_class_def;
 extern const jsclassdef Controller_class_def;
+
+void response_handler(GVariant* message);
+void signal_handler(GVariant* message);
 
 void send_response(
     const gchar* uid,
@@ -31,25 +29,6 @@ void send_response(
     const JSValueRef value,
     const JSValueRef ex = NULL
 ); 
-
-void got_dbus (
-    GObject *source_object,
-    GAsyncResult *res,
-    gpointer user_data
-    );
-
-extern std::string sid;
-extern std::string rsid;
-
-extern const std::string dbus_interface;
-
-extern std::string dbus_object_path_send_req_path;
-extern std::string dbus_object_path_recv_req_path; 
-
-extern std::string dbus_object_path_send_res_path;
-extern std::string dbus_object_path_recv_res_path; 
-
-extern GDBusConnection* dbuscon;
 
 ///////////////////////////////////////////////////
 
@@ -86,14 +65,12 @@ public:
     void add(const char* uid, ResponseData* p)
     {
         pending_.insert( std::make_pair(std::string(uid),p) );
-
         //g_print (PROG "responses add %s\n", uid );
     }
 
     ResponseData* get(const char* uid)
     {
         //g_print (PROG "responses get %s\n", uid );
-
         if ( pending_.count(std::string(uid)) == 0)
         {
             return 0;
@@ -114,23 +91,23 @@ inline Responses& responses()
     return r;
 }
 
-struct DBusCallback 
+struct BoundController 
 {
-    DBusCallback()
+    BoundController()
     {}
 
-    DBusCallback(jsobj& o)
+    BoundController(jsobj& o)
         : obj(o)
     {
         obj.protect();
     }
 
-    ~DBusCallback()
+    ~BoundController()
     {
         obj.unprotect();
     }
 
-    DBusCallback& operator=(const DBusCallback& rhs)
+    BoundController& operator=(const BoundController& rhs)
     {
         if( &rhs.obj == &this->obj) 
         {
@@ -152,7 +129,8 @@ struct DBusCallback
     jsobj obj;
 };
 
-extern DBusCallback theCallback;
+extern BoundController theCallback;
 
+extern WebKitWebPage* thePage;
 
 #endif

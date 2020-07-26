@@ -1,13 +1,10 @@
 #include "common.h"
 
-std::string sid;
-std::string rsid;
+BoundController theCallback;
 
-DBusCallback theCallback;
-
-GDBusConnection* dbuscon = 0;
 
 static GVariant* make_response(
+    const gchar* uid,
     JSContextRef ctx, 
     const JSValueRef value,
     const JSValueRef ex = NULL
@@ -19,6 +16,7 @@ static GVariant* make_response(
 
     jsobj obj = js.object();
 
+    obj.set("response", js.string(uid) );
     obj.set("result", js.undefined().ref() );
     obj.set("exception", js.undefined().ref() );
 
@@ -46,70 +44,38 @@ void send_response(
 {
     jsctx js(ctx);
 
-    //g_print (PROG " send_response: %s \n", uid);
+    g_print (PROG " send_response: %s \n", uid);
 
-    gvar_builder builder = gtuple();  
-
-    GVariant* guid = g_variant_new_string(uid);
-    builder.add(guid);
-
-    GVariant* data = make_response(ctx,value,ex);
-    builder.add(data);
-
-    GVariant* params = builder.build();
-   
+    GVariant* result = make_response(uid,ctx,value,ex);
     GError* gerror = 0;
 
-    int r = g_dbus_connection_emit_signal(
-        dbuscon,
-        NULL,
-        dbus_object_path_send_res_path.c_str(),
-        dbus_interface.c_str(),
-        "response",
-        params,
-        &gerror
-    );    
+    WebKitUserMessage* msg = webkit_user_message_new( "response", result);
 
-    if(!r && gerror)
-    {
-        g_print (PROG "send_response error %s\n",gerror->message);
-    }
-    else
-    {
-        // g_print (PROG "send_response sent %i\n",r);
-    }
+    webkit_web_page_send_message_to_view(
+        thePage,
+        msg,
+        NULL,
+        NULL,
+        NULL
+    );
 }
 
-static void response_handler(GDBusConnection *connection,
-                        const gchar *sender_name,
-                        const gchar *object_path,
-                        const gchar *interface_name,
-                        const gchar *signal_name,
-                        GVariant *parameters,
-                        gpointer user_data)
+
+void response_handler(GVariant* message)                        
 {
-    //g_print (PROG " received response %s %s\n", signal_name, g_variant_get_type_string (parameters));
+    g_print (PROG " received response  %s\n", g_variant_get_type_string (message));
 
     jsctx js(theCallback.obj.ctx());
 
-    gvar params(parameters);
-
-    int len = params.length();
-    if(len < 2)
-    {
-        g_print (PROG " received invalid response tuple %s %s\n", signal_name, g_variant_get_type_string (parameters));
-        return;
-    }
-
-    gvar uid = params.item(0);
-    gvar args = params.item(1);
-
-    std::string json = args.str();
-
+    // extract JSON
+    gvar msg(message);
+    std::string json = msg.str();
     jsobj dict = from_json(js.ctx(),json).obj();
 
+    // extract response params
     jsval result = js.undefined();
     jsval ex = js.undefined();
+    jsval uid = js.undefined();
 
     if ( dict.hasMember("result") )
     {
@@ -119,13 +85,20 @@ static void response_handler(GDBusConnection *connection,
     {
         ex = jsobj(dict).member("exception");
     }
+    if ( dict.hasMember("response") )
+    {
+        uid = dict.member("response");
+    }
 
-    ResponseData* response_data = responses().get( uid.str() );
+    // retrive Promise for this response
+    ResponseData* response_data = responses().get( uid.str().c_str() );
     if(!response_data)
     {
+        g_print (PROG "received invalid response uid not found %s\n", uid.str().c_str() );
         return;
     }
 
+    // call reject or response depending on response params
     std::vector<JSValueRef> v;
     if( !ex.isUndefined() && !ex.isNull() )
     {
@@ -145,135 +118,105 @@ static void response_handler(GDBusConnection *connection,
 ////////////////////////////////////////////////////////
 
 
-static void signal_handler(
-    GDBusConnection *connection,
-    const gchar *sender_name,
-    const gchar *object_path,
-    const gchar *interface_name,
-    const gchar *signal_name,
-    GVariant *parameters,
-    gpointer user_data
-    )
+void signal_handler(GVariant* message)
 {
     jsctx js(theCallback.obj.ctx());
 
-    gvar params(parameters);
+    // unpack json
+    gvar msg(message);
+    std::string json = msg.str();
+    jsobj dict = from_json(js.ctx(),json).obj();
 
-    if(!params.isTuple())
+    // extract data
+    jsval uid = js.undefined();
+    jsval method = js.undefined();
+    jsval params = js.undefined();
+
+    if ( dict.hasMember("request") )
     {
-        g_print (PROG "invalid signal params is not a tuple:  %s\n", signal_name);
+        uid = dict.member("request");
+    }
+    if ( dict.hasMember("method") )
+    {
+        method = jsobj(dict).member("method");
+    }
+    if ( dict.hasMember("parameters") )
+    {
+        params = dict.member("parameters");
+    }
+
+    // validate data
+    if(!uid.isValid() || uid.isNull() || uid.isUndefined() || uid.str().size() == 0 )
+    {
+        g_print (PROG "invalid signal without uid \n" );
         return;
     }
 
-    int len = params.length();
-
-    gvar uid = params.item(0);
-    //g_print (PROG "recevied signal with uid:  %s %s\n", signal_name,uid.str() );
-    
-    jsval arr;  
-
-    if(len>1)
+    if(!method.isValid() || method.isNull() || method.isUndefined() || method.str().size() == 0 )
     {
-        gvar args = params.item(1);
-        std::string json = args.str();
-
-        //g_print (PROG " JSON:  %s \n", json.c_str() );
-        arr = from_json(js.ctx(),json);
+        g_print (PROG "invalid signal without method \n" );
+        return;
     }
 
-    std::vector<JSValueRef> arguments;
-    for( int i = 0; i < arr.obj().length(); i++)
+    if(!params.isValid() || params.isNull() || params.isUndefined() )
     {
-        arguments.push_back(arr.obj().item(i).ref());
+        g_print (PROG "invalid signal without parameters \n" );
+        return;
     }
 
-    jsval member = theCallback.obj.member(signal_name);
+    // validate member of bound controller to call
+    jsval member = theCallback.obj.member(method.str());
 
     if(member.isUndefined())
     {
-        g_print (PROG "unknown signal %s\n", signal_name);
+        g_print (PROG "unknown signal %s\n", method.str() );
+        return;
     }
-    else 
+
+    jsobj fun = member.obj();
+
+    bool isFunction = fun.isFunction();
+    if(!isFunction)
     {
-        jsobj fun = member.obj();
+        g_print (PROG "signal %s is not a function \n", method.str());
+        return;
+    }
 
-        bool isFunction = fun.isFunction();
-        if(!isFunction)
+    // call the bound member function of controller
+    std::vector<JSValueRef> arguments = params.obj().vector();
+
+    jsval result = fun.invoke(arguments);
+
+    // check if result is a Promise
+    if(result.isObject())
+    {
+        jsobj r = result.obj();
+        if(r.hasMember("then"))
         {
-            g_print (PROG " error: %s is not a function \n", signal_name);
-        }
-        else 
-        {
-            jsval result = fun.invoke(arguments);
-            if(result.isObject())
-            {
-                jsobj r = result.obj();
-                if(r.hasMember("then"))
-                {
-                    ResponseCallbackData* data = new ResponseCallbackData{ uid.str(), false  };
-                    jsobj responseCB1 = js.object(ResponseCallback_class_def, data);
+            // prepare Promise reject and resolve handler
+            ResponseCallbackData* data = new ResponseCallbackData{ uid.str(), false  };
+            jsobj onSuccess = js.object(ResponseCallback_class_def, data);
 
-                    ResponseCallbackData* exData = new ResponseCallbackData{ uid.str(), true  };
-                    jsobj responseCB2 = js.object(ResponseCallback_class_def, exData);
-                    jsval member = r.member("then");
-                    jsobj then = member.obj();
+            ResponseCallbackData* exData = new ResponseCallbackData{ uid.str(), true  };
+            jsobj onException = js.object(ResponseCallback_class_def, exData);
 
+            // prepare call to promise.then()
+            jsval member = r.member("then");
+            jsobj then = member.obj();
 
-                    std::vector<JSValueRef> args;
-                    args.push_back(responseCB1.ref());
-                    args.push_back(responseCB2.ref());
+            std::vector<JSValueRef> args;
+            args.push_back(onSuccess.ref());
+            args.push_back(onException.ref());
 
-                    then.invoke(args,r.ref());
-                }
-                else
-                {
-                    send_response(uid.str(),theCallback.obj.ctx(),result.ref());
-                }
-            }
-            else
-            {
-                send_response(uid.str(),theCallback.obj.ctx(),result.ref());
-            }
+            // call promise.then( onSuccess, onException );
+            then.invoke(args,r.ref());
+            return;
         }
     }
+
+    // default return result
+    send_response(uid.str().c_str(),theCallback.obj.ctx(),result.ref());
 }
 
 
 ///////////////////////////////////////////////////////////////
-
-
-void got_dbus (
-    GObject *source_object,
-    GAsyncResult *res,
-    gpointer user_data
-    )
-{
-    dbuscon =  g_bus_get_finish (res, NULL);    
-
-    sid = g_dbus_connection_signal_subscribe (
-        dbuscon, 
-        /*sender*/ NULL, 
-        dbus_interface.c_str(),
-        /*const gchar *member*/ NULL,
-        dbus_object_path_recv_req_path.c_str(),
-        NULL,
-        G_DBUS_SIGNAL_FLAGS_NONE,
-        &signal_handler,
-        NULL,
-        NULL
-    );
-
-    rsid = g_dbus_connection_signal_subscribe (
-        dbuscon, 
-        /*sender*/ NULL, 
-        dbus_interface.c_str(),
-        /*const gchar *member*/ NULL,
-        dbus_object_path_recv_res_path.c_str(),
-        NULL,
-        G_DBUS_SIGNAL_FLAGS_NONE,
-        &response_handler,
-        NULL,
-        NULL
-    );    
-}
-

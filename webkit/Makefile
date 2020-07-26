@@ -83,8 +83,8 @@ $(LIB_BUILD)/$(TYPELIB_FILE): $(LIB_BUILD)/$(GIR_FILE)
 	g-ir-compiler $(LIB_BUILD)/$(GIR_FILE) --output=$(LIB_BUILD)/$(TYPELIB_FILE)
 
 
-$(LIB_BUILD)/$(GIR_FILE): pywebkit.h pywebkit.cpp
-	libtool exec g-ir-scanner $^ -L $(LIB_BUILD) --library=webview $(C_INCLUDES) --include=WebKit2-4.0 --include=GObject-2.0 --namespace=$(NAMESPACE) --nsversion=$(NSVERSION) --output=$@
+$(LIB_BUILD)/$(GIR_FILE): ../include/pywebkit.h pywebkit.cpp
+	libtool exec g-ir-scanner $^ -L $(LIB_BUILD) --library=webview --include=WebKit2-4.0 --include=GObject-2.0 --namespace=$(NAMESPACE) --nsversion=$(NSVERSION) --output=$@
 		
 #################################################
 # make clean

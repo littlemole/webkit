@@ -652,5 +652,19 @@ inline PyObject* from_json(const std::string& value)
     return pyobj(loads).call(json.ref());
 }
 
+extern "C" {
+
+    struct _GObject;
+    typedef struct _GObject GObject;
+}
+
+inline GObject* gobject(PyObject* obj)
+{
+    PyObject *capsule = PyObject_GetAttrString(obj, "__gpointer__");
+    if(!PyCapsule_CheckExact(capsule))
+        return 0;
+    const char* capsulename = PyCapsule_GetName(capsule);
+    return (GObject*) PyCapsule_GetPointer(capsule, capsulename);
+}
 
 #endif

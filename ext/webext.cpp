@@ -1,18 +1,8 @@
 #include "common.h"
 
-const std::string dbus_interface = "org.oha7.webkit.WebKitDBus";
-static const std::string dbus_object_path_send_req_prefix = "/org/oha7/webkit/WebKitDBus/view/request/";
-static const std::string dbus_object_path_recv_req_prefix = "/org/oha7/webkit/WebKitDBus/controller/request/";
-static const std::string dbus_object_path_send_res_prefix = "/org/oha7/webkit/WebKitDBus/view/response/";
-static const std::string dbus_object_path_recv_res_prefix = "/org/oha7/webkit/WebKitDBus/controller/response/";
+static std::string sid;
 
-std::string dbus_object_path_send_req_path;
-std::string dbus_object_path_recv_req_path; 
-
-std::string dbus_object_path_send_res_path;
-std::string dbus_object_path_recv_res_path; 
-
-
+WebKitWebPage* thePage = 0;
 
 static JSValueRef bind_signals(
     JSContextRef ctx, 
@@ -40,7 +30,7 @@ static JSValueRef bind_signals(
 
     jsobj obj = arg.obj();
 
-    theCallback = DBusCallback(obj);
+    theCallback = BoundController(obj);
 
     //g_print (PROG " bind signals \n");
 
@@ -65,6 +55,14 @@ static void window_object_cleared(
 {
     g_print (PROG " Page window_object_cleared\n");
 
+    if( thePage )
+    {
+        g_object_unref(thePage);
+    }
+    thePage = page;
+    g_object_ref(thePage);
+    
+
     JSGlobalContextRef ctx = webkit_frame_get_javascript_global_context(frame);
     jsctx js(ctx);
 
@@ -73,15 +71,37 @@ static void window_object_cleared(
     jstr bindSignalsFunctionName("bind");
     jsobj bindSignalsFunction = js.make_function(bindSignalsFunctionName.ref(), &bind_signals);
 
-    jsobj WebKitDBus = js.object();
+    jsobj WebKit = js.object();
 
-    WebKitDBus.set(bindSignalsFunctionName.ref(), bindSignalsFunction.ref());
+    WebKit.set(bindSignalsFunctionName.ref(), bindSignalsFunction.ref());
 
     jsobj controller = js.object(Controller_class_def);
-    WebKitDBus.set("Host",controller.ref());
+    WebKit.set("Python",controller.ref());
      
-    global.set("WebKit", WebKitDBus.ref());
+    global.set("WebKit", WebKit.ref());
 
+}
+
+static gboolean user_msg_received(
+    WebKitWebPage     *web_page,
+    WebKitUserMessage *message,
+    gpointer           user_data
+    )
+{
+    GVariant* params = webkit_user_message_get_parameters(message);
+
+    std::string name = webkit_user_message_get_name(message);
+
+    if( name == "request")
+    {
+        signal_handler(params);
+    }
+    if( name== "response")
+    {
+        response_handler(params);
+    }
+
+    return TRUE;
 }
 
 static void web_page_created_cb (WebKitWebExtension *extension, WebKitWebPage *web_page, gpointer user_data)
@@ -94,6 +114,7 @@ static void web_page_created_cb (WebKitWebExtension *extension, WebKitWebPage *w
     g_signal_connect(jsworld, "window-object-cleared", G_CALLBACK (window_object_cleared),  NULL);
 
 
+    g_signal_connect (web_page, "user-message-received", G_CALLBACK (user_msg_received),  NULL);
 
     g_signal_connect (web_page, "document-loaded", G_CALLBACK (dom_loaded_cb),  NULL);
 }
@@ -111,28 +132,6 @@ G_MODULE_EXPORT void webkit_web_extension_initialize_with_user_data (WebKitWebEx
     sid = std::string(data.str());
 
     g_print(PROG " PLUGIN activated %s\n", sid.c_str());
-
-    std::ostringstream oss_send;
-    oss_send << dbus_object_path_send_req_prefix << sid;
-    dbus_object_path_send_req_path = oss_send.str();
-
-    std::ostringstream oss_recv;
-    oss_recv << dbus_object_path_recv_req_prefix << sid;
-    dbus_object_path_recv_req_path = oss_recv.str();
-
-    std::ostringstream oss_res_send;
-    oss_res_send << dbus_object_path_send_res_prefix << sid;
-    dbus_object_path_send_res_path = oss_res_send.str();
-
-    std::ostringstream oss_res_recv;
-    oss_res_recv << dbus_object_path_recv_res_prefix << sid;
-    dbus_object_path_recv_res_path = oss_res_recv.str();
-
-    g_print (PROG "Interface: %s.\n", dbus_interface.c_str());
-    g_print (PROG "Send: %s.\n", dbus_object_path_send_req_path.c_str());
-    g_print (PROG "Recv: %s.\n", dbus_object_path_recv_req_path.c_str());
-    
-    g_bus_get(G_BUS_TYPE_SESSION, NULL, &got_dbus,NULL);
 
     g_signal_connect (extension, "page-created", G_CALLBACK (web_page_created_cb),  NULL);
 }

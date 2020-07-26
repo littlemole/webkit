@@ -1,11 +1,8 @@
 #ifndef __MO_WEBKIT_H__
 #define __MO_WEBKIT_H__
 
-#include <glib.h>
-#include <glib-object.h>
 #include <gtk/gtk.h>
 #include <webkit2/webkit2.h>
-#include <gio/gio.h>
 
 #define PY_WEBKIT_TYPE		\
     (pywebkit_webview_get_type())

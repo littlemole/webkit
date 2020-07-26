@@ -6,7 +6,7 @@ gi.require_versions({
 
 from gi.repository import Gtk 
 
-import pygtk.WebKitDBus as WebKitDBus
+import pygtk.WebKit as WebKit
 import functools
 
 uis = []
@@ -19,7 +19,7 @@ def bind(*args,**kargs):
     for arg in args:
         if arg is UI:
             ui = True
-        if arg is WebKitDBus:
+        if arg is WebKit:
             web = True
 
     def wrapper(clazz):
@@ -32,7 +32,7 @@ def bind(*args,**kargs):
                 uis.append(obj)
 
             if not web is None:
-                WebKitDBus.callback = obj
+                WebKit.callback = obj
 
             return obj 
         return wrap
@@ -45,8 +45,8 @@ def synced(func):
     @functools.wraps(func)
     def wrapper(*args,**kargs):
         r = func(*args,**kargs)
-        WebKitDBus.run_async(r)
-        if isinstance(r,WebKitDBus.Future) or isinstance(r,WebKitDBus.Task):
+        WebKit.run_async(r)
+        if isinstance(r,WebKit.Future) or isinstance(r,WebKit.Task):
             return False
         return r
     return wrapper
@@ -66,6 +66,19 @@ class UI(object):
     def show(self,mainWindow):
         for ui in uis:
             self.bind(ui)
+
+        objs = self.builder.get_objects()
+
+        if not WebKit.callback is None:
+
+            for obj in objs:
+
+                clazzName = type(obj).__module__ + "." + type(obj).__qualname__
+
+                if clazzName == "gi.repository.Pywebkit.Webview":
+
+                    print("binding WebKit controller")
+                    WebKit.bind(obj,WebKit.callback)
 
         self.main = self.builder.get_object(mainWindow)
         self.main.show_all()

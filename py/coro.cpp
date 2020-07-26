@@ -196,7 +196,7 @@ PyAsyncMethods future_AsyncMethods = {
 
 PythonTypeObject future_objectType( [](PyTypeObject& clazz)
 {
-    clazz.tp_name = "WebKitDBus.Future";
+    clazz.tp_name = "pygtk.WebKit.Future";
     clazz.tp_basicsize = sizeof(future_object);
     clazz.tp_init = (initproc)future_object_init;
     clazz.tp_dealloc = (destructor)future_object_dealloc;
@@ -218,9 +218,6 @@ extern "C" PyObject* new_future_object()
 
 void add_future_obj_def(pyobj_ref& m)
 {
-//    if (PyType_Ready(&future_objectType) < 0)
-//        return;    
-
     pyobj(m).addObject("Future",&future_objectType);
 }
 
@@ -313,7 +310,7 @@ static PyObject* future_iter_next(PyObject* myself)
 
 PythonTypeObject future_iter_objectType( [](PyTypeObject& clazz)
 {
-    clazz.tp_name = "WebKitDBus._FutureIter";
+    clazz.tp_name = "pygtk.WebKit._FutureIter";
     clazz.tp_basicsize = sizeof(future_iter_object);
     clazz.tp_init = (initproc)future_iter_object_init;
     clazz.tp_dealloc = (destructor)future_iter_object_dealloc;
@@ -336,9 +333,6 @@ extern "C" PyObject* new_future_iter_object(PyObject* future)
 
 void add_future_iter_obj_def(pyobj_ref& m)
 {
-//    if (PyType_Ready(&future_iter_objectType) < 0)
-//        return;    
-
     pyobj(m).addObject("_FutureIter",&future_iter_objectType);
 }
 
@@ -542,7 +536,7 @@ static PyMethodDef task_methods[] = {
 
 PythonTypeObject task_objectType( [](PyTypeObject& clazz)
 {
-    clazz.tp_name = "WebKitDBus.Task";
+    clazz.tp_name = "pygtk.WebKit.Task";
     clazz.tp_basicsize = sizeof(task_object);
     clazz.tp_init = (initproc)task_object_init;
     clazz.tp_dealloc = (destructor)task_object_dealloc;
@@ -565,9 +559,6 @@ extern "C" PyObject* new_task_object(PyObject* coro)
 void add_task_obj_def(pyobj_ref& m)
 {
     task_objectType.tp_base = &future_objectType;
-
-//    if (PyType_Ready(&task_objectType) < 0)
-//        return;    
 
     pyobj(m).addObject("Task",&task_objectType);
 }

@@ -5,11 +5,13 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <map>
 #include <memory>
+#include <map>
+
 #include <glib.h>
 #include <gio/gio.h>
 #include <gdk/gdk.h>
+
 #include "pyglue.h"
 #include "gvglue.h"
 

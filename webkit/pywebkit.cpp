@@ -1,13 +1,8 @@
 #include "pywebkit.h"
-#include <iostream>
 #include <sstream>
-#include <Python.h>
-#include "pyglue.h"
 #include <string>
-#include <unistd.h>
-#include <limits.h>
 
-#define PROG "[libwebview] "
+#define PROG "[PywebkitWebview] "
 
 /**
  * SECTION: pywebkit
@@ -47,36 +42,9 @@ static void pywebkit_webview_init(PywebkitWebview *web)
     g_print(PROG "pywebkit_webview_init\n");
 
     gchar* c = g_dbus_generate_guid();
-    //sid = std::string(c);
     web->uid = g_strdup (c);
     g_free(c);
 
-    PyGlobalInterpreterLock lock;
-
-    pyobj_ref n = PyUnicode_FromString("pygtk.WebKitDBus");
-
-    pyobj_ref m = PyImport_GetModule(n);
-    //pyobj_ref m = PyImport_Import(n);
-
-    if(m.isValid())
-    {
-        g_print(PROG "lookup cb \n");
-        pyobj_ref cb = pyobj(PyModule_GetDict(m)).member("callback");
-
-        if( pyobj(cb).isValid() && !pyobj(cb).isNone() )
-        {
-            g_print(PROG "bind controller cb\n");
-
-            pyobj_ref bind = pyobj(m).attr("bind");
-            pyobj_ref str = PyUnicode_FromString(web->uid);
-            pyobj_ref r = pyobj(bind).call( str.ref(), cb.ref());
-
-            if(py_error())
-            {
-                PyErr_Print();
-            }              
-        }
-    }
 
     WebKitWebContext* ctx = webkit_web_context_get_default();
     g_signal_connect( G_OBJECT (ctx), "initialize-web-extensions", G_CALLBACK(init_ext), web);
@@ -88,8 +56,6 @@ static void pywebkit_webview_init(PywebkitWebview *web)
 static void pywebkit_webview_finalize(GObject *object)
 {
 }
-
-
 
 static void pywebkit_webview_class_init(PywebkitWebviewClass *klass)
 {
@@ -118,12 +84,21 @@ PywebkitWebview* pywebkit_webview_new()
 }
 
 
-std::string cwd() 
+static std::string cwd() 
 {
     char result[ PATH_MAX ];
     return getcwd(result, PATH_MAX);
 }
 
+/**
+ * pywebkit_webview_load_local_uri:
+ *
+ * @web: #PywebkitWebview*
+ * @localpath: #gchar*
+ *
+ * loads a new HTML document into #PyWebKit.
+ *
+ */
 
 void pywebkit_webview_load_local_uri(PywebkitWebview *web, const gchar* localpath)
 {

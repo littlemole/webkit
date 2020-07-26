@@ -6,16 +6,7 @@ gi.require_versions({
 
 from gi.repository import Gtk
 
-import pygtk.WebKitDBus as WebKitDBus
-
-class MenuCB(object):
-
-    def __init__(self,cb):
-        self.cb = cb
-
-    def __call__(self,*args):
-        WebKitDBus.run_async( self.cb(*args) )
-        return False
+import pygtk.WebKit as WebKit
 
 
 class MenuMaker(object):
@@ -54,8 +45,7 @@ class MenuMaker(object):
                 subMenuItem.action_target_value = entry[0]
                 subMenu.append(subMenuItem)
 
-                mcb = MenuCB(entry[1])
-                subMenuItem.connect("activate", mcb )
+                subMenuItem.connect("activate", entry[1] )
                 
             else:
                 subMenuItem = Gtk.MenuItem( label=entry[0] )

@@ -8,9 +8,10 @@ gi.require_versions({
 
 #import json
 from gi.repository import Gtk, Pywebkit
-from pygtk.bind import bind,synced,UI
-import pygtk.WebKitDBus as WebKitDBus
+#d = Pywebkit.Webview
 from gi.repository.Pywebkit import Webview #as Webview
+from pygtk.bind import bind,synced,UI
+import pygtk.WebKit as WebKit
 
 #d = WebKitDBus
 #w = Pywebkit.Webview
@@ -28,7 +29,7 @@ from gi.repository.Pywebkit import Webview #as Webview
 #messagedialog.run()
 
 
-@bind(UI,WebKitDBus)
+@bind(UI,WebKit)
 class Controller(object):
 
     def onFileOpen(self,*args):
@@ -38,14 +39,14 @@ class Controller(object):
         if not response is None:
             
             txt = Path(response).read_text()
-            WebKitDBus.WebView(web).onFileLoaded(txt)
+            WebKit.JavaScript(web).onFileLoaded(txt)
 
 
 
     @synced
     async def saveFile(self,fn):
 
-        txt = await WebKitDBus.WebView(web).onSaveFile()
+        txt = await WebKit.JavaScript(web).onSaveFile()
 
         with open(fn, "w") as file:
             print(txt, file=file)
@@ -75,6 +76,9 @@ controller = Controller()
 #w = Pywebkit.Webview
 
 ui = UI("markdown.ui.xml")
+
+ui.alert("Hello World")#,buttons=Gtk.ButtonsType.OK)
+
 # create html widget
 #web = Pywebkit.Webview() 
 web = ui["web"]
@@ -83,13 +87,12 @@ web.load_local_uri("markdown.html")
 
 #ui["scrollWindow"].add(web)
 
-#WebKitDBus.bind(web.uid,controller)
+#WebKit.bind(web,controller)
 #ui.bind(controller)
 
 #show main window
 ui.show("mainWindow")
 
-ui.alert("Hello World")#,buttons=Gtk.ButtonsType.OK)
 
 # start the GUI event main loop
 Gtk.main()

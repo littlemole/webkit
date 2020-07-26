@@ -6,8 +6,10 @@ gi.require_versions({
 
 from gi.repository import Gtk, Pywebkit, GLib 
 
+from gi.repository.Pywebkit import Webview #as Webview
+import pygtk.WebKit as WebKit
+
 import os,sys,socket,json,threading,pprint
-import pygtk.WebKitDBus as WebKitDBus
 from pygtk.worker import Worker
 from pygtk.worker import background
 from pygtk.bind import bind
@@ -47,7 +49,7 @@ def request_task(msg,host,port):
 
 
 
-@bind
+#@bind
 class Controller(object):
 
     async def sendRequest(self,req):
@@ -71,7 +73,7 @@ class Controller(object):
     @synced
     async def onRequest(self,*args):
 
-        r = await WebKitDBus.WebView.onSubmit()
+        r = await WebKit.JavaScript(web).onSubmit()
         print(r)
 
 
@@ -82,13 +84,14 @@ class Controller(object):
 # global main.controller accessed from javascript
 controller = Controller()        
 pprint.pprint(controller)
-#WebKitDBus.bind(controller)
 #WebKitDBus.callback = controller
 
 # create html widget
 web = Pywebkit.Webview() 
 url = "file://" + os.path.dirname(os.path.realpath(__file__)) + "/curl.html"
 web.load_uri(url)
+
+WebKit.bind(web,controller)
 
 # make resizable
 #scrolledwindow = Gtk.ScrolledWindow()

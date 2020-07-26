@@ -2,8 +2,7 @@ import threading
 
 import gi
 from gi.repository import GLib
-#import WebKitDBus
-import pygtk.WebKitDBus as WebKitDBus
+import pygtk.WebKit as WebKit
 
 class Worker(threading.Thread):
 
@@ -15,7 +14,7 @@ class Worker(threading.Thread):
     @staticmethod
     def schedule(task):
 
-        future = WebKitDBus.Future()
+        future = WebKit.Future()
         worker = Worker(future,task)
         worker.start()
         return future
@@ -33,7 +32,7 @@ def background(func):
 
     def decorator(*vargs):
 
-        f = WebKitDBus.Future()
+        f = WebKit.Future()
 
         def set_result(f,r):
             f.set_result(r)

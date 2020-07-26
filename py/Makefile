@@ -8,8 +8,8 @@ ifneq ($(CXX),g++)
 DEFAULT_OPTS = $(TS) -std=c++17 -stdlib=libc++ -fcoroutines-ts -D_RESUMABLE_FUNCTIONS_SUPPORTED 
 endif
 
-PKG_INC=$(shell pkg-config gobject-2.0 gdk-3.0 python3-embed --cflags)
-PKG_LIB=$(shell pkg-config gobject-2.0 gdk-3.0 python3-embed--libs)
+PKG_INC=$(shell pkg-config gobject-2.0 gdk-3.0 webkit2gtk-4.0 python3-embed --cflags)
+PKG_LIB=$(shell pkg-config gobject-2.0 gdk-3.0 webkit2gtk-4.0 python3-embed--libs)
 
 OPTIONS = -fpic -Wno-write-strings -pthread -D_REENTRANT $(DEFAULT_OPTS)
 
@@ -22,8 +22,8 @@ CPPFLAGS = -Wall -I../include $(DEBUG) $(INCLUDE) $(OPTIONS) $(PKG_INC)
 #################################################
 
 # the shared lib
-LIB = ./build/WebKitDBus.so
-release : override LIB = ./build/WebKitDBus.so
+LIB = ./build/WebKit.so
+release : override LIB = ./build/WebKit.so
 
 LIB_SRC = .
 LIB_BUILD = ./build
