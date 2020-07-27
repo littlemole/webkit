@@ -14,7 +14,7 @@
 
 G_DEFINE_TYPE (PywebkitWebview, pywebkit_webview, WEBKIT_TYPE_WEB_VIEW   )
  
-
+/*
 static gboolean on_context_menu (
     WebKitWebView       *web_view,
     WebKitContextMenu   *context_menu,
@@ -24,6 +24,7 @@ static gboolean on_context_menu (
 {
     return TRUE;
 }
+*/
 
 static void init_ext(WebKitWebContext *context, gpointer user_data)
 {

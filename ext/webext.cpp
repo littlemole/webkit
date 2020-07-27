@@ -47,6 +47,18 @@ void dom_loaded_cb (WebKitWebPage *web_page, gpointer user_data)
 }
 
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
+static JSGlobalContextRef get_global_ctx(WebKitFrame* frame)
+{
+    JSGlobalContextRef ctx = webkit_frame_get_javascript_global_context(frame);
+    return ctx;
+}
+
+#pragma GCC diagnostic pop
+
+
 static void window_object_cleared(
     WebKitScriptWorld *world,
     WebKitWebPage     *page,
@@ -62,8 +74,7 @@ static void window_object_cleared(
     thePage = page;
     g_object_ref(thePage);
     
-
-    JSGlobalContextRef ctx = webkit_frame_get_javascript_global_context(frame);
+    JSGlobalContextRef ctx = get_global_ctx(frame);
     jsctx js(ctx);
 
     jsobj global = js.globalObject();
@@ -108,14 +119,11 @@ static void web_page_created_cb (WebKitWebExtension *extension, WebKitWebPage *w
 {
     g_print (PROG " Page created\n");
 
-    WebKitFrame* frame = webkit_web_page_get_main_frame(web_page);
-
+    //WebKitFrame* frame = webkit_web_page_get_main_frame(web_page);
     WebKitScriptWorld* jsworld = webkit_script_world_get_default();
+
     g_signal_connect(jsworld, "window-object-cleared", G_CALLBACK (window_object_cleared),  NULL);
-
-
     g_signal_connect (web_page, "user-message-received", G_CALLBACK (user_msg_received),  NULL);
-
     g_signal_connect (web_page, "document-loaded", G_CALLBACK (dom_loaded_cb),  NULL);
 }
 

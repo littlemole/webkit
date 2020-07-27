@@ -276,7 +276,7 @@ static void webviewctrl_object_dealloc(webviewctrl_object* self)
 
 static PyObject * webviewctrl_object_getattr(webviewctrl_object* self, char* name)
 {
-    g_print (PROG " webviewctrl_object_getattr %s %i\n", name, (void*)self->channel);
+    //g_print (PROG " webviewctrl_object_getattr %s\n", name ;
 
     return new_signal_object(name,self->channel);
 }
@@ -293,7 +293,7 @@ PythonTypeObject webviewctrl_objectType( [](PyTypeObject& clazz)
 
 extern "C" PyObject* new_webviewctrl_object(Channel* channel)
 {
-    g_print (PROG " new_webviewctrl_object  %i\n",  (void*)channel);
+    //g_print (PROG " new_webviewctrl_object  %i\n",  (void*)channel);
 
     webviewctrl_object* self = py_alloc<webviewctrl_object>(&webviewctrl_objectType);
 
@@ -322,7 +322,7 @@ static void javascript_object_dealloc(javascript_object* self)
 
 static PyObject* javascript_object_call(PyObject* self, PyObject* args, PyObject* kargs)
 {
-    javascript_object* that = (javascript_object*)self;
+    //javascript_object* that = (javascript_object*)self;
 
     pyobj arguments(args);
     if(arguments.length()<1)
@@ -334,11 +334,11 @@ static PyObject* javascript_object_call(PyObject* self, PyObject* args, PyObject
     pyobj_ref web = arguments.item(0);
     pyobj_ref uid = pyobj(web).attr("uid");
 
-    g_print (PROG " javascript_object_call uid: %s\n", pyobj(uid).str() );
+    //g_print (PROG " javascript_object_call uid: %s\n", pyobj(uid).str().c_str() );
 
     Channel* channel = channels()[pyobj(uid).str()];
 
-    g_print (PROG " javascript_object_call %i\n", (void*)channel);
+    //g_print (PROG " javascript_object_call %i\n", (void*)channel);
 
     return new_webviewctrl_object(channel);
 }

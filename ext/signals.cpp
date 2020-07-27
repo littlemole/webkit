@@ -44,10 +44,9 @@ void send_response(
 {
     jsctx js(ctx);
 
-    g_print (PROG " send_response: %s \n", uid);
+    //g_print (PROG " send_response: %s \n", uid);
 
     GVariant* result = make_response(uid,ctx,value,ex);
-    GError* gerror = 0;
 
     WebKitUserMessage* msg = webkit_user_message_new( "response", result);
 
@@ -63,7 +62,7 @@ void send_response(
 
 void response_handler(GVariant* message)                        
 {
-    g_print (PROG " received response  %s\n", g_variant_get_type_string (message));
+    //g_print (PROG " received response  %s\n", g_variant_get_type_string (message));
 
     jsctx js(theCallback.obj.ctx());
 
@@ -169,7 +168,7 @@ void signal_handler(GVariant* message)
 
     if(member.isUndefined())
     {
-        g_print (PROG "unknown signal %s\n", method.str() );
+        g_print (PROG "unknown signal %s\n", method.str().c_str() );
         return;
     }
 
@@ -178,7 +177,7 @@ void signal_handler(GVariant* message)
     bool isFunction = fun.isFunction();
     if(!isFunction)
     {
-        g_print (PROG "signal %s is not a function \n", method.str());
+        g_print (PROG "signal %s is not a function \n", method.str().c_str() );
         return;
     }
 

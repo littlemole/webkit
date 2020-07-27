@@ -33,7 +33,7 @@ and/or use gtk-doc annotations.  -->
               c:identifier="pywebkit_webview_load_local_uri">
         <doc xml:space="preserve"
              filename="webkit/pywebkit.cpp"
-             line="93">loads a new HTML document into #PyWebKit.</doc>
+             line="94">loads a new HTML document into #PyWebKit.</doc>
         <source-position filename="include/pywebkit.h" line="42"/>
         <return-value transfer-ownership="none">
           <type name="none" c:type="void"/>
@@ -42,13 +42,13 @@ and/or use gtk-doc annotations.  -->
           <instance-parameter name="web" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="webkit/pywebkit.cpp"
-                 line="96">#PywebkitWebview*</doc>
+                 line="97">#PywebkitWebview*</doc>
             <type name="Webview" c:type="PywebkitWebview*"/>
           </instance-parameter>
           <parameter name="localpath" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="webkit/pywebkit.cpp"
-                 line="97">#gchar*</doc>
+                 line="98">#gchar*</doc>
             <type name="utf8" c:type="const gchar*"/>
           </parameter>
         </parameters>

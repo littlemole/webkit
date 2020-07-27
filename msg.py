@@ -92,7 +92,7 @@ class Controller(object):
         web.load_uri(url)
 
     def goSignal(self,w):
-        url = "file://" + os.path.dirname(os.path.realpath(__file__)) + "/signal.html"
+        url = "file://" + os.path.dirname(os.path.realpath(__file__)) + "/msg.html"
         web.load_uri(url)        
 
     def onContext(self,web,menue,event,hit,*args):
@@ -111,7 +111,7 @@ controller = Controller()
 # this is similar to Gtk.WebView
 web = Pywebkit.Webview() 
 web.connect("context-menu", controller.onContext )
-url = "file://" + os.path.dirname(os.path.realpath(__file__)) + "/signal.html"
+url = "file://" + os.path.dirname(os.path.realpath(__file__)) + "/msg.html"
 web.load_uri(url)
 print(web.uid)
 
@@ -119,7 +119,7 @@ WebKit.bind(web,controller)
 
 # from here on just standard python gtk
 builder = Gtk.Builder()
-builder.add_from_file("signal.ui.xml")
+builder.add_from_file("msg.ui.xml")
 builder.connect_signals(controller)
 
 scrollWindow = builder.get_object("scrollWindow")
