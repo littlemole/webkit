@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.36.0 -->
+<!-- Generated with glade 3.22.2 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkApplicationWindow" id="mainWindow">
@@ -9,6 +9,9 @@
     <property name="default_height">650</property>
     <property name="icon_name">applications-internet</property>
     <signal name="destroy" handler="onExit" swapped="no"/>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
     <child>
       <object class="GtkBox">
         <property name="visible">True</property>
@@ -70,33 +73,36 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkImageMenuItem" id="ViewStatusMenuItem">
+                      <object class="GtkRadioMenuItem" id="ViewStatusMenuItem">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
                         <property name="label">View Status</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
-                        <signal name="activate" handler="onViewStatus" swapped="no"/>
+                        <property name="active">True</property>
+                        <property name="draw_as_radio">True</property>
+                        <signal name="button-press-event" handler="onViewStatus" swapped="no"/>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="ViewDiffMenuItem">
+                      <object class="GtkRadioMenuItem" id="ViewDiffMenuItem">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
                         <property name="label">View Diff</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
-                        <signal name="activate" handler="onViewDiff" swapped="no"/>
+                        <property name="draw_as_radio">True</property>
+                        <property name="group">ViewStatusMenuItem</property>
+                        <signal name="button-press-event" handler="onViewDiff" swapped="no"/>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="ViewFileMenuItem">
-                        <property name="label">View File</property>
+                      <object class="GtkRadioMenuItem" id="ViewFileMenuItem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="label">View File</property>
                         <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
-                        <signal name="activate" handler="onViewFile" swapped="no"/>
+                        <property name="draw_as_radio">True</property>
+                        <property name="group">ViewStatusMenuItem</property>
+                        <signal name="button-press-event" handler="onViewFile" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -144,7 +150,7 @@
                 <property name="can_focus">False</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-open</property>
-                <signal name="clicked" handler="onFileOpen" swapped="no"/>
+                <signal name="clicked" handler="onTbFileOpen" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -162,12 +168,12 @@
               </packing>
             </child>
             <child>
-              <object class="GtkToolButton" id="tb_status">
+              <object class="GtkToggleToolButton" id="tb_status">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-dialog-question</property>
-                <signal name="clicked" handler="onViewStatus" swapped="no"/>
+                <signal name="clicked" handler="onTbViewStatus" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -175,12 +181,12 @@
               </packing>
             </child>
             <child>
-              <object class="GtkToolButton" id="tb_diff">
+              <object class="GtkToggleToolButton" id="tb_diff">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-zoom-fit</property>
-                <signal name="clicked" handler="onViewDiff" swapped="no"/>
+                <signal name="clicked" handler="onTbViewDiff" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -188,12 +194,12 @@
               </packing>
             </child>
             <child>
-              <object class="GtkToolButton" id="tb_file">
+              <object class="GtkToggleToolButton" id="tb_file">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-file</property>
-                <signal name="clicked" handler="onViewFile" swapped="no"/>
+                <signal name="clicked" handler="onTbViewFile" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -224,8 +230,6 @@
                     <property name="can_focus">True</property>
                     <property name="headers_visible">False</property>
                     <property name="enable_grid_lines">both</property>
-                    <signal name="row-activated" handler="onFileTreeViewActivate" swapped="no"/>
-                    <signal name="row-expanded" handler="onFileTreeViewExpand" swapped="no"/>
                     <child internal-child="selection">
                       <object class="GtkTreeSelection"/>
                     </child>
@@ -289,9 +293,6 @@
           </packing>
         </child>
       </object>
-    </child>
-    <child type="titlebar">
-      <placeholder/>
     </child>
   </object>
 </interface>

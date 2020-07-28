@@ -1,6 +1,8 @@
 #include "pywebkit.h"
 #include <sstream>
 #include <string>
+#include <dlfcn.h>
+#include <libgen.h>
 
 #define PROG "[PywebkitWebview] "
 
@@ -34,7 +36,20 @@ static void init_ext(WebKitWebContext *context, gpointer user_data)
 
     g_print(PROG "init_ext: %s \n", web->uid );
 
-    webkit_web_context_set_web_extensions_directory(context,"./ext/build");
+    std::ostringstream oss;
+
+    Dl_info info;
+    char* fn = 0;
+    if (dladdr((const void*)&pywebkit_webview_init, &info))
+    {
+        fn = strdup(info.dli_fname);
+        char* dir = dirname(dirname(dirname(fn)));
+        g_print( PROG "Loaded from path = %s\n", dir);
+        oss << dir << "/ext/build";
+        free(fn);
+    }
+
+    webkit_web_context_set_web_extensions_directory(context,oss.str().c_str());
     webkit_web_context_set_web_extensions_initialization_user_data(context,s);
 }
 

@@ -13,11 +13,9 @@ from pygtk.bind import bind,synced,idle_add
 from pygtk.ui import UI,DirectoryTree
 from pygtk import WebKit, ui
 import pygtk
-
+import traceback
 
 dir = os.path.dirname(os.path.realpath(__file__))
-
-print(dir)
 
 @bind(UI,WebKit)
 class Controller(object):
@@ -44,40 +42,108 @@ class Controller(object):
             tree.clear()
             tree.add_dir(dir)
 
-            r = subprocess.run(["git", "status", dir], capture_output=True)
+            r = subprocess.run(["bash", "-c", "cd " + dir + " && git status ."], capture_output=True) 
             WebKit.JavaScript(web).setPlainText(r.stdout.decode())
 
 
     def onViewDiff(self,*args):
+        print("onViewDiff")
 
-        f = tree.get_selection()
-
-        r = subprocess.run(["git", "diff", f], capture_output=True)
-        print(r)
-        WebKit.JavaScript(web).setDiff(r.stdout.decode())
+        ui["tb_status"].set_active(False)
+        ui["tb_file"].set_active(False)
+        ui["tb_diff"].set_active(True)
 
         self.last_action = self.onViewDiff
 
 
     def onViewStatus(self,*args):
+        print("onViewStatus")
 
-        f = tree.get_selection()
-
-        r = subprocess.run(["git", "status", f], capture_output=True)
-        print(r)
-        WebKit.JavaScript(web).setPlainText(r.stdout.decode())
+        ui["tb_diff"].set_active(False)
+        ui["tb_file"].set_active(False)
+        ui["tb_status"].set_active(True)
 
         self.last_action = self.onViewStatus
 
 
     def onViewFile(self,*args):
+        print("onViewFile")
+
+        ui["tb_diff"].set_active(False)
+        ui["tb_status"].set_active(False)
+        ui["tb_file"].set_active(True)
+
+        self.last_action = self.onViewFile
+
+    def onTbViewDiff(self,*args):
+        print("onTbViewDiff")
+        print(traceback.print_stack())
+        f = tree.get_selection()
+
+        r = None
+        if os.path.isdir(f):  
+            r = subprocess.run(["bash", "-c", "cd " + f + " && git diff ."], capture_output=True)
+        else:
+            d = os.path.dirname(f)
+            n = os.path.basename(f)
+            r = subprocess.run(["bash", "-c", "cd " + d + " && git diff " + n], capture_output=True)
+
+        WebKit.JavaScript(web).setDiff(r.stdout.decode())
+
+        if ui["ViewDiffMenuItem"].get_active() == False:
+            print("toggle")
+            ui["ViewDiffMenuItem"].set_active(True)
+
+        ui["tb_status"].set_active(False)
+        ui["tb_file"].set_active(False)
+
+        self.last_action = self.onTbViewDiff
+
+
+    def onTbViewStatus(self,*args):
+        print("onTbViewStatus")
+        print(traceback.print_stack())
+
+        f = tree.get_selection()
+        r = None
+        if os.path.isdir(f):  
+            r = subprocess.run(["bash", "-c", "cd " + f + " && git status ."], capture_output=True)
+        else:
+            d = os.path.dirname(f)
+            n = os.path.basename(f)
+            r = subprocess.run(["bash", "-c", "cd " + d + " && git status " + n], capture_output=True)
+
+        WebKit.JavaScript(web).setPlainText(r.stdout.decode())
+
+        if ui["ViewStatusMenuItem"].get_active() == False:
+            print("toggle")
+            ui["ViewStatusMenuItem"].set_active(True)
+
+        ui["tb_diff"].set_active(False)
+        ui["tb_file"].set_active(False)
+
+        self.last_action = self.onTbViewStatus
+
+
+    def onTbViewFile(self,*args):
+        print("onTbViewFile")
+        print(traceback.print_stack())
 
         f = tree.get_selection()
 
         txt = Path(f).read_text()
         WebKit.JavaScript(web).setPlainText(txt)
 
-        self.last_action = self.onViewFile
+        if ui["ViewFileMenuItem"].get_active() == False:
+            print("toggle")
+            ui["ViewFileMenuItem"].set_active(True)
+
+        ui["tb_diff"].set_active(False)
+        ui["tb_status"].set_active(False)
+
+        self.last_action = self.onTbViewFile
+
+
 
 
     def onContext(self,*args):
@@ -90,6 +156,7 @@ class Controller(object):
 
     def onSelect(self,*args):
 
+        print("last action hero")
         f = self.last_action
         f()
  

@@ -45,7 +45,6 @@ class UI(object):
 
                 if clazzName == "gi.repository.Pywebkit.Webview":
 
-                    print("binding WebKit controller")
                     WebKit.bind(obj,WebKit.callback)
 
         self.main = self.builder.get_object(mainWindow)
