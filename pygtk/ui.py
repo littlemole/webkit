@@ -281,3 +281,47 @@ class DirectoryTree:
             if not getattr(self.controller,"onSelect") is None:
 
                 getattr(self.controller,"onSelect")(*args)
+
+    def statusBar(self,id,txt):
+
+        statusBar = self.builder.get_object(id)
+
+        if self.ctx is None:
+            self.ctx = statusBar.get_context_id("status ctx")
+
+        statusBar.pop(ctx)
+        statusBar.push(ctx, txt )
+
+
+def radio_group(**kargs):
+
+    menu = None
+    tb = None
+
+    if "menu" in kargs:
+        menu = kargs["menu"]
+    if "tb" in kargs:
+        tb = kargs["tb"]
+
+    def wrapper(func):
+
+        def wrap(*args,**kargs):
+        
+            if len(args)>0 and ( args[1].get_active() == 0 ):
+                return
+
+            if len(args)>1 and ( type(args[1]) == gi.repository.Gtk.RadioMenuItem ):
+                if not ui[tb].get_active():
+                    ui[tb].set_active(True)
+                return
+
+            r = func(*args,*kargs)
+
+            if ui[menu].get_active() == False:
+                ui[menu].set_active(True)
+
+            return r
+
+        return wrap
+
+    return wrapper

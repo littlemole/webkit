@@ -10,12 +10,13 @@ gi.require_versions({
 from gi.repository import Gtk, Gdk, GObject, GLib, Pywebkit
 from gi.repository.Pywebkit import Webview 
 from pygtk.bind import bind,synced,idle_add
-from pygtk.ui import UI,DirectoryTree
+from pygtk.ui import UI,DirectoryTree,radio_group
 from pygtk import WebKit, ui
 import pygtk
 import traceback
 
 dir = os.path.dirname(os.path.realpath(__file__))
+
 
 @bind(UI,WebKit)
 class Controller(object):
@@ -37,7 +38,7 @@ class Controller(object):
 
         if not dir is None:
 
-            statusBar.push(ctx, dir )
+            ui.statusBar( "statusBar", dir )
 
             tree.clear()
             tree.add_dir(dir)
@@ -46,38 +47,9 @@ class Controller(object):
             WebKit.JavaScript(web).setPlainText(r.stdout.decode())
 
 
+    @radio_group(menu="ViewDiffMenuItem", tb="tb_diff")
     def onViewDiff(self,*args):
-        print("onViewDiff")
 
-        ui["tb_status"].set_active(False)
-        ui["tb_file"].set_active(False)
-        ui["tb_diff"].set_active(True)
-
-        self.last_action = self.onViewDiff
-
-
-    def onViewStatus(self,*args):
-        print("onViewStatus")
-
-        ui["tb_diff"].set_active(False)
-        ui["tb_file"].set_active(False)
-        ui["tb_status"].set_active(True)
-
-        self.last_action = self.onViewStatus
-
-
-    def onViewFile(self,*args):
-        print("onViewFile")
-
-        ui["tb_diff"].set_active(False)
-        ui["tb_status"].set_active(False)
-        ui["tb_file"].set_active(True)
-
-        self.last_action = self.onViewFile
-
-    def onTbViewDiff(self,*args):
-        print("onTbViewDiff")
-        print(traceback.print_stack())
         f = tree.get_selection()
 
         r = None
@@ -90,20 +62,12 @@ class Controller(object):
 
         WebKit.JavaScript(web).setDiff(r.stdout.decode())
 
-        if ui["ViewDiffMenuItem"].get_active() == False:
-            print("toggle")
-            ui["ViewDiffMenuItem"].set_active(True)
-
-        ui["tb_status"].set_active(False)
-        ui["tb_file"].set_active(False)
-
-        self.last_action = self.onTbViewDiff
+        self.last_action = self.onViewDiff
 
 
-    def onTbViewStatus(self,*args):
-        print("onTbViewStatus")
-        print(traceback.print_stack())
-
+    @radio_group(menu="ViewStatusMenuItem", tb="tb_status")
+    def onViewStatus(self,*args):
+            
         f = tree.get_selection()
         r = None
         if os.path.isdir(f):  
@@ -115,35 +79,24 @@ class Controller(object):
 
         WebKit.JavaScript(web).setPlainText(r.stdout.decode())
 
-        if ui["ViewStatusMenuItem"].get_active() == False:
-            print("toggle")
-            ui["ViewStatusMenuItem"].set_active(True)
-
-        ui["tb_diff"].set_active(False)
-        ui["tb_file"].set_active(False)
-
-        self.last_action = self.onTbViewStatus
+        self.last_action = self.onViewStatus
 
 
-    def onTbViewFile(self,*args):
-        print("onTbViewFile")
-        print(traceback.print_stack())
+    @radio_group(menu="ViewFileMenuItem", tb="tb_file")
+    def onViewFile(self,*args):
 
         f = tree.get_selection()
+        txt = None
 
-        txt = Path(f).read_text()
+        if os.path.isdir(f):  
+            r = subprocess.run(["bash", "-c", "cd " + f + " && ls -lah"], capture_output=True)
+            txt = r.stdout.decode()
+        else:
+            txt = Path(f).read_text()
+            
         WebKit.JavaScript(web).setPlainText(txt)
 
-        if ui["ViewFileMenuItem"].get_active() == False:
-            print("toggle")
-            ui["ViewFileMenuItem"].set_active(True)
-
-        ui["tb_diff"].set_active(False)
-        ui["tb_status"].set_active(False)
-
-        self.last_action = self.onTbViewFile
-
-
+        self.last_action = self.onViewFile
 
 
     def onContext(self,*args):
@@ -180,13 +133,13 @@ ui = UI(dir + "/diff.ui.xml")
 # tree view
 tree = DirectoryTree( ui["fileTreeView"] )
 tree.add_dir( os.getcwd() )
+
 # web view 
 web = ui["web"]
 web.load_uri("file://" + dir + "/diff.html")
 
-statusBar = ui["statusBar"]
-ctx = statusBar.get_context_id("status ctx")
-statusBar.push(ctx, os.getcwd() )
+# status bar
+ui.statusBar( "statusBar", os.getcwd() )
 
 #show main window
 ui.show("mainWindow")
