@@ -24,3 +24,5 @@ to launch the test application implemented in curl.py and curl.html.
 sudo apt install python-gobject-2 python-gobject-2-dev libwebkit2gtk-4.0-dev \
 gobject-introspection libgirepository1.0-dev libtool-bin
 
+# todo
+add another paragraph

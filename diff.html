@@ -1,0 +1,73 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script src="js/diff2html.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/diff2html.min.css">
+  <style type="text/css">
+
+    body {
+        background-color: white;
+        padding:0px;
+        margin:0px;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="main">
+   <div id="html" class="html">
+     <pre id="git"></pre>  
+   </div>
+  </div>
+
+<script type="text/javascript">
+
+
+window.onerror = function(e) {
+    alert(e);
+}
+
+function escapeHtml(unsafe) {
+    return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
+ }
+
+
+document.addEventListener("DOMContentLoaded", function(e)
+{
+    let View = {
+
+        setPlainText : function( output) {
+            if(!output) {
+                output = "";
+            }
+            document.getElementById("html").innerHTML = "<pre>"  + escapeHtml(output) + "</pre>";
+        },
+
+        setDiff : function( output) {
+
+            var diffHtml = window.Diff2Html.html( output, {
+                drawFileList: true,
+                matching: 'lines',
+//                outputFormat: 'side-by-side',
+            });
+
+            document.getElementById("html").innerHTML = diffHtml;
+        }
+}   ;
+
+    WebKit.bind(View);
+
+    WebKit.Python.onDocumentLoad();
+
+});
+
+</script>
+</body>
+</html>
+
