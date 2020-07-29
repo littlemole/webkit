@@ -26,6 +26,7 @@ class UI(object):
         self.builder = Gtk.Builder()
         self.builder.add_from_file(xml)
         self.main = None
+        self.ctx = None
 
     def __getitem__(self,key):
         return self.builder.get_object(key)
@@ -98,6 +99,17 @@ class UI(object):
         response = messagedialog.run()
         messagedialog.hide()
         return response
+
+    def statusBar(self,id,txt):
+
+        statusBar = self.builder.get_object(id)
+
+        if self.ctx is None:
+            self.ctx = statusBar.get_context_id("status ctx")
+
+        statusBar.pop(self.ctx)
+        statusBar.push(self.ctx, txt )
+
 
 #messagedialog = Gtk.MessageDialog(None,
 #    flags=Gtk.DialogFlags.MODAL,
@@ -282,15 +294,6 @@ class DirectoryTree:
 
                 getattr(self.controller,"onSelect")(*args)
 
-    def statusBar(self,id,txt):
-
-        statusBar = self.builder.get_object(id)
-
-        if self.ctx is None:
-            self.ctx = statusBar.get_context_id("status ctx")
-
-        statusBar.pop(ctx)
-        statusBar.push(ctx, txt )
 
 
 def radio_group(**kargs):
