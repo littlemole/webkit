@@ -11,7 +11,7 @@ from gi.repository import Gtk, Gdk, GObject, GLib, Pywebkit
 from gi.repository.Pywebkit import Webview 
 from pygtk.bind import bind,synced,idle_add
 from pygtk.ui import UI,DirectoryTree,radio_group
-from pygtk import WebKit, ui
+from pygtk import WebKit#, ui
 import pygtk
 import traceback
 
@@ -51,7 +51,6 @@ class Controller(object):
     def onViewDiff(self,*args):
 
         f = tree.get_selection()
-
         r = None
         if os.path.isdir(f):  
             r = subprocess.run(["bash", "-c", "cd " + f + " && git diff ."], capture_output=True)
@@ -60,7 +59,12 @@ class Controller(object):
             n = os.path.basename(f)
             r = subprocess.run(["bash", "-c", "cd " + d + " && git diff " + n], capture_output=True)
 
-        WebKit.JavaScript(web).setDiff(r.stdout.decode())
+        c = r.stdout.decode()
+
+        if not c :
+            c = ""
+            
+        WebKit.JavaScript(web).setDiff(c)
 
         self.last_action = self.onViewDiff
 
@@ -122,7 +126,6 @@ class Controller(object):
     def onExit(self,*args):
 
         Gtk.main_quit()
-
 
 #create controller
 controller = Controller()        

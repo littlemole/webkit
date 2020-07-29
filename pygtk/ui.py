@@ -8,7 +8,7 @@ from gi.repository import Gtk, Gdk, GLib
 
 import pygtk
 import pygtk.WebKit as WebKit
-import os
+import os,sys
 
 uis = []
 
@@ -300,28 +300,47 @@ def radio_group(**kargs):
 
     menu = None
     tb = None
+    mod = "__main__"
 
     if "menu" in kargs:
         menu = kargs["menu"]
     if "tb" in kargs:
         tb = kargs["tb"]
+    if "mod" in kargs:
+        mod = kargs["mod"]
+    
 
     def wrapper(func):
 
+        wrapper.ui = None
+
         def wrap(*args,**kargs):
         
-            if len(args)>0 and ( args[1].get_active() == 0 ):
+            main = sys.modules[mod]
+            for i in dir(main):
+                t = getattr(main,i)
+                if t is None:
+                    continue
+
+                clazzName = type(t).__module__ + "." + t.__class__.__name__
+                if clazzName == "pygtk.ui.UI":
+                    wrapper.ui = t
+
+
+            if len(args)>1 and ( args[1].get_active() == 0 ):
                 return
 
-            if len(args)>1 and ( type(args[1]) == gi.repository.Gtk.RadioMenuItem ):
-                if not ui[tb].get_active():
-                    ui[tb].set_active(True)
-                return
+            if wrapper.ui:
+                if len(args)>1 and ( type(args[1]) == gi.repository.Gtk.RadioMenuItem ):
+                    if not wrapper.ui[tb].get_active():
+                        wrapper.ui[tb].set_active(True)
+                    return
 
             r = func(*args,*kargs)
 
-            if ui[menu].get_active() == False:
-                ui[menu].set_active(True)
+            if wrapper.ui:
+                if wrapper.ui[menu].get_active() == False:
+                    wrapper.ui[menu].set_active(True)
 
             return r
 
