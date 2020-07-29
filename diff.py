@@ -44,7 +44,14 @@ class Controller(object):
             tree.add_dir(dir)
 
             r = subprocess.run(["bash", "-c", "cd " + dir + " && git status ."], capture_output=True) 
-            WebKit.JavaScript(web).setPlainText(r.stdout.decode())
+
+            c = ""
+            if r.stdout:
+                c = r.stdout.decode()
+            else:
+                c = r.stderr.decode()
+
+            WebKit.JavaScript(web).setPlainText( c )
 
 
     @radio_group(menu="ViewDiffMenuItem", tb="tb_diff")
@@ -59,10 +66,11 @@ class Controller(object):
             n = os.path.basename(f)
             r = subprocess.run(["bash", "-c", "cd " + d + " && git diff " + n], capture_output=True)
 
-        c = r.stdout.decode()
-
-        if not c :
-            c = ""
+        c = ""
+        if r.stdout:
+            c = r.stdout.decode()
+        else:
+            c = r.stderr.decode()
             
         WebKit.JavaScript(web).setDiff(c)
 
@@ -81,7 +89,13 @@ class Controller(object):
             n = os.path.basename(f)
             r = subprocess.run(["bash", "-c", "cd " + d + " && git status " + n], capture_output=True)
 
-        WebKit.JavaScript(web).setPlainText(r.stdout.decode())
+        c = ""
+        if r.stdout:
+            c = r.stdout.decode()
+        else:
+            c = r.stderr.decode()
+
+        WebKit.JavaScript(web).setPlainText( c )
 
         self.last_action = self.onViewStatus
 
@@ -90,13 +104,26 @@ class Controller(object):
     def onViewFile(self,*args):
 
         f = tree.get_selection()
-        txt = None
+        txt = "<not a text file>"
 
         if os.path.isdir(f):  
-            r = subprocess.run(["bash", "-c", "cd " + f + " && ls -lah"], capture_output=True)
-            txt = r.stdout.decode()
+            try:
+                r = subprocess.run(["bash", "-c", "cd " + f + " && ls -lah"], capture_output=True)
+                c = ""
+                if r.stdout:
+                    c = r.stdout.decode()
+                else:
+                    c = r.stderr.decode()
+                txt = c
+            except BaseException:
+                pass
         else:
-            txt = Path(f).read_text()
+            try:
+                c = Path(f).read_text()
+                if c :
+                    txt = c
+            except BaseException:
+                pass
             
         WebKit.JavaScript(web).setPlainText(txt)
 
@@ -113,7 +140,6 @@ class Controller(object):
 
     def onSelect(self,*args):
 
-        print("last action hero")
         f = self.last_action
         f()
  
