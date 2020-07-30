@@ -85,11 +85,22 @@ class Git(object):
 
     def commit(self):
 
-        cmd = "cd " + self.cd + " && gnome-terminal -- bash -c 'git commit' "
+        cmd = "gnome-terminal --wait -- bash -c 'cd " +self.cd + " && git commit'"
+
+        cmd = "bash -c 'cd " + self.cd + " && gnome-terminal --wait -- git commit'"
 
         print(cmd)
 
-        self.bash( cmd )
+        #r = subprocess.run(["gnome-terminal", "--wait", "--", "bash", "-c", "'cd " +self.cd + " && git commit'"], capture_output=True)
+        r = subprocess.run( cmd, shell=True,capture_output=True)
+
+        c = ""
+        if r.stdout:
+            c = r.stdout.decode()
+        else:
+            c = r.stderr.decode()        
+        
+        print(c)
 
         f = pygtk.WebKit.Future()
         GLib.timeout_add(1000,self._on_commit_done,f)
