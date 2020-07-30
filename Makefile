@@ -4,6 +4,7 @@ all:
 	cd ext && make
 	cd webkit && make
 	cp py/build/WebKit.so pygtk/
+	mkdir -p lib/webkitext
 	cp ext/build/webkit2_web_extension.so lib/webkitext/
 	cp webkit/build/libwebview.so lib/
 	bash -c "cd lib && ln -s libwebview.so libwebview.so.0"
