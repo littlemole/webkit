@@ -90,7 +90,16 @@ class Git(object):
         print(cmd)
 
         self.bash( cmd )
-        return self.status()
+
+        f = pygtk.WebKit.Future()
+        GLib.timeout_add(1000,self._on_commit_done,f)
+        return f        
+
+        
+    def _on_commit_done(self,f):
+
+        r = self.status()
+        f.set_result(r)
 
 
     async def push(self):
@@ -213,12 +222,13 @@ class Controller(object):
         WebKit.JavaScript(web).setPlainText(txt)
 
 
-    def onGitCommit(self,*args):
+    @synced()
+    async def onGitCommit(self,*args):
 
         WebKit.JavaScript(web).setPlainText("..running commit..")
 
         f = tree.get_selection()
-        txt = Git(f).commit()
+        txt = await Git(f).commit()
 
         WebKit.JavaScript(web).setPlainText(txt)
 
