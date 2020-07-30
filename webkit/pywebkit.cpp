@@ -43,10 +43,11 @@ static void init_ext(WebKitWebContext *context, gpointer user_data)
     if (dladdr((const void*)&pywebkit_webview_init, &info))
     {
         fn = strdup(info.dli_fname);
-        char* dir = dirname(dirname(dirname(fn)));
-        g_print( PROG "Loaded from path = %s\n", dir);
-        oss << dir << "/ext/build";
+        char* dir = dirname(fn);
+        oss << dir << "/webkitext";
         free(fn);
+
+        g_print( PROG "loading extensions from path: %s\n", oss.str().c_str() );
     }
 
     webkit_web_context_set_web_extensions_directory(context,oss.str().c_str());

@@ -1,4 +1,4 @@
-import os, os.path, subprocess
+import os, os.path, subprocess, tempfile, time
 from pathlib import Path
 
 import gi
@@ -17,6 +17,130 @@ import traceback
 
 dir = os.path.dirname(os.path.realpath(__file__))
 
+class Git(object):
+
+    def __init__(self,path):
+
+        self.path = path
+        self.is_dir = os.path.isdir(path)
+
+        self.filename = os.path.basename(path)
+        self.dirname = os.path.dirname(path)
+
+        self.cd = path if self.is_dir else self.dirname
+        self.target = "." if self.is_dir else self.filename
+
+
+    def cmd(self,cmd):
+
+        return "cd " + self.cd + " && " + cmd + " "
+
+
+    def cmd_target(self,cmd):
+
+        return self.cmd(cmd) + self.target
+
+
+    def status(self):
+
+        return self.bash( self.cmd_target("git status") )
+
+
+    def diff(self):
+
+        return self.bash( self.cmd_target("git diff") )
+
+
+    def add(self):
+
+        return self.bash( self.cmd_target("git add") )
+
+
+    def checkout(self):
+
+        return self.bash( self.cmd_target("cgit heckout") )
+
+
+    def view_file(self):
+
+        r = ""
+        try:
+            if self.is_dir:  
+                r = self.bash( self.cmd( "ls -lah" ) )
+            else:
+                r = Path(self.path).read_text()
+
+        except BaseException:
+            pass
+
+        return r
+
+
+    async def pull(self):
+
+        return await self.bash_async( "git pull" )
+
+
+    async def commit(self):
+
+        return await self.bash_async( "git commit" )
+
+
+    async def push(self):
+
+        return await self.bash_async( "git push" )
+
+
+    def bash(self,cmd):
+
+        r = subprocess.run(["bash", "-c", cmd], capture_output=True)
+
+        c = ""
+        if r.stdout:
+            c = r.stdout.decode()
+        else:
+            c = r.stderr.decode()        
+
+        return c
+
+
+    def tmp_file(self):
+
+        fp = tempfile.NamedTemporaryFile(delete=False,mode="w+b")
+        fn = fp.name
+        fp.close()
+        return fn
+
+
+    def cmd_async( self, cmd, tmpfile ):
+
+        return "cd " + self.cd + " && gnome-terminal -- bash -c ' stdbuf -o0 " + cmd + " > " + tmpfile + " 2>&1 '"
+
+
+    def bash_async(self, command):
+
+        tmpfile = self.tmp_file()
+
+        cmd = self.cmd_async(command, tmpfile) 
+
+        self.bash( cmd )
+
+        f = pygtk.WebKit.Future()
+
+        GLib.timeout_add(1000,self._on_bash_async_done,tmpfile,f,cmd)
+        return f
+
+
+    def _on_bash_async_done(self,tmpfile,f,cmd):
+
+        txt = Path(tmpfile).read_text()
+        Path(tmpfile).unlink()
+
+        if not txt:
+            txt = "<empty>"
+
+        f.set_result(txt)
+
 
 @bind(UI,WebKit)
 class Controller(object):
@@ -28,8 +152,24 @@ class Controller(object):
 
     def onDocumentLoad(self,*args):
 
-        r = subprocess.run(["git", "status", "."], capture_output=True)
-        WebKit.JavaScript(web).setPlainText(r.stdout.decode())
+        f = os.getcwd()
+
+        c = Git(f).status()
+
+        WebKit.JavaScript(web).setPlainText( c )
+
+        self.last_action = self.onViewStatus
+
+
+    @synced()
+    async def onGitPull(self,*args):
+
+        WebKit.JavaScript(web).setPlainText("..running pull..")
+
+        f = tree.get_selection()
+        txt = await Git(f).pull()
+
+        WebKit.JavaScript(web).setPlainText(txt)
 
 
     def onFileOpen(self,*args):
@@ -43,13 +183,7 @@ class Controller(object):
             tree.clear()
             tree.add_dir(dir)
 
-            r = subprocess.run(["bash", "-c", "cd " + dir + " && git status ."], capture_output=True) 
-
-            c = ""
-            if r.stdout:
-                c = r.stdout.decode()
-            else:
-                c = r.stderr.decode()
+            c = Git(dir).status()
 
             WebKit.JavaScript(web).setPlainText( c )
 
@@ -58,20 +192,9 @@ class Controller(object):
     def onViewDiff(self,*args):
 
         f = tree.get_selection()
-        r = None
-        if os.path.isdir(f):  
-            r = subprocess.run(["bash", "-c", "cd " + f + " && git diff ."], capture_output=True)
-        else:
-            d = os.path.dirname(f)
-            n = os.path.basename(f)
-            r = subprocess.run(["bash", "-c", "cd " + d + " && git diff " + n], capture_output=True)
 
-        c = ""
-        if r.stdout:
-            c = r.stdout.decode()
-        else:
-            c = r.stderr.decode()
-            
+        c = Git(f).diff() 
+
         WebKit.JavaScript(web).setDiff(c)
 
         self.last_action = self.onViewDiff
@@ -81,19 +204,8 @@ class Controller(object):
     def onViewStatus(self,*args):
             
         f = tree.get_selection()
-        r = None
-        if os.path.isdir(f):  
-            r = subprocess.run(["bash", "-c", "cd " + f + " && git status ."], capture_output=True)
-        else:
-            d = os.path.dirname(f)
-            n = os.path.basename(f)
-            r = subprocess.run(["bash", "-c", "cd " + d + " && git status " + n], capture_output=True)
 
-        c = ""
-        if r.stdout:
-            c = r.stdout.decode()
-        else:
-            c = r.stderr.decode()
+        c = Git(f).status()
 
         WebKit.JavaScript(web).setPlainText( c )
 
@@ -104,27 +216,9 @@ class Controller(object):
     def onViewFile(self,*args):
 
         f = tree.get_selection()
-        txt = "<not a text file>"
 
-        if os.path.isdir(f):  
-            try:
-                r = subprocess.run(["bash", "-c", "cd " + f + " && ls -lah"], capture_output=True)
-                c = ""
-                if r.stdout:
-                    c = r.stdout.decode()
-                else:
-                    c = r.stderr.decode()
-                txt = c
-            except BaseException:
-                pass
-        else:
-            try:
-                c = Path(f).read_text()
-                if c :
-                    txt = c
-            except BaseException:
-                pass
-            
+        txt = Git(f).view_file()           
+
         WebKit.JavaScript(web).setPlainText(txt)
 
         self.last_action = self.onViewFile
@@ -152,6 +246,7 @@ class Controller(object):
     def onExit(self,*args):
 
         Gtk.main_quit()
+
 
 #create controller
 controller = Controller()        

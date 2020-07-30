@@ -22,7 +22,7 @@ CPPFLAGS = -Wall -I../include $(DEBUG) $(INCLUDE) $(OPTIONS) $(PKG_INC)
 #################################################
 
 # the shared lib
-LIB = ./build/webkit2_web_extensiond.so
+LIB = ./build/webkit2_web_extension.so
 release : override LIB = ./build/webkit2_web_extension.so
 
 LIB_SRC = .

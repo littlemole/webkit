@@ -316,16 +316,21 @@ def radio_group(**kargs):
 
         def wrap(*args,**kargs):
         
-            main = sys.modules[mod]
-            for i in dir(main):
-                t = getattr(main,i)
-                if t is None:
-                    continue
+            if not wrapper.ui:
 
-                clazzName = type(t).__module__ + "." + t.__class__.__name__
-                if clazzName == "pygtk.ui.UI":
-                    wrapper.ui = t
+                main = sys.modules[mod]
 
+                for i in dir(main):
+
+                    t = getattr(main,i)
+
+                    if t is None:
+                        continue
+
+                    clazzName = type(t).__module__ + "." + t.__class__.__name__
+                    if clazzName == "pygtk.ui.UI":
+
+                        wrapper.ui = t
 
             if len(args)>1 and ( args[1].get_active() == 0 ):
                 return

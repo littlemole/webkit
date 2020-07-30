@@ -40,6 +40,16 @@
                       </object>
                     </child>
                     <child>
+                      <object class="GtkImageMenuItem" id="ActionPull">
+                        <property name="label">Git Pull</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="use_underline">True</property>
+                        <property name="use_stock">False</property>
+                        <signal name="activate" handler="onGitPull" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
                       <object class="GtkSeparatorMenuItem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
