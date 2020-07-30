@@ -95,7 +95,10 @@ class Git(object):
 
     async def push(self):
 
-        return await self.bash_async( "git push" )
+        r = await self.bash_async( "git push" )
+        if r :
+            return r
+        return self.status()
 
 
     def bash(self,cmd):
@@ -144,7 +147,7 @@ class Git(object):
         Path(tmpfile).unlink()
 
         if not txt:
-            txt = "<empty>"
+            txt = ""
 
         f.set_result(txt)
 
