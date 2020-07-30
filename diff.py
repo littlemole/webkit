@@ -95,7 +95,7 @@ class Git(object):
         GLib.timeout_add(1000,self._on_commit_done,f)
         return f        
 
-        
+
     def _on_commit_done(self,f):
 
         r = self.status()
@@ -229,6 +229,8 @@ class Controller(object):
 
         f = tree.get_selection()
         txt = await Git(f).commit()
+
+        print("COMMIT: " + txt)
 
         WebKit.JavaScript(web).setPlainText(txt)
 
