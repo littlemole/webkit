@@ -85,9 +85,10 @@ class Git(object):
 
     def commit(self):
 
-        cmd = "gnome-terminal --wait -- bash -c 'cd " +self.cd + " && git commit'"
+        #cmd = "gnome-terminal --wait -- bash -c 'cd " +self.cd + " && git commit'"
 
         cmd = "bash -c 'cd " + self.cd + " && gnome-terminal --wait -- git commit'"
+#        cmd = "bash -c \" gnome-terminal --wait -- bash -c 'cd " + self.cd + " && git commit > " + tmpfile + "'\""
 
         print(cmd)
 
@@ -102,7 +103,7 @@ class Git(object):
         
         print(c)
 
-        return c
+        return self.status()
 
     async def push(self):
 
