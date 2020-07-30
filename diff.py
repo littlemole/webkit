@@ -53,7 +53,9 @@ class Git(object):
 
     def add(self):
 
-        return self.bash( self.cmd_target("git add") )
+        self.bash( self.cmd_target("git add") )
+        return self.status()
+
 
 
     def checkout(self):
@@ -83,7 +85,12 @@ class Git(object):
 
     async def commit(self):
 
-        return await self.bash_async( "git commit" )
+        cmd = "cd " + self.cd + " && gnome-terminal -- bash -c 'git commit' "
+
+        print(cmd)
+
+        c = self.bash( cmd )
+        return self.status()
 
 
     async def push(self):
@@ -161,6 +168,26 @@ class Controller(object):
         self.last_action = self.onViewStatus
 
 
+    def onGitAdd(self,*args):
+
+        f = tree.get_selection()
+
+        c = Git(f).add() 
+
+        WebKit.JavaScript(web).setPlainText(c)
+
+        self.last_action = self.onViewDiff
+
+    def onGitCheckout(self,*args):
+
+        f = tree.get_selection()
+
+        c = Git(f).checkout() 
+
+        WebKit.JavaScript(web).setPlainText(c)
+
+        self.last_action = self.onViewDiff
+
     @synced()
     async def onGitPull(self,*args):
 
@@ -168,6 +195,28 @@ class Controller(object):
 
         f = tree.get_selection()
         txt = await Git(f).pull()
+
+        WebKit.JavaScript(web).setPlainText(txt)
+
+
+    @synced()
+    async def onGitPush(self,*args):
+
+        WebKit.JavaScript(web).setPlainText("..running push..")
+
+        f = tree.get_selection()
+        txt = await Git(f).push()
+
+        WebKit.JavaScript(web).setPlainText(txt)
+
+
+    @synced()
+    async def onGitCommit(self,*args):
+
+        WebKit.JavaScript(web).setPlainText("..running commit..")
+
+        f = tree.get_selection()
+        txt = await Git(f).commit()
 
         WebKit.JavaScript(web).setPlainText(txt)
 
@@ -225,6 +274,13 @@ class Controller(object):
 
 
     def onContext(self,*args):
+
+        event = pygtk.ui.event(args)
+        m = ui["GitSubMenu"]
+        
+        Gtk.Menu.popup_at_pointer(m,event)             
+
+    def onWebContext(self,*args):
 
         event = pygtk.ui.event(args)
         m = ui["ViewSubMenu"]
