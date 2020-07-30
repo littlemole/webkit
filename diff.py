@@ -102,16 +102,7 @@ class Git(object):
         
         print(c)
 
-        f = pygtk.WebKit.Future()
-        GLib.timeout_add(1000,self._on_commit_done,f)
-        return f        
-
-
-    def _on_commit_done(self,f):
-
-        r = self.status()
-        f.set_result(r)
-
+        return c
 
     async def push(self):
 
@@ -145,6 +136,7 @@ class Git(object):
     def cmd_async( self, cmd, tmpfile ):
 
         return "cd " + self.cd + " && gnome-terminal -- bash -c ' stdbuf -o0 " + cmd + " > " + tmpfile + " 2>&1 '"
+        #cmd = "bash -c 'cd " + self.cd + " && gnome-terminal --wait -- git commit'"
 
 
     def bash_async(self, command):
@@ -233,15 +225,12 @@ class Controller(object):
         WebKit.JavaScript(web).setPlainText(txt)
 
 
-    @synced()
-    async def onGitCommit(self,*args):
+    def onGitCommit(self,*args):
 
         WebKit.JavaScript(web).setPlainText("..running commit..")
 
         f = tree.get_selection()
-        txt = await Git(f).commit()
-
-        print("COMMIT: " + txt)
+        txt = Git(f).commit()
 
         WebKit.JavaScript(web).setPlainText(txt)
 
