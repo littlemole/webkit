@@ -83,13 +83,13 @@ class Git(object):
         return await self.bash_async( "git pull" )
 
 
-    async def commit(self):
+    def commit(self):
 
         cmd = "cd " + self.cd + " && gnome-terminal -- bash -c 'git commit' "
 
         print(cmd)
 
-        c = self.bash( cmd )
+        self.bash( cmd )
         return self.status()
 
 
@@ -213,13 +213,12 @@ class Controller(object):
         WebKit.JavaScript(web).setPlainText(txt)
 
 
-    @synced()
-    async def onGitCommit(self,*args):
+    def onGitCommit(self,*args):
 
         WebKit.JavaScript(web).setPlainText("..running commit..")
 
         f = tree.get_selection()
-        txt = await Git(f).commit()
+        txt = Git(f).commit()
 
         WebKit.JavaScript(web).setPlainText(txt)
 
