@@ -261,6 +261,46 @@ class GitTree(pygtk.ui.DirectoryTree):
         if Y == " ":
             return colors["black"]
 
+    def get_status_icon(self,file):
+
+        X = file.status[0:1]
+        Y = file.status[1:2]
+
+        if file.status == "??" :
+            return Gtk.STOCK_DIALOG_QUESTION
+
+        if file.status == "DD" or file.status == "UD":
+            return Gtk.STOCK_DIALOG_ERROR
+
+        if file.status == "UA" or file.status == "AA":
+            return Gtk.STOCK_DIALOG_ERROR
+
+        if Y == "U":
+            return Gtk.STOCK_DIALOG_ERROR
+
+        if Y == "M" or Y == "D" or Y == "R" or Y == "C":
+            return Gtk.STOCK_EDIT
+
+        if Y == "A":
+            return Gtk.STOCK_DIALOG_INFO
+
+        if X == "M" or Y == "D" or Y == "R" or Y == "C":
+            return Gtk.STOCK_APPLY
+
+        if file.directory:
+            return Gtk.STOCK_OPEN
+        else:
+            return Gtk.STOCK_FILE
+
+
+    def tree_cell_render_pix(self,col, renderer, model, tree_iter, user_data):
+
+        _file = model[tree_iter][0]
+        if _file.empty:
+            renderer.set_property('stock_id', None)
+        else:
+            renderer.set_property('stock-id', self.get_status_icon(_file))
+
 
     def tree_cell_render_file(self,col, renderer, model, tree_iter, user_data):
         _file = model[tree_iter][0]
@@ -276,9 +316,7 @@ class GitTree(pygtk.ui.DirectoryTree):
 
     def onFileTreeViewExpand(self,widget, tree_iter, path):
 
-        print("GitTree.onFileTreeViewExpand")
         current_dir = self.treeModel[tree_iter][0]
-        print(str(current_dir.directory) + ":" + current_dir.file_name)
 
         place_holder_iter = self.treeModel.iter_children(tree_iter)
         if not self.treeModel[place_holder_iter][0].place_holder:
@@ -396,21 +434,10 @@ class Controller(object):
 
         WebKit.JavaScript(web).setCommit(c)
 
-       # WebKit.JavaScript(web).setPlainText("..running commit..")
-
-       # f = tree.get_selection()
-       # txt = Git(f).commit()
-
-       # WebKit.JavaScript(web).setPlainText(txt)
 
     def onSubmitCommit(self,msg):
 
         c = Git(tree.root).commit(msg)
-
-       # WebKit.JavaScript(web).setPlainText("..running commit..")
-
-       # f = tree.get_selection()
-       # txt = Git(f).commit()
 
         WebKit.JavaScript(web).setPlainText(c)
 

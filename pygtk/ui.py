@@ -229,6 +229,7 @@ class DirectoryTree:
             renderer.set_property('stock-id', Gtk.STOCK_OPEN)
         else:
             renderer.set_property('stock-id', Gtk.STOCK_FILE)
+            
 
     def add_dir(self, dir_name, root=None):
 
