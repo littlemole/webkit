@@ -16,6 +16,11 @@
 <body>
 
   <div class="main">
+   <div id="commit">
+     commit message:<br>
+     <textarea id="commitMsg" rows=5 cols=80></textarea>
+     <button id="commitButton">commit</button>
+   </div>
    <div id="html" class="html">
      <pre id="git"></pre>  
    </div>
@@ -46,6 +51,7 @@ document.addEventListener("DOMContentLoaded", function(e)
             if(!output) {
                 output = "";
             }
+            document.getElementById("commit").style.display = "none";
             document.getElementById("html").innerHTML = "<pre>"  + escapeHtml(output) + "</pre>";
         },
 
@@ -57,14 +63,35 @@ document.addEventListener("DOMContentLoaded", function(e)
 //                outputFormat: 'side-by-side',
             });
 
+            document.getElementById("commit").style.display = "none";
             document.getElementById("html").innerHTML = diffHtml;
+        },
+
+        setCommit : function( output) {
+
+          var diffHtml = window.Diff2Html.html( output, {
+            drawFileList: true,
+            matching: 'lines',
+            //                outputFormat: 'side-by-side',
+          });
+
+          document.getElementById("html").innerHTML = diffHtml;
+          document.getElementById("commit").style.display = "block";
+        },
+
+        onCommit : function() {
+
+          let msg = document.getElementById("commitMsg").value;
+          WebKit.Python.onSubmitCommit(msg);
         }
-}   ;
+
+    };
+
 
     WebKit.bind(View);
 
     WebKit.Python.onDocumentLoad();
-
+    document.getElementById("commitButton").onclick=View.onCommit;
 });
 
 </script>

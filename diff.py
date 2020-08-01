@@ -50,6 +50,9 @@ class Git(object):
 
         return self.bash( self.cmd_target("git diff") )
 
+    def diff_cached(self):
+
+        return self.bash( self.cmd_target("git diff --cached") )
 
     def add(self):
 
@@ -129,29 +132,25 @@ class Git(object):
 
     def commit(self,msg):
 
-        msg = shlex.quote(msg)
+        try:
+            msg = shlex.quote(msg)
 
-        "cd " + self.cd + " &&  git commit -m'" + msg + "' "
+            cmd = "cd " + self.cd + " &&  git commit -m'" + msg + "' "
 
-        #cmd = "gnome-terminal --wait -- bash -c 'cd " +self.cd + " && git commit'"
+            r = subprocess.run( cmd, shell=True,capture_output=True)
 
-  #      cmd = "bash -c 'cd " + self.cd + " && gnome-terminal --wait -- git commit'"
-#        cmd = "bash -c \" gnome-terminal --wait -- bash -c 'cd " + self.cd + " && git commit > " + tmpfile + "'\""
-
-        print(cmd)
-
-        #r = subprocess.run(["gnome-terminal", "--wait", "--", "bash", "-c", "'cd " +self.cd + " && git commit'"], capture_output=True)
-        r = subprocess.run( cmd, shell=True,capture_output=True)
-
-        c = ""
-        if r.stdout:
-            c = r.stdout.decode()
-        else:
-            c = r.stderr.decode()        
-        
-        print(c)
+            c = ""
+            if r.stdout:
+                c = r.stdout.decode()
+            else:
+                c = r.stderr.decode()        
+            
+            print(c)
+        except BaseException as e:
+            print(e)
 
         return c if c != "" else self.status()
+
 
     async def push(self):
 
@@ -231,11 +230,14 @@ class GitTree(pygtk.ui.DirectoryTree):
             "green" : "#17901B",
             "ref"   : "#FF0000",
             "orange" : "#FF7D4B",
-            "yellow" : "#D0D07E"
+            "blue" : "#5A8DF3"
         }
 
         X = file.status[0:1]
         Y = file.status[1:2]
+
+        if file.status == "??" :
+            return colors["blue"]
 
         if file.status == "DD" or file.status == "UD":
             return colors["red"]
@@ -250,7 +252,7 @@ class GitTree(pygtk.ui.DirectoryTree):
             return colors["orange"]
 
         if Y == "A":
-            return colors["yellow"]
+            return colors["blue"]
 
 
         if X == "M" or Y == "D" or Y == "R" or Y == "C":
@@ -350,6 +352,7 @@ class Controller(object):
 
         self.onViewRefresh()
 
+
     def onGitCheckout(self,*args):
 
         f = tree.get_selection()
@@ -357,6 +360,8 @@ class Controller(object):
         c = Git(f).checkout() 
 
         WebKit.JavaScript(web).setPlainText(c)
+
+        self.onViewRefresh()
 
 
     @synced()
@@ -369,6 +374,8 @@ class Controller(object):
 
         WebKit.JavaScript(web).setPlainText(txt)
 
+        self.onViewRefresh()
+
 
     @synced()
     async def onGitPush(self,*args):
@@ -380,10 +387,12 @@ class Controller(object):
 
         WebKit.JavaScript(web).setPlainText(txt)
 
+        self.onViewRefresh()
+
 
     def onGitCommit(self,*args):
 
-        c = Git(tree.root).diff() 
+        c = Git(tree.root).diff_cached() 
 
         WebKit.JavaScript(web).setCommit(c)
 
@@ -403,7 +412,9 @@ class Controller(object):
        # f = tree.get_selection()
        # txt = Git(f).commit()
 
-       # WebKit.JavaScript(web).setPlainText(txt)
+        WebKit.JavaScript(web).setPlainText(c)
+
+        self.onViewRefresh()
 
 
     def onFileOpen(self,*args):

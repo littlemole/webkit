@@ -179,12 +179,11 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkRadioMenuItem" id="ViewRefresh">
+                      <object class="GtkImageMenuItem" id="ViewRefresh">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label">Refresh View</property>
                         <property name="use_underline">True</property>
-                        <property name="draw_as_radio">True</property>
                         <signal name="activate" handler="onViewRefresh" swapped="no"/>
                       </object>
                     </child>
