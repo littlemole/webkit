@@ -1,4 +1,4 @@
-import os, os.path, subprocess, tempfile, time
+import os, os.path, subprocess, tempfile, time, shlex
 from pathlib import Path
 
 import gi
@@ -57,6 +57,50 @@ class Git(object):
         return self.status()
 
 
+    def porcelain(self):
+
+        data = {}
+
+        cmd = self.cmd_target("git rev-parse --show-toplevel && git status --porcelain -uall ") 
+        print(cmd)
+        txt = self.bash( cmd )
+
+        print(txt)
+        lines = txt.split("\n")
+        l = len(lines)
+
+        gitroot = lines[0]
+
+        for i in range(1,l):
+
+            line = lines[i]
+            status = line[0:2]
+            path = line[3:]
+
+            items = path.split(" ")
+            if len(items) > 0:
+                path = items[0]
+
+            path = gitroot + "/" + path
+
+            if path.startswith(self.cd):
+                path = path[len(self.cd)+1:]
+
+            i = path
+            if "/" in i:
+                i = i.split("/")[0]
+
+            if i in data:
+                s = data[i]
+                if status != "!!" and status != "??":
+                    data[ i ] = status
+            else:                  
+                data[ i ] = status
+
+        print(data)
+
+        return data
+
 
     def checkout(self):
 
@@ -83,11 +127,15 @@ class Git(object):
         return await self.bash_async( "git pull" )
 
 
-    def commit(self):
+    def commit(self,msg):
+
+        msg = shlex.quote(msg)
+
+        "cd " + self.cd + " &&  git commit -m'" + msg + "' "
 
         #cmd = "gnome-terminal --wait -- bash -c 'cd " +self.cd + " && git commit'"
 
-        cmd = "bash -c 'cd " + self.cd + " && gnome-terminal --wait -- git commit'"
+  #      cmd = "bash -c 'cd " + self.cd + " && gnome-terminal --wait -- git commit'"
 #        cmd = "bash -c \" gnome-terminal --wait -- bash -c 'cd " + self.cd + " && git commit > " + tmpfile + "'\""
 
         print(cmd)
@@ -103,7 +151,7 @@ class Git(object):
         
         print(c)
 
-        return self.status()
+        return c if c != "" else self.status()
 
     async def push(self):
 
@@ -165,6 +213,107 @@ class Git(object):
         f.set_result(txt)
 
 
+class GitFile(pygtk.ui.File):
+
+    def __init__(self, dirname, status, *args, **kargs):
+        super().__init__(dirname, *args,**kargs)
+        self.status = status #kargs["status"] if "status" in kargs else "" 
+
+class GitTree(pygtk.ui.DirectoryTree):
+
+    def __init__(self, *args, **kargs):
+        super().__init__(*args,**kargs)
+
+    def get_status_color(self,file):
+
+        colors = {
+            "black" : "#000000",
+            "green" : "#17901B",
+            "ref"   : "#FF0000",
+            "orange" : "#FF7D4B",
+            "yellow" : "#D0D07E"
+        }
+
+        X = file.status[0:1]
+        Y = file.status[1:2]
+
+        if file.status == "DD" or file.status == "UD":
+            return colors["red"]
+
+        if file.status == "UA" or file.status == "AA":
+            return colors["red"]
+
+        if Y == "U":
+            return colors["red"]
+
+        if Y == "M" or Y == "D" or Y == "R" or Y == "C":
+            return colors["orange"]
+
+        if Y == "A":
+            return colors["yellow"]
+
+
+        if X == "M" or Y == "D" or Y == "R" or Y == "C":
+            return colors["green"]
+
+        if Y == " ":
+            return colors["black"]
+
+
+    def tree_cell_render_file(self,col, renderer, model, tree_iter, user_data):
+        _file = model[tree_iter][0]
+        label = _file.status + " " + os.path.basename(_file.file_name)
+        hidden = os.path.basename(_file.file_name)[0] == '.'
+        label = GLib.markup_escape_text(label)
+        if hidden:
+            label = '<i>' + label + '</i>'
+
+        renderer.set_property('foreground', self.get_status_color(_file))
+
+        renderer.set_property('markup', label)
+
+    def onFileTreeViewExpand(self,widget, tree_iter, path):
+
+        print("GitTree.onFileTreeViewExpand")
+        current_dir = self.treeModel[tree_iter][0]
+        print(str(current_dir.directory) + ":" + current_dir.file_name)
+
+        place_holder_iter = self.treeModel.iter_children(tree_iter)
+        if not self.treeModel[place_holder_iter][0].place_holder:
+            return
+
+        git_paths = Git(current_dir.file_name).porcelain()
+
+        paths = os.listdir(current_dir.file_name)
+        paths.sort()
+
+        if len(paths) > 0:
+            for child_path in paths:
+                status = ""
+                if child_path in git_paths:
+                    status = git_paths[child_path]
+                self.add_dir(os.path.join(current_dir.file_name, child_path),status, tree_iter)
+        else:
+            self.treeModel.append(tree_iter, [DirectoryTree.EMPTY_DIR])
+
+        self.treeModel.remove(place_holder_iter)
+
+
+    def add_dir(self, dir_name,status="", root=None):
+
+        is_root = root == None
+        if(is_root):
+            self.root = dir_name
+            GLib.idle_add(self.tree.expand_row,Gtk.TreePath.new_first(), False)
+
+        if os.path.isdir(dir_name):
+            tree_iter = self.treeModel.append(root, [GitFile(dir_name, status, root=is_root,)])
+            self.treeModel.append(tree_iter, [DirectoryTree.PLACE_HOLDER])
+        else:
+            self.treeModel.append(root, [GitFile(dir_name, status, root=is_root, directory=False)])
+
+
+
 @bind(UI,WebKit)
 class Controller(object):
 
@@ -183,6 +332,13 @@ class Controller(object):
 
         self.last_action = self.onViewStatus
 
+    def onViewRefresh(self,*args):
+
+        dir = tree.root
+        print("--------------------------->"+dir)
+        tree.clear()
+        tree.add_dir(dir)
+
 
     def onGitAdd(self,*args):
 
@@ -192,7 +348,7 @@ class Controller(object):
 
         WebKit.JavaScript(web).setPlainText(c)
 
-        self.last_action = self.onViewDiff
+        self.onViewRefresh()
 
     def onGitCheckout(self,*args):
 
@@ -202,7 +358,6 @@ class Controller(object):
 
         WebKit.JavaScript(web).setPlainText(c)
 
-        self.last_action = self.onViewDiff
 
     @synced()
     async def onGitPull(self,*args):
@@ -228,12 +383,27 @@ class Controller(object):
 
     def onGitCommit(self,*args):
 
-        WebKit.JavaScript(web).setPlainText("..running commit..")
+        c = Git(tree.root).diff() 
 
-        f = tree.get_selection()
-        txt = Git(f).commit()
+        WebKit.JavaScript(web).setCommit(c)
 
-        WebKit.JavaScript(web).setPlainText(txt)
+       # WebKit.JavaScript(web).setPlainText("..running commit..")
+
+       # f = tree.get_selection()
+       # txt = Git(f).commit()
+
+       # WebKit.JavaScript(web).setPlainText(txt)
+
+    def onSubmitCommit(self,msg):
+
+        c = Git(tree.root).commit(msg)
+
+       # WebKit.JavaScript(web).setPlainText("..running commit..")
+
+       # f = tree.get_selection()
+       # txt = Git(f).commit()
+
+       # WebKit.JavaScript(web).setPlainText(txt)
 
 
     def onFileOpen(self,*args):
@@ -326,7 +496,7 @@ controller = Controller()
 ui = UI(dir + "/diff.ui.xml")
 
 # tree view
-tree = DirectoryTree( ui["fileTreeView"] )
+tree = GitTree( ui["fileTreeView"] )
 tree.add_dir( os.getcwd() )
 
 # web view 
