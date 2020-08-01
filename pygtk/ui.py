@@ -140,6 +140,7 @@ class DirectoryTree:
 
     def __init__(self,tree,*args,**kargs):
 
+        self.root = None
         self.tree = tree
         self.treeModel = None
         self.contextMenuCB = None
@@ -172,6 +173,8 @@ class DirectoryTree:
     def get_selection(self):
 
         selection = self.tree.get_selection().get_selected()
+        if not selection or selection[1] is None:
+            return self.root
         f = self.treeModel.get(selection[1], (0) )
         return f[0].file_name
 
@@ -230,6 +233,10 @@ class DirectoryTree:
     def add_dir(self, dir_name, root=None):
 
         is_root = root == None
+        if(is_root):
+            self.root = dir_name
+            GLib.idle_add(self.tree.expand_row,Gtk.TreePath.new_first(), False)
+
         if os.path.isdir(dir_name):
             tree_iter = self.treeModel.append(root, [File(dir_name, root=is_root)])
             self.treeModel.append(tree_iter, [DirectoryTree.PLACE_HOLDER])
@@ -253,6 +260,7 @@ class DirectoryTree:
             self.treeModel.append(tree_iter, [DirectoryTree.EMPTY_DIR])
 
         self.treeModel.remove(place_holder_iter)
+
 
 
     def button_press_event(self,treeview, event):

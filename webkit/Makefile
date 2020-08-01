@@ -1,3 +1,4 @@
+
 PWD = $(shell pwd)
 DEBUG = -g 
 release : override DEBUG = -O3
