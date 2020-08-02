@@ -141,6 +141,26 @@
                         <signal name="activate" handler="onGitDiffOrigin" swapped="no"/>
                       </object>
                     </child>
+                    <child>
+                      <object class="GtkImageMenuItem" id="GitDiffCached">
+                        <property name="label">Git Diff --cached</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="use_underline">True</property>
+                        <property name="use_stock">False</property>
+                        <signal name="activate" handler="onGitDiffCached" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem" id="GitBranches">
+                        <property name="label">Git Branches</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="use_underline">True</property>
+                        <property name="use_stock">False</property>
+                        <signal name="activate" handler="onGitShowBranches" swapped="no"/>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>

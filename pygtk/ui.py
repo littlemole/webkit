@@ -8,7 +8,7 @@ from gi.repository import Gtk, Gdk, GLib
 
 import pygtk
 import pygtk.WebKit as WebKit
-import os,sys,traceback
+import os,sys,traceback,re
 
 uis = []
 
@@ -172,9 +172,11 @@ class DirectoryTree:
     PLACE_HOLDER = File('<should never be visible>', place_holder=True)
     EMPTY_DIR = File('<empty>', empty=True)
 
-    def __init__(self,tree,*args,**kargs):
+    def __init__(self,tree,filter=".*",*args,**kargs):
 
+        self.filter = filter
         self.root = None
+        self.cursel = ""
         self.tree = tree
         self.treeModel = None
         self.contextMenuCB = None
@@ -250,7 +252,7 @@ class DirectoryTree:
             return None
 
         f = self.treeModel.get(selection[1], (0) )
-        return f[0].file_name
+        return f[0]
 
 
     def clear(self):
@@ -307,16 +309,37 @@ class DirectoryTree:
         self.add_entry(file)
         
         #GLib.idle_add(self.tree.expand_row,Gtk.TreePath.new_first(), False)
-        self.tree.expand_row(Gtk.TreePath.new_first(), False)
+        #self.tree.expand_row(Gtk.TreePath.new_first(), False)
 
 
-    def add_entry(self, file ):
+    def add_entry(self, file, ):
 
         if file.directory :
+
             tree_iter = self.treeModel.append( file.root, [file] )
             self.treeModel.append(tree_iter, [DirectoryTree.PLACE_HOLDER])
+
+            if self.cursel == file.file_name:
+
+                self.tree.get_selection().select_iter(tree_iter)
+                #self.tree.scroll_to_cell( self.treeModel.get_path(tree_iter))
+                GLib.idle_add(self.tree.scroll_to_cell, self.treeModel.get_path(tree_iter) )
+
+            elif self.cursel.startswith(file.file_name):
+
+                self.tree.expand_row(self.treeModel.get_path(tree_iter), False)            
         else:
-            self.treeModel.append( file.root, [file] )
+
+            if re.match(self.filter,file.file_name):
+
+                tree_iter = self.treeModel.append( file.root, [file] )
+
+                if self.cursel == file.file_name:
+
+                    self.tree.get_selection().select_iter(tree_iter)
+                    #self.tree.scroll_to_cell( self.treeModel.get_path(tree_iter))
+                    GLib.idle_add(self.tree.scroll_to_cell, self.treeModel.get_path(tree_iter) )
+
 
 
 
@@ -365,6 +388,8 @@ class DirectoryTree:
 
 
     def onSelect(self,selection,*args):
+
+        self.cursel = self.get_selection().file_name
 
         if not self.selectCB is None:
 

@@ -15,7 +15,7 @@
 </head>
 <body>
 
-  <h5>Git repo at <span id="git"></span></h5>
+  <h5><span id="git"></span></h5>
   <div class="main">
    <div id="commit">
      commit message:<br>
@@ -81,6 +81,30 @@ document.addEventListener("DOMContentLoaded", function(e)
           document.getElementById("html").innerHTML = diffHtml;
           document.getElementById("commit").style.display = "block";
           document.getElementById("git").innerHTML = gitdir;
+        },
+
+        setBranches : function( gitdir, output) {
+
+          let html = "<ul>";
+          output.forEach(function(branch)
+          {
+              html += "<li><a class='branch' href='#' data-branch='"+branch+"'>";
+              html += escapeHtml(branch);
+              html += "</a></li>"
+          });
+          html += "</ul>";
+
+          document.getElementById("html").innerHTML = html;
+          document.getElementById("commit").style.display = "none";
+          document.getElementById("git").innerHTML = gitdir;
+
+          document.querySelectorAll("a.branch").forEach( function(branch) {
+              branch.onclick = function(e) {
+                e.preventDefault();
+                //alert(e.target.getAttribute("data-branch"));
+                WebKit.Python.onSelectBranch( e.target.getAttribute("data-branch") );
+              };
+          });
         },
 
         onCommit : function() {

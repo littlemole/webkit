@@ -41,6 +41,34 @@ class Git(object):
         return self.cmd(cmd) + self.target
 
 
+    def branches(self):
+
+        result = {
+            "current" : "",
+            "branches" : []
+        }
+
+        txt = self.bash( self.cmd("git branch --no-color") )
+
+        lines = txt.split("\n")
+        for line in lines:
+            if line[0:1] == "*":
+                result["current"] = line[2:]
+            else:
+                path = line[2:].strip()
+                if path != "":
+                    result["branches"].append( line[2:] )
+         
+        print("BRANCHES: " + str(result) )
+        return result
+
+    def select_branch(self,branch):
+
+        txt = self.bash( self.cmd("git checkout " + branch) )
+
+        return ["selected branch", txt]
+
+
     def status(self):
 
         txt = self.bash( self.cmd_target("git rev-parse --show-toplevel ; echo && git status") ).strip()
@@ -118,7 +146,7 @@ class Git(object):
 #        print(cmd)
         txt = self.bash( cmd )
 
-        print(txt)
+        #print(txt)
         lines = txt.split("\n")
         l = len(lines)
 
@@ -177,7 +205,7 @@ class Git(object):
             pass
 
         if r == "":
-            return ["eror",""]
+            return ["error",""]
 
         line = r.split("\n")[0]
         body = r[len(line)+1:]
@@ -361,7 +389,7 @@ class GitFile(pygtk.ui.File):
 
         git_paths = Git(self.file_name).porcelain()
         origin = Git(self.file_name).origin_status()
-        print(origin)
+        #print(origin)
         paths = os.listdir(self.file_name)
         paths.sort()
 
@@ -378,7 +406,7 @@ class GitFile(pygtk.ui.File):
                 is_dir = os.path.isdir( target )
                 result.append( GitFile( target, status,directory=is_dir, root=tree_iter) )
 
-                print(status + " " + target)
+                #print(status + " " + target)
 
         return result
 
@@ -439,6 +467,13 @@ class Controller(object):
 
         self.last_action = self.onViewStatus
 
+    def selected_file(self):
+
+        f = tree.get_selection().file_name
+        f = f if not f is None else tree.root.file_name
+        f = f if not f is None else os.getcwd()
+        return f
+
 
     def onDocumentLoad(self,*args):
 
@@ -455,10 +490,10 @@ class Controller(object):
 
         tree.refresh()
 
+
     def onGitAdd(self,*args):
 
-        f = tree.get_selection()
-        f = f if f else tree.root.file_name
+        f = self.selected_file()
 
         c = Git(f).add() 
 
@@ -469,8 +504,7 @@ class Controller(object):
 
     def onGitCheckout(self,*args):
 
-        f = tree.get_selection()
-        f = f if f else tree.root.file_name
+        f = self.selected_file()
 
         c = Git(f).checkout() 
 
@@ -482,8 +516,7 @@ class Controller(object):
     @synced()
     async def onGitPull(self,*args):
 
-        f = tree.get_selection()
-        f = f if f else tree.root.file_name
+        f = self.selected_file()
 
         txt = Git(f).pull()
 
@@ -495,8 +528,7 @@ class Controller(object):
     @synced()
     async def onGitPush(self,*args):
 
-        f = tree.get_selection()
-        f = f if f else tree.root.file_name
+        f = self.selected_file()
 
         txt = Git(f).push()
 
@@ -505,10 +537,18 @@ class Controller(object):
         self.onViewRefresh()
 
 
+    def onGitShowBranches(self,*args):
+
+        f = self.selected_file()
+
+        c = Git(f).branches() 
+
+        WebKit.JavaScript(web).setBranches(c["current"], c["branches"])
+
+
     def onGitCommit(self,*args):
 
-        f = tree.get_selection()
-        f = f if f else tree.root.file_name
+        f = self.selected_file()
 
         c = Git(f).diff_cached() 
 
@@ -517,10 +557,20 @@ class Controller(object):
 
     def onSubmitCommit(self,msg):
 
-        f = tree.get_selection()
-        f = f if f else tree.root.file_name
+        f = self.selected_file()
 
         c = Git(f).commit(msg)
+
+        WebKit.JavaScript(web).setPlainText(c[0],c[1])
+
+        self.onViewRefresh()
+
+
+    def onSelectBranch(self,branch):
+
+        f = self.selected_file()
+
+        c = Git(f).select_branch(branch)
 
         WebKit.JavaScript(web).setPlainText(c[0],c[1])
 
@@ -542,21 +592,29 @@ class Controller(object):
 
             WebKit.JavaScript(web).setPlainText( c[0], c[1] )
 
+
     def onGitDiffOrigin(self,*args):
 
-        f = tree.get_selection()
-        f = f if f else tree.root.file_name
+        f = self.selected_file()
 
         c = Git(f).diff_origin() 
 
         WebKit.JavaScript(web).setDiff("ORIGIN: " + c[0],c[1])
 
 
+    def onGitDiffCached(self,*args):
+
+        f = self.selected_file()
+
+        c = Git(f).diff_cached() 
+
+        WebKit.JavaScript(web).setDiff("Indexed but not committed: " + c[0],c[1])
+
+
     @radio_group(menu="ViewDiffMenuItem", tb="tb_diff")
     def onViewDiff(self,*args):
 
-        f = tree.get_selection()
-        f = f if f else tree.root.file_name
+        f = self.selected_file()
 
         c = Git(f).diff() 
 
@@ -568,9 +626,9 @@ class Controller(object):
     @radio_group(menu="ViewStatusMenuItem", tb="tb_status")
     def onViewStatus(self,*args):
             
-        f = tree.get_selection()
-        f = f if f else tree.root.file_name
+        f = self.selected_file()
 
+        print("STATUS: " + str(f))
         c = Git(f).status()
 
         WebKit.JavaScript(web).setPlainText( c[0], c[1] )
@@ -581,8 +639,7 @@ class Controller(object):
     @radio_group(menu="ViewFileMenuItem", tb="tb_file")
     def onViewFile(self,*args):
 
-        f = tree.get_selection()
-        f = f if f else tree.root.file_name
+        f = self.selected_file()
 
         txt = Git(f).view_file()           
 
@@ -609,7 +666,7 @@ class Controller(object):
     def onSelect(self,*args):
 
         f = self.last_action
-        if not f is None:
+        if not f == None:
             self.last_action = None
             f()
             self.last_action = f
@@ -633,9 +690,11 @@ ui = UI(dir + "/diff.ui.xml")
 
 # tree view
 #tree = GitTree( ui["fileTreeView"] )
-tree = DirectoryTree( ui["fileTreeView"] )
+tree = DirectoryTree( ui["fileTreeView"] )#, filter=".*\\.py" )
 #tree.add_dir( os.getcwd() )
+#tree.filter=".*\\.py"
 tree.add_root(GitFile( os.getcwd() ) )
+
 # web view 
 web = ui["web"]
 web.load_uri("file://" + dir + "/diff.html")
