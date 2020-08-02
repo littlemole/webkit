@@ -165,8 +165,8 @@ class Git(object):
         try:
             msg = shlex.quote(msg)
 
-            cmd = "cd " + self.cd + " && git rev-parse --show-toplevel && git commit -m'" + msg + "' "
-
+            cmd = "cd " + self.cd + " && git rev-parse --show-toplevel && git commit -m" + msg + " "
+            print(cmd)
             r = subprocess.run( cmd, shell=True,capture_output=True)
 
             c = ""
@@ -206,8 +206,9 @@ class Git(object):
         c = ""
         if r.stdout:
             c = r.stdout.decode()
-        #else:
+        else:
         #    c = r.stderr.decode()        
+            print("ERR:" + r.stderr.decode()  )
 
         return c
 
@@ -433,12 +434,10 @@ class Controller(object):
     @synced()
     async def onGitPull(self,*args):
 
-        WebKit.JavaScript(web).setPlainText("..running pull..")
-
         f = tree.get_selection()
         f = f if f else tree.root.file_name
 
-        txt = await Git(f).pull()
+        txt = Git(f).pull()
 
         WebKit.JavaScript(web).setPlainText(txt[0],txt[1])
 
@@ -448,12 +447,10 @@ class Controller(object):
     @synced()
     async def onGitPush(self,*args):
 
-        WebKit.JavaScript(web).setPlainText("..running push..")
-
         f = tree.get_selection()
         f = f if f else tree.root.file_name
 
-        txt = await Git(f).push()
+        txt = Git(f).push()
 
         WebKit.JavaScript(web).setPlainText(txt[0],txt[1])
 
