@@ -69,6 +69,13 @@ class Git(object):
         return [ line, body ]
 
 
+    def diff_origin(self):
+        txt = self.bash( self.cmd_target( "git rev-parse --show-toplevel && git diff origin/$(git branch --show-current) -- ") )
+        line = txt.split("\n")[0]
+        body = txt[len(line)+1:]
+        return [ line, body ]
+
+
     def add(self):
 
         txt = self.bash( self.cmd_target("git rev-parse --show-toplevel && git add") )
@@ -77,7 +84,7 @@ class Git(object):
         return [ line, body ]
 
     def origin_status(self):
-        txt = self.bash( self.cmd_target("git rev-parse --show-toplevel && git diff --name-status origin/$(git branch --show-current) -- . " ) )
+        txt = self.bash( self.cmd_target("git rev-parse --show-toplevel && git diff --name-status origin/$(git branch --show-current) -- " ) )
 
         result = {}
         lines = txt.split("\n")
@@ -534,6 +541,15 @@ class Controller(object):
             c = Git(dir).status()
 
             WebKit.JavaScript(web).setPlainText( c[0], c[1] )
+
+    def onGitDiffOrigin(self,*args):
+
+        f = tree.get_selection()
+        f = f if f else tree.root.file_name
+
+        c = Git(f).diff_origin() 
+
+        WebKit.JavaScript(web).setDiff("ORIGIN: " + c[0],c[1])
 
 
     @radio_group(menu="ViewDiffMenuItem", tb="tb_diff")
