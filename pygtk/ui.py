@@ -8,7 +8,7 @@ from gi.repository import Gtk, Gdk, GLib
 
 import pygtk
 import pygtk.WebKit as WebKit
-import os,sys
+import os,sys,traceback
 
 uis = []
 
@@ -180,7 +180,6 @@ class DirectoryTree:
         self.contextMenuCB = None
         self.selectCB = None
         self.controller = None
-        self.refreshing = False
 
         if "on_context" in kargs:
             self.contextMenuCB = kargs["on_context"]
@@ -207,17 +206,8 @@ class DirectoryTree:
 
     def refresh(self):
 
-        self.refreshing = True
-        f = self.root
-
-        selection = self.tree.get_selection().get_selected()
-        if selection and not selection[1] is None:
-            f = self.treeModel.get(selection[1], (0) )[0]
-
         self.clear()
         self.add_root(self.root)
-
-        GLib.idle_add(self.select,f.file_name)
 
 
     def search(self, treeiter, path):
@@ -316,7 +306,8 @@ class DirectoryTree:
         self.root = file
         self.add_entry(file)
         
-        GLib.idle_add(self.tree.expand_row,Gtk.TreePath.new_first(), False)
+        #GLib.idle_add(self.tree.expand_row,Gtk.TreePath.new_first(), False)
+        self.tree.expand_row(Gtk.TreePath.new_first(), False)
 
 
     def add_entry(self, file ):
@@ -326,6 +317,7 @@ class DirectoryTree:
             self.treeModel.append(tree_iter, [DirectoryTree.PLACE_HOLDER])
         else:
             self.treeModel.append( file.root, [file] )
+
 
 
     def onFileTreeViewExpand(self,widget, tree_iter, path):
@@ -341,12 +333,6 @@ class DirectoryTree:
         if len(children) > 0:
             for child in children:
                 self.add_entry( child )
-
-#        paths = os.listdir(current_dir.file_name)
-#        paths.sort()
-#        if len(paths) > 0:
-#            for child_path in paths:
-#                self.add_dir(os.path.join(current_dir.file_name, child_path), tree_iter)
         else:
             self.treeModel.append(tree_iter, [DirectoryTree.EMPTY_DIR])
 
@@ -375,18 +361,10 @@ class DirectoryTree:
 
     def connect_late(self,cb):
 
-        self.tree.get_selection().connect("changed", cb)
-
-        #iter = self.treeModel.get_iter_first()
-        #self.tree.get_selection().select_iter(iter)
+        self.tree.connect("row-activated", cb)
 
 
-    def onSelect(self,*args):
-
-        if self.refreshing:
-
-            self.refreshing = False
-            return
+    def onSelect(self,selection,*args):
 
         if not self.selectCB is None:
 
