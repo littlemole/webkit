@@ -153,7 +153,7 @@ class Git(object):
 
     def pull(self):
 
-        txt = self.bash( "git rev-parse --show-toplevel && git pull" )
+        txt = self.bash( "git rev-parse --show-toplevel && GIT_ASKPASS=true git pull" )
         line = txt.split("\n")[0]
         body = txt[len(line)+1:]
         return [ line, body ]
@@ -190,7 +190,7 @@ class Git(object):
     def push(self):
 
         r = ""
-        r = self.bash( "git rev-parse --show-toplevel && git push" )
+        r = self.bash( "git rev-parse --show-toplevel && GIT_ASKPASS=true git push" )
         if r == "" :
             return self.status()
 
