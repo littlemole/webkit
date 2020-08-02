@@ -77,14 +77,28 @@ class Git(object):
         return [ line, body ]
 
     def origin_status(self):
-        txt = self.bash( self.cmd_target("git diff --name-status origin/$(git branch --show-current) -- . " ) )
+        txt = self.bash( self.cmd_target("git rev-parse --show-toplevel && git diff --name-status origin/$(git branch --show-current) -- . " ) )
 
         result = {}
         lines = txt.split("\n")
-        for line in lines:
+
+        l = len(lines)
+
+        gitroot = lines[0]
+
+        for i in range(1,l):
+
+            line = lines[i]
+
             status = line[0:1]
-            file = line[2:]
-            result[file] = status
+            path = line[2:]
+
+            path = gitroot + "/" + path
+
+            if path.startswith(self.cd):
+                path = path[len(self.cd)+1:]
+
+            result[path] = status
 
         return result
 
