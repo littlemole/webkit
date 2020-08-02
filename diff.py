@@ -388,7 +388,6 @@ class Controller(object):
 
     def __init__(self,*args):
 
-        self.refreshing = False
         self.last_action = self.onViewStatus
 
 
@@ -405,10 +404,7 @@ class Controller(object):
 
     def onViewRefresh(self,*args):
 
-        self.refreshing = True
         tree.refresh()
-        self.refreshing = False
-
 
     def onGitAdd(self,*args):
 
@@ -477,7 +473,6 @@ class Controller(object):
 
         c = Git(f).commit(msg)
 
-        print("onSubmitCommit" +str(c) )
         WebKit.JavaScript(web).setPlainText(c[0],c[1])
 
         self.onViewRefresh()
@@ -555,11 +550,11 @@ class Controller(object):
 
     def onSelect(self,*args):
 
-        if(self.refreshing):
-            return
-
         f = self.last_action
-        f()
+        if not f is None:
+            self.last_action = None
+            f()
+            self.last_action = f
  
 
     def onHelp(self,*args):
