@@ -82,7 +82,7 @@ class Git(object):
         data = {}
 
         cmd = self.cmd_target("git rev-parse --show-toplevel && git status --porcelain -uall ") 
-        print(cmd)
+#        print(cmd)
         txt = self.bash( cmd )
 
         print(txt)
@@ -201,6 +201,7 @@ class Git(object):
 
     def bash(self,cmd):
 
+        print(cmd)
         r = subprocess.run(["bash", "-c", cmd], capture_output=True)
 
         c = ""
@@ -404,7 +405,9 @@ class Controller(object):
 
     def onViewRefresh(self,*args):
 
+        self.refreshing = True
         tree.refresh()
+        self.refreshing = False
 
 
     def onGitAdd(self,*args):
@@ -551,6 +554,9 @@ class Controller(object):
 
     def onSelect(self,*args):
 
+        if(self.refreshing):
+            return
+            
         f = self.last_action
         f()
  
