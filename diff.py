@@ -76,6 +76,18 @@ class Git(object):
         body = txt[len(line)+1:]
         return [ line, body ]
 
+    def origin_status(self):
+        txt = self.bash( self.cmd_target("git diff --name-status origin/$(git branch --show-current) -- . " ) )
+
+        result = {}
+        lines = txt.split("\n")
+        for line in lines:
+            status = line[0:2]
+            file = line[3:]
+            result[file] = status
+
+        return result
+
 
     def porcelain(self):
 
@@ -235,8 +247,11 @@ class GitFile(pygtk.ui.File):
         X = self.status[0:1]
         Y = self.status[1:2]
 
+        if self.status == "OO" :
+            return colors["green"]
+
         if self.status == "??" :
-            return colors["blue"]
+            return colors["black"]
 
         if self.status == "!!" :
             return colors["gray"]
@@ -268,6 +283,9 @@ class GitFile(pygtk.ui.File):
         X = self.status[0:1]
         Y = self.status[1:2]
 
+        if self.status == "OO" :
+            return Gtk.STOCK_APPLY
+
         if self.status == "??" :
             return Gtk.STOCK_DIALOG_QUESTION
 
@@ -287,7 +305,7 @@ class GitFile(pygtk.ui.File):
             return Gtk.STOCK_DIALOG_INFO
 
         if X == "M" or Y == "D" or Y == "R" or Y == "C":
-            return Gtk.STOCK_APPLY
+            return Gtk.STOCK_GO_UP
 
         if self.directory:
             return Gtk.STOCK_OPEN
@@ -321,6 +339,7 @@ class GitFile(pygtk.ui.File):
         result = []
 
         git_paths = Git(self.file_name).porcelain()
+        origin = Git(self.file_name).origin_status()
 
         paths = os.listdir(self.file_name)
         paths.sort()
@@ -330,6 +349,9 @@ class GitFile(pygtk.ui.File):
                 status = ""
                 if child_path in git_paths:
                     status = git_paths[child_path]
+                elif child_path in origin:
+                    status = "OO"
+
                 
                 target = os.path.join(self.file_name, child_path)
                 is_dir = os.path.isdir( target )
