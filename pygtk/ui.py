@@ -180,6 +180,7 @@ class DirectoryTree:
         self.contextMenuCB = None
         self.selectCB = None
         self.controller = None
+        self.refreshing = False
 
         if "on_context" in kargs:
             self.contextMenuCB = kargs["on_context"]
@@ -206,6 +207,7 @@ class DirectoryTree:
 
     def refresh(self):
 
+        self.refreshing = True
         f = self.root
 
         selection = self.tree.get_selection().get_selected()
@@ -216,7 +218,6 @@ class DirectoryTree:
         self.add_root(self.root)
 
         GLib.idle_add(self.select,f.file_name)
-
 
 
     def search(self, treeiter, path):
@@ -381,6 +382,11 @@ class DirectoryTree:
 
 
     def onSelect(self,*args):
+
+        if self.refreshing:
+
+            self.refreshing = False
+            return
 
         if not self.selectCB is None:
 
