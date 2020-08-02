@@ -125,6 +125,22 @@
                         <signal name="activate" handler="onGitPush" swapped="no"/>
                       </object>
                     </child>
+                    <child>
+                      <object class="GtkSeparatorMenuItem">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem" id="GitDiffOrigin">
+                        <property name="label">Git Diff Origin</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="use_underline">True</property>
+                        <property name="use_stock">False</property>
+                        <signal name="activate" handler="onGitDiffOrigin" swapped="no"/>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>
