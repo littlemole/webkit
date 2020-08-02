@@ -82,8 +82,8 @@ class Git(object):
         result = {}
         lines = txt.split("\n")
         for line in lines:
-            status = line[0:2]
-            file = line[3:]
+            status = line[0:1]
+            file = line[2:]
             result[file] = status
 
         return result
@@ -340,7 +340,7 @@ class GitFile(pygtk.ui.File):
 
         git_paths = Git(self.file_name).porcelain()
         origin = Git(self.file_name).origin_status()
-
+        print(origin)
         paths = os.listdir(self.file_name)
         paths.sort()
 
@@ -356,6 +356,8 @@ class GitFile(pygtk.ui.File):
                 target = os.path.join(self.file_name, child_path)
                 is_dir = os.path.isdir( target )
                 result.append( GitFile( target, status,directory=is_dir, root=tree_iter) )
+
+                print(status + " " + target)
 
         return result
 
