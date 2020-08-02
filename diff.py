@@ -81,7 +81,7 @@ class Git(object):
 
         data = {}
 
-        cmd = self.cmd_target("git rev-parse --show-toplevel && git status --porcelain -uall ") 
+        cmd = self.cmd_target("git rev-parse --show-toplevel && git status --porcelain -uall --ignored ") 
 #        print(cmd)
         txt = self.bash( cmd )
 
@@ -153,7 +153,7 @@ class Git(object):
 
     def pull(self):
 
-        txt = self.bash( "git rev-parse --show-toplevel && GIT_ASKPASS=true git pull" )
+        txt = self.bash( self.cmd( "git rev-parse --show-toplevel && GIT_ASKPASS=true git pull") )
         line = txt.split("\n")[0]
         body = txt[len(line)+1:]
         return [ line, body ]
@@ -189,7 +189,7 @@ class Git(object):
     def push(self):
 
         r = ""
-        r = self.bash( "git rev-parse --show-toplevel && GIT_ASKPASS=true git push" )
+        r = self.bash( self.cmd( "git rev-parse --show-toplevel && GIT_ASKPASS=true git push") )
         if r == "" :
             return self.status()
 
@@ -206,8 +206,8 @@ class Git(object):
         c = ""
         if r.stdout:
             c = r.stdout.decode()
-        else:
-        #    c = r.stderr.decode()        
+        if r.stderr:
+            c = r.stderr.decode() + "\n" + c
             print("ERR:" + r.stderr.decode()  )
 
         return c
@@ -228,7 +228,8 @@ class GitFile(pygtk.ui.File):
             "green" : "#17901B",
             "ref"   : "#FF0000",
             "orange" : "#FF7D4B",
-            "blue" : "#5A8DF3"
+            "blue" : "#5A8DF3",
+            "gray" : "#AAAAAA"
         }
 
         X = self.status[0:1]
@@ -236,6 +237,9 @@ class GitFile(pygtk.ui.File):
 
         if self.status == "??" :
             return colors["blue"]
+
+        if self.status == "!!" :
+            return colors["gray"]
 
         if self.status == "DD" or self.status == "UD":
             return colors["red"]
