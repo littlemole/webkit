@@ -282,7 +282,7 @@ class GitFile(pygtk.ui.File):
         self.status = status #kargs["status"] if "status" in kargs else "" 
 
 
-    def get_status_color(self):
+    def get_status_data(self):
 
         colors = {
             "black" : "#000000",
@@ -296,70 +296,42 @@ class GitFile(pygtk.ui.File):
         X = self.status[0:1]
         Y = self.status[1:2]
 
+        stock = Gtk.STOCK_FILE
+        if self.directory:
+            stock = Gtk.STOCK_OPEN
+
         if self.status == "OO" :
-            return colors["green"]
+            return [ colors["green"], Gtk.STOCK_APPLY ]
 
         if self.status == "??" :
-            return colors["black"]
+            return [ colors["black"], Gtk.STOCK_DIALOG_QUESTION ]
 
         if self.status == "!!" :
-            return colors["gray"]
+            return [ colors["gray"], stock ]
 
         if self.status == "DD" or self.status == "UD":
-            return colors["red"]
+            return [ colors["red"], Gtk.STOCK_DIALOG_ERROR ]
 
         if self.status == "UA" or self.status == "AA":
-            return colors["red"]
+            return [ colors["red"], Gtk.STOCK_DIALOG_ERROR ]
 
         if Y == "U":
-            return colors["red"]
+            return [ colors["red"], Gtk.STOCK_DIALOG_ERROR ]
 
         if Y == "M" or Y == "D" or Y == "R" or Y == "C":
-            return colors["orange"]
+            return [ colors["orange"], Gtk.STOCK_EDIT ]
 
         if Y == "A":
-            return colors["blue"]
+            return [ colors["blue"], Gtk.STOCK_DIALOG_INFO ]
 
 
         if X == "M" or Y == "D" or Y == "R" or Y == "C":
-            return colors["green"]
+            return [ colors["green"], Gtk.STOCK_GO_UP ]
 
         if Y == " ":
-            return colors["black"]
+            return [ colors["black"], stock ]
 
-    def get_status_icon(self):
-
-        X = self.status[0:1]
-        Y = self.status[1:2]
-
-        if self.status == "OO" :
-            return Gtk.STOCK_APPLY
-
-        if self.status == "??" :
-            return Gtk.STOCK_DIALOG_QUESTION
-
-        if self.status == "DD" or self.status == "UD":
-            return Gtk.STOCK_DIALOG_ERROR
-
-        if self.status == "UA" or self.status == "AA":
-            return Gtk.STOCK_DIALOG_ERROR
-
-        if Y == "U":
-            return Gtk.STOCK_DIALOG_ERROR
-
-        if Y == "M" or Y == "D" or Y == "R" or Y == "C":
-            return Gtk.STOCK_EDIT
-
-        if Y == "A":
-            return Gtk.STOCK_DIALOG_INFO
-
-        if X == "M" or Y == "D" or Y == "R" or Y == "C":
-            return Gtk.STOCK_GO_UP
-
-        if self.directory:
-            return Gtk.STOCK_OPEN
-        else:
-            return Gtk.STOCK_FILE
+        return [ colors["black"], stock ]
 
 
     def tree_cell_render_pix(self,col, renderer, model, tree_iter, user_data):
@@ -367,18 +339,18 @@ class GitFile(pygtk.ui.File):
         if self.empty:
             renderer.set_property('stock_id', None)
         else:
-            renderer.set_property('stock-id', self.get_status_icon())
+            renderer.set_property('stock-id', self.get_status_data()[1] )
 
 
     def tree_cell_render_file(self,col, renderer, model, tree_iter, user_data):
 
-        label = self.status + " " + os.path.basename(self.file_name)
+        label = os.path.basename(self.file_name)
         hidden = os.path.basename(self.file_name)[0] == '.'
         label = GLib.markup_escape_text(label)
         if hidden:
             label = '<i>' + label + '</i>'
 
-        renderer.set_property('foreground', self.get_status_color())
+        renderer.set_property('foreground', self.get_status_data()[0] )
 
         renderer.set_property('markup', label)
 
