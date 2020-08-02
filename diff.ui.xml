@@ -70,32 +70,6 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkImageMenuItem" id="GitPull">
-                        <property name="label">Git Pull</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="use_underline">True</property>
-                        <property name="use_stock">False</property>
-                        <signal name="activate" handler="onGitPull" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkImageMenuItem" id="GitCheckout">
-                        <property name="label">Git Checkout</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="use_underline">True</property>
-                        <property name="use_stock">False</property>
-                        <signal name="activate" handler="onGitCheckout" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkSeparatorMenuItem">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                      </object>
-                    </child>
-                    <child>
                       <object class="GtkImageMenuItem" id="GitAdd">
                         <property name="label">Git Add</property>
                         <property name="visible">True</property>
@@ -116,13 +90,13 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="GitPush">
-                        <property name="label">Git Push</property>
+                      <object class="GtkImageMenuItem" id="GitCheckout">
+                        <property name="label">Git Checkout</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">False</property>
-                        <signal name="activate" handler="onGitPush" swapped="no"/>
+                        <signal name="activate" handler="onGitCheckout" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -132,33 +106,89 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="GitDiffOrigin">
-                        <property name="label">Git Diff Origin</property>
+                      <object class="GtkImageMenuItem" id="GitLocal">
+                        <property name="label">Git Local</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">False</property>
-                        <signal name="activate" handler="onGitDiffOrigin" swapped="no"/>
+                        <child type="submenu">
+                          <object class="GtkMenu" id="GitLocalSubMenu">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <child>
+                              <object class="GtkImageMenuItem" id="GitLocalDiffCached">
+                                <property name="label">Git Diff --cached</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="use_underline">True</property>
+                                <property name="use_stock">False</property>
+                                <signal name="activate" handler="onGitDiffCached" swapped="no"/>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkImageMenuItem" id="GitBranches">
+                                <property name="label">Git Branches</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="use_underline">True</property>
+                                <property name="use_stock">False</property>
+                                <signal name="activate" handler="onGitShowBranches" swapped="no"/>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="GitDiffCached">
-                        <property name="label">Git Diff --cached</property>
+                      <object class="GtkSeparatorMenuItem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="use_underline">True</property>
-                        <property name="use_stock">False</property>
-                        <signal name="activate" handler="onGitDiffCached" swapped="no"/>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="GitBranches">
-                        <property name="label">Git Branches</property>
+                      <object class="GtkImageMenuItem" id="GitRemote">
+                        <property name="label">Git Remote</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">False</property>
-                        <signal name="activate" handler="onGitShowBranches" swapped="no"/>
+                        <child type="submenu">
+                          <object class="GtkMenu" id="GitRemoteSubMenu">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <child>
+                              <object class="GtkImageMenuItem" id="GitRemotePull">
+                                <property name="label">Git Pull</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="use_underline">True</property>
+                                <property name="use_stock">False</property>
+                                <signal name="activate" handler="onGitPull" swapped="no"/>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkImageMenuItem" id="GitRemotePush">
+                                <property name="label">Git Push</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="use_underline">True</property>
+                                <property name="use_stock">False</property>
+                                <signal name="activate" handler="onGitPush" swapped="no"/>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkImageMenuItem" id="GitRemoteDiffOrigin">
+                                <property name="label">Git Diff Origin</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="use_underline">True</property>
+                                <property name="use_stock">False</property>
+                                <signal name="activate" handler="onGitDiffOrigin" swapped="no"/>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
                       </object>
                     </child>
                   </object>
