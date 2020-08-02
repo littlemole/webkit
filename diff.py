@@ -161,7 +161,7 @@ class Git(object):
 
     def commit(self,msg):
 
-        r = ""
+        c = ""
         try:
             msg = shlex.quote(msg)
 
@@ -169,7 +169,6 @@ class Git(object):
             print(cmd)
             r = subprocess.run( cmd, shell=True,capture_output=True)
 
-            c = ""
             if r.stdout:
                 c = r.stdout.decode()
             else:
@@ -179,11 +178,11 @@ class Git(object):
         except BaseException as e:
             print(e)
 
-        if r == "":
+        if c == "":
             return self.status()
 
-        line = r.split("\n")[0]
-        body = r[len(line)+1:]
+        line = c.split("\n")[0]
+        body = c[len(line)+1:]
         return [ line, body ]
 
 
@@ -389,6 +388,7 @@ class Controller(object):
 
     def __init__(self,*args):
 
+        self.refreshing = False
         self.last_action = self.onViewStatus
 
 
@@ -556,7 +556,7 @@ class Controller(object):
 
         if(self.refreshing):
             return
-            
+
         f = self.last_action
         f()
  
