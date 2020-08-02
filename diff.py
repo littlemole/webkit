@@ -477,6 +477,7 @@ class Controller(object):
 
         c = Git(f).commit(msg)
 
+        print("onSubmitCommit" +str(c) )
         WebKit.JavaScript(web).setPlainText(c[0],c[1])
 
         self.onViewRefresh()
