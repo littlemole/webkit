@@ -132,6 +132,40 @@ class File(object):
                 format(self.file_name, self.directory, self.empty)
 
 
+    def tree_cell_render_file(self,col, renderer, model, tree_iter, user_data):
+        label = os.path.basename(self.file_name)
+        hidden = os.path.basename(self.file_name)[0] == '.'
+        label = GLib.markup_escape_text(label)
+        if hidden:
+            label = '<i>' + label + '</i>'
+        renderer.set_property('markup', label)
+
+
+    def tree_cell_render_pix(self,col, renderer, model, tree_iter, user_data):
+        if self.empty:
+            renderer.set_property('stock_id', None)
+        elif self.directory:
+            renderer.set_property('stock-id', Gtk.STOCK_OPEN)
+        else:
+            renderer.set_property('stock-id', Gtk.STOCK_FILE)
+
+
+    def get_children(self,tree_iter):
+
+        result = []
+
+        paths = os.listdir(self.file_name)
+        paths.sort()
+
+        if len(paths) > 0:
+            for child_path in paths:
+                
+                target = os.path.join(self.file_name, child_path)
+                is_dir = os.path.isdir( target )
+                result.append( File( target, directory=is_dir, root=tree_iter) )
+
+        return result
+
 
 class DirectoryTree:
 
@@ -170,11 +204,60 @@ class DirectoryTree:
         self.controller = controller
 
 
+    def refresh(self):
+
+        f = self.root
+
+        selection = self.tree.get_selection().get_selected()
+        if selection and not selection[1] is None:
+            f = self.treeModel.get(selection[1], (0) )[0]
+
+        self.clear()
+        self.add_root(self.root)
+
+        GLib.idle_add(self.select,f.file_name)
+
+
+
+    def search(self, treeiter, path):
+
+        while treeiter != None:
+
+            if self.treeModel[treeiter][0].file_name == path:
+                return treeiter
+                break
+
+            if self.treeModel.iter_has_child(treeiter):
+                childiter = self.treeModel.iter_children(treeiter)
+                ret = self.search( childiter, path)
+                if ret is not None:
+                    return ret
+
+            treeiter = self.treeModel.iter_next(treeiter)
+
+
+    def select(self,path):
+
+        iter = self.treeModel.get_iter_first()
+
+        r = self.search(iter,path)
+
+        if r is None:
+            return
+
+        selection = self.tree.get_selection()
+        paths = selection.get_selected()
+        selection.select_iter(r)
+
+        self.tree.scroll_to_cell( self.treeModel.get_path(r))
+
+
     def get_selection(self):
 
         selection = self.tree.get_selection().get_selected()
         if not selection or selection[1] is None:
-            return self.root
+            return None
+
         f = self.treeModel.get(selection[1], (0) )
         return f[0].file_name
 
@@ -209,40 +292,40 @@ class DirectoryTree:
         GLib.idle_add(self.connect_late, self.onSelect)
 
 
-
-
     def tree_cell_render_file(self,col, renderer, model, tree_iter, user_data):
+
         _file = model[tree_iter][0]
-        label = os.path.basename(_file.file_name)
-        hidden = os.path.basename(_file.file_name)[0] == '.'
-        label = GLib.markup_escape_text(label)
-        if hidden:
-            label = '<i>' + label + '</i>'
-        renderer.set_property('markup', label)
+        return _file.tree_cell_render_file(col,renderer,model,tree_iter, user_data)
 
 
     def tree_cell_render_pix(self,col, renderer, model, tree_iter, user_data):
+
         _file = model[tree_iter][0]
-        if _file.empty:
-            renderer.set_property('stock_id', None)
-        elif _file.directory:
-            renderer.set_property('stock-id', Gtk.STOCK_OPEN)
-        else:
-            renderer.set_property('stock-id', Gtk.STOCK_FILE)
-            
+        return _file.tree_cell_render_pix(col,renderer,model,tree_iter, user_data)
 
-    def add_dir(self, dir_name, root=None):
 
-        is_root = root == None
-        if(is_root):
-            self.root = dir_name
-            GLib.idle_add(self.tree.expand_row,Gtk.TreePath.new_first(), False)
+    def add_dir(self, dir_name):
 
-        if os.path.isdir(dir_name):
-            tree_iter = self.treeModel.append(root, [File(dir_name, root=is_root)])
+        file = File(dir_name, root=None)
+        self.add_root(file)
+
+
+    def add_root(self, file):
+
+        self.root = file
+        self.add_entry(file)
+        
+        GLib.idle_add(self.tree.expand_row,Gtk.TreePath.new_first(), False)
+
+
+    def add_entry(self, file ):
+
+        if file.directory :
+            tree_iter = self.treeModel.append( file.root, [file] )
             self.treeModel.append(tree_iter, [DirectoryTree.PLACE_HOLDER])
         else:
-            self.treeModel.append(root, [File(dir_name, root=is_root, directory=False)])
+            self.treeModel.append( file.root, [file] )
+
 
     def onFileTreeViewExpand(self,widget, tree_iter, path):
 
@@ -252,11 +335,17 @@ class DirectoryTree:
         if not self.treeModel[place_holder_iter][0].place_holder:
             return
 
-        paths = os.listdir(current_dir.file_name)
-        paths.sort()
-        if len(paths) > 0:
-            for child_path in paths:
-                self.add_dir(os.path.join(current_dir.file_name, child_path), tree_iter)
+        children = current_dir.get_children(tree_iter)
+
+        if len(children) > 0:
+            for child in children:
+                self.add_entry( child )
+
+#        paths = os.listdir(current_dir.file_name)
+#        paths.sort()
+#        if len(paths) > 0:
+#            for child_path in paths:
+#                self.add_dir(os.path.join(current_dir.file_name, child_path), tree_iter)
         else:
             self.treeModel.append(tree_iter, [DirectoryTree.EMPTY_DIR])
 

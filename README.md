@@ -1,4 +1,4 @@
-webkit
+Webkit
 ======
 
 academic example of using embedded webkit and python extensions in a gnome.3 python application.

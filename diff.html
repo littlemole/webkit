@@ -15,6 +15,7 @@
 </head>
 <body>
 
+  <h5>Git repo at <span id="git"></span></h5>
   <div class="main">
    <div id="commit">
      commit message:<br>
@@ -47,15 +48,16 @@ document.addEventListener("DOMContentLoaded", function(e)
 {
     let View = {
 
-        setPlainText : function( output) {
+        setPlainText : function( gitdir,output) {
             if(!output) {
                 output = "";
             }
             document.getElementById("commit").style.display = "none";
             document.getElementById("html").innerHTML = "<pre>"  + escapeHtml(output) + "</pre>";
+            document.getElementById("git").innerHTML = gitdir;
         },
 
-        setDiff : function( output) {
+        setDiff : function( gitdir, output) {
 
             var diffHtml = window.Diff2Html.html( output, {
                 drawFileList: true,
@@ -65,9 +67,10 @@ document.addEventListener("DOMContentLoaded", function(e)
 
             document.getElementById("commit").style.display = "none";
             document.getElementById("html").innerHTML = diffHtml;
+            document.getElementById("git").innerHTML = gitdir;
         },
 
-        setCommit : function( output) {
+        setCommit : function( gitdir, output) {
 
           var diffHtml = window.Diff2Html.html( output, {
             drawFileList: true,
@@ -77,6 +80,7 @@ document.addEventListener("DOMContentLoaded", function(e)
 
           document.getElementById("html").innerHTML = diffHtml;
           document.getElementById("commit").style.display = "block";
+          document.getElementById("git").innerHTML = gitdir;
         },
 
         onCommit : function() {
