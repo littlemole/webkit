@@ -39,7 +39,7 @@ class Controller(object):
 
         c = Git(f).status()
 
-        WebKit.JavaScript(web).setPlainText( c[0], c[1] )
+        WebKit.JavaScript(web).setPlainText( *c ) #c[0], c[1] )
 
         self.last_action = self.onViewStatus
 
@@ -66,7 +66,7 @@ class Controller(object):
 
         c = Git(f).checkout() 
 
-        WebKit.JavaScript(web).setPlainText(c[0],c[1])
+        WebKit.JavaScript(web).setPlainText( *c )
 
         self.onViewRefresh()
 
@@ -78,7 +78,7 @@ class Controller(object):
 
         txt = Git(f).pull()
 
-        WebKit.JavaScript(web).setPlainText(txt[0],txt[1])
+        WebKit.JavaScript(web).setPlainText( *txt )
 
         self.onViewRefresh()
 
@@ -90,7 +90,7 @@ class Controller(object):
 
         txt = Git(f).push()
 
-        WebKit.JavaScript(web).setPlainText(txt[0],txt[1])
+        WebKit.JavaScript(web).setPlainText( *txt )
 
         self.onViewRefresh()
 
@@ -110,7 +110,7 @@ class Controller(object):
 
         c = Git(f).diff_cached() 
 
-        WebKit.JavaScript(web).setCommit(c[0], c[1])
+        WebKit.JavaScript(web).setCommit( *c )
 
 
     def onSubmitCommit(self,msg):
@@ -119,7 +119,7 @@ class Controller(object):
 
         c = Git(f).commit(msg)
 
-        WebKit.JavaScript(web).setPlainText(c[0],c[1])
+        WebKit.JavaScript(web).setPlainText( *c )
 
         self.onViewRefresh()
 
@@ -130,7 +130,7 @@ class Controller(object):
 
         c = Git(f).select_branch(branch)
 
-        WebKit.JavaScript(web).setPlainText(c[0],c[1])
+        WebKit.JavaScript(web).setPlainText( *c )
 
         self.onViewRefresh()
 
@@ -148,7 +148,7 @@ class Controller(object):
 
             c = Git(dir).status()
 
-            WebKit.JavaScript(web).setPlainText( c[0], c[1] )
+            WebKit.JavaScript(web).setPlainText( *c )
 
 
     def onGitDiffOrigin(self,*args):
@@ -176,7 +176,7 @@ class Controller(object):
 
         c = Git(f).diff() 
 
-        WebKit.JavaScript(web).setDiff(c[0],c[1])
+        WebKit.JavaScript(web).setDiff( *c )
 
         self.last_action = self.onViewDiff
 
@@ -189,7 +189,7 @@ class Controller(object):
         print("STATUS: " + str(f))
         c = Git(f).status()
 
-        WebKit.JavaScript(web).setPlainText( c[0], c[1] )
+        WebKit.JavaScript(web).setPlainText( *c )
 
         self.last_action = self.onViewStatus
 
@@ -201,7 +201,7 @@ class Controller(object):
 
         txt = Git(f).view_file()           
 
-        WebKit.JavaScript(web).setPlainText(txt[0],txt[1])
+        WebKit.JavaScript(web).setPlainText( *txt )
 
         self.last_action = self.onViewFile
 
