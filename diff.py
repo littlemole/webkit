@@ -24,6 +24,7 @@ class Controller(object):
 
         self.last_action = self.onViewStatus
 
+
     def selected_file(self):
 
         f = tree.get_selection().file_name
@@ -54,8 +55,8 @@ class Controller(object):
 
         c = Git(f).add() 
 
-        WebKit.JavaScript(web).setPlainText(c[0],c[1])
-
+        WebKit.JavaScript(web).setPlainText( *c ) #c[0],c[1])
+ 
         self.onViewRefresh()
 
 
