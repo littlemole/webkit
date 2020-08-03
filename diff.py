@@ -12,7 +12,7 @@ from pygtk.bind import bind,synced,idle_add
 from pygtk.ui import UI,DirectoryTree,radio_group
 from pygtk.git import Git, GitFile
 from pygtk import WebKit
-
+import pygtk
 
 dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -205,12 +205,14 @@ class Controller(object):
         self.last_action = self.onViewFile
 
 
-    def onContext(self,*args):
+    def onContext(self,treeview, event,*args):
 
-        event = pygtk.ui.event(args)
-        m = ui["GitSubMenu"]
-        
-        Gtk.Menu.popup_at_pointer(m,event)             
+        #event = pygtk.ui.event(args)
+
+        if event.button == 3: # right click
+       
+            m = ui["GitSubMenu"] 
+            Gtk.Menu.popup_at_pointer(m,event)             
 
 
     def onWebContext(self,*args):

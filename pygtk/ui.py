@@ -277,12 +277,14 @@ class DirectoryTree:
         self.tree.append_column(file_name_column)
 
         self.tree.connect("row-expanded",self.onFileTreeViewExpand)
-        self.tree.connect('button-press-event' , self.button_press_event)
+        self.tree.connect("row-activated", self.onSelect)
 
-        for ui in pygtk.ui.uis:
-            self.bind(ui)
+        #self.tree.connect('button-press-event' , self.button_press_event)
 
-        GLib.idle_add(self.connect_late, self.onSelect)
+        #for ui in pygtk.ui.uis:
+        #    self.bind(ui)
+
+        #GLib.idle_add(self.connect_late, self.onSelect)
 
 
     def tree_cell_render_file(self,col, renderer, model, tree_iter, user_data):
@@ -391,15 +393,15 @@ class DirectoryTree:
 
         self.cursel = self.get_selection().file_name
 
-        if not self.selectCB is None:
+#        if not self.selectCB is None:
 
-            self.selectCB(*args)
+#            self.selectCB(*args)
 
-        if not self.controller is None:
+#        if not self.controller is None:
 
-            if not getattr(self.controller,"onSelect") is None:
+#            if not getattr(self.controller,"onSelect") is None:
 
-                getattr(self.controller,"onSelect")(*args)
+#                getattr(self.controller,"onSelect")(*args)
 
 
 

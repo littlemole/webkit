@@ -382,6 +382,8 @@
                     <property name="headers_visible">False</property>
                     <property name="enable_grid_lines">both</property>
                     <property name="activate_on_single_click">True</property>
+                    <signal name="row-activated" handler="onSelect" swapped="no"/>
+                    <signal name="button-press-event" handler="onContext" swapped="no"/>
                     <child internal-child="selection">
                       <object class="GtkTreeSelection"/>
                     </child>
