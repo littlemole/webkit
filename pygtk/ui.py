@@ -179,31 +179,8 @@ class DirectoryTree:
         self.cursel = ""
         self.tree = tree
         self.treeModel = None
-        self.contextMenuCB = None
-        self.selectCB = None
-        self.controller = None
-
-        if "on_context" in kargs:
-            self.contextMenuCB = kargs["on_context"]
-
-        if "on_select" in kargs:
-            self.selectCB = kargs["on_select"]
 
         self.compose()
-
-
-    def set_context_menu(self,cb):
-
-        self.contextMenuCB = cb
-
-
-    def on_select(self,cb):
-
-        self.selectCB = cb
-
-    def bind(self,controller):
-        
-        self.controller = controller
 
 
     def refresh(self):
@@ -279,13 +256,6 @@ class DirectoryTree:
         self.tree.connect("row-expanded",self.onFileTreeViewExpand)
         self.tree.connect("row-activated", self.onSelect)
 
-        #self.tree.connect('button-press-event' , self.button_press_event)
-
-        #for ui in pygtk.ui.uis:
-        #    self.bind(ui)
-
-        #GLib.idle_add(self.connect_late, self.onSelect)
-
 
     def tree_cell_render_file(self,col, renderer, model, tree_iter, user_data):
 
@@ -310,9 +280,6 @@ class DirectoryTree:
         self.root = file
         self.add_entry(file)
         
-        #GLib.idle_add(self.tree.expand_row,Gtk.TreePath.new_first(), False)
-        #self.tree.expand_row(Gtk.TreePath.new_first(), False)
-
 
     def add_entry(self, file, ):
 
@@ -343,8 +310,6 @@ class DirectoryTree:
                     GLib.idle_add(self.tree.scroll_to_cell, self.treeModel.get_path(tree_iter) )
 
 
-
-
     def onFileTreeViewExpand(self,widget, tree_iter, path):
 
         current_dir = self.treeModel[tree_iter][0]
@@ -364,45 +329,13 @@ class DirectoryTree:
         self.treeModel.remove(place_holder_iter)
 
 
-
-    def button_press_event(self,treeview, event):
-
-        if event.button == 3: # right click
-            #r = self.tree.get_path_at_pos(int(event.x), int(event.y))
-            #i = self.treeModel.get_iter(r[0])
-            #f = self.treeModel.get(i, (0) )
-
-            if not self.contextMenuCB is None:
-
-                self.contextMenuCB(event) 
-
-            if not self.controller is None:
-
-                if not getattr(self.controller, "onContext") is None:
-
-                    getattr(self.controller, "onContext")(event)
-
-
-
-    def connect_late(self,cb):
-
-        self.tree.connect("row-activated", cb)
-
-
     def onSelect(self,selection,*args):
 
         self.cursel = self.get_selection().file_name
 
-#        if not self.selectCB is None:
 
-#            self.selectCB(*args)
 
-#        if not self.controller is None:
-
-#            if not getattr(self.controller,"onSelect") is None:
-
-#                getattr(self.controller,"onSelect")(*args)
-
+######################################################
 
 
 def radio_group(**kargs):

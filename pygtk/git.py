@@ -10,6 +10,9 @@ from gi.repository import Gtk, Gdk, GObject, GLib
 import pygtk
 
 
+###########################################################
+
+
 class Git(object):
 
     def __init__(self,path):
@@ -22,16 +25,6 @@ class Git(object):
 
         self.cd = path if self.is_dir else self.dirname
         self.target = "." if self.is_dir else self.filename
-
-
-    def cmd(self,cmd):
-
-        return "cd " + self.cd + " && " + cmd + " "
-
-
-    def cmd_target(self,cmd):
-
-        return self.cmd(cmd) + self.target
 
 
     def branches(self):
@@ -54,6 +47,7 @@ class Git(object):
          
         print("BRANCHES: " + str(result) )
         return result
+
 
     def select_branch(self,branch):
 
@@ -91,6 +85,7 @@ class Git(object):
 
 
     def diff_origin(self):
+
         txt = self.bash( self.cmd_target( "git rev-parse --show-toplevel && git diff origin/$(git branch --show-current) -- ") )
         line = txt.split("\n")[0]
         body = txt[len(line)+1:]
@@ -104,7 +99,9 @@ class Git(object):
         body = txt[len(line)+1:]
         return [ line, body ]
 
+
     def origin_status(self):
+
         txt = self.bash( self.cmd_target("git rev-parse --show-toplevel && git diff --name-status origin/$(git branch --show-current) -- " ) )
 
         result = {}
@@ -250,6 +247,16 @@ class Git(object):
         return [ line, body ]
 
 
+    def cmd(self,cmd):
+
+        return "cd " + self.cd + " && " + cmd + " "
+
+
+    def cmd_target(self,cmd):
+
+        return self.cmd(cmd) + self.target
+
+
     def bash(self,cmd):
 
         print(cmd)
@@ -264,6 +271,8 @@ class Git(object):
 
         return c
 
+
+########################################################
 
 
 class GitFile(pygtk.ui.File):
