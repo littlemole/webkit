@@ -311,6 +311,7 @@ class GitFile(pygtk.ui.File):
 
         super().__init__(dirname, place_holder, directory, root,empty)
         self.status = status
+        self.data = self.get_status_data()
 
 
     def get_status_data(self):
@@ -332,37 +333,42 @@ class GitFile(pygtk.ui.File):
             stock = Gtk.STOCK_OPEN
 
         if self.status == "OO" :
-            return [ colors["green"], Gtk.STOCK_APPLY ]
+            return [ colors["green"], Gtk.STOCK_APPLY, "File is committed waiting for push." ]
 
         if self.status == "??" :
-            return [ colors["black"], Gtk.STOCK_DIALOG_QUESTION ]
+            return [ colors["black"], Gtk.STOCK_DIALOG_QUESTION, "File is unknown to git." ]
 
         if self.status == "!!" :
-            return [ colors["gray"], stock ]
+            return [ colors["gray"], stock, "File is ingored by git." ]
 
         if self.status == "DD" or self.status == "UD":
-            return [ colors["red"], Gtk.STOCK_DIALOG_ERROR ]
+            return [ colors["red"], Gtk.STOCK_DIALOG_ERROR, "File has merge conflict." ]
 
         if self.status == "UA" or self.status == "AA":
-            return [ colors["red"], Gtk.STOCK_DIALOG_ERROR ]
+            return [ colors["red"], Gtk.STOCK_DIALOG_ERROR, "File has merge conflict." ]
 
         if Y == "U":
-            return [ colors["red"], Gtk.STOCK_DIALOG_ERROR ]
+            return [ colors["red"], Gtk.STOCK_DIALOG_ERROR, "File has merge conflict." ]
 
         if Y == "M" or Y == "D" or Y == "R" or Y == "C":
-            return [ colors["orange"], Gtk.STOCK_EDIT ]
+            return [ colors["orange"], Gtk.STOCK_EDIT, "File is locally modified but not added for commit yet." ]
 
         if Y == "A":
-            return [ colors["blue"], Gtk.STOCK_DIALOG_INFO ]
+            return [ colors["blue"], Gtk.STOCK_DIALOG_INFO, "File is added." ]
 
 
         if X == "M" or Y == "D" or Y == "R" or Y == "C":
-            return [ colors["green"], Gtk.STOCK_GO_UP ]
+            return [ colors["green"], Gtk.STOCK_GO_UP, "File is locally modified and added to be committed." ]
 
         if Y == " ":
-            return [ colors["black"], stock ]
+            return [ colors["black"], stock, "No changes in git." ]
 
-        return [ colors["black"], stock ]
+        return [ colors["black"], stock, "Uptodate in git." ]
+
+
+    def get_tooltip(self):
+
+        return self.data[2]
 
 
     def tree_cell_render_pix(self,col, renderer, model, tree_iter, user_data):
@@ -370,7 +376,7 @@ class GitFile(pygtk.ui.File):
         if self.empty:
             renderer.set_property('stock_id', None)
         else:
-            renderer.set_property('stock-id', self.get_status_data()[1] )
+            renderer.set_property('stock-id', self.data[1] )
 
 
     def tree_cell_render_file(self,col, renderer, model, tree_iter, user_data):
@@ -381,7 +387,7 @@ class GitFile(pygtk.ui.File):
         if hidden:
             label = '<i>' + label + '</i>'
 
-        renderer.set_property('foreground', self.get_status_data()[0] )
+        renderer.set_property('foreground', self.data[0] )
 
         renderer.set_property('markup', label)
 

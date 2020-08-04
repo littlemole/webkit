@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <glade-catalog name="Pywebkit" depends="webkit2gtk">
+
   <glade-widget-classes>
     <glade-widget-class parent="WebKitWebView" name="PywebkitWebview" generic-name="webview" title="Web View" />
   </glade-widget-classes>
@@ -7,4 +8,5 @@
   <glade-widget-group name="py" title="Pywebkit">
     <glade-widget-class-ref name="PywebkitWebview"/>
   </glade-widget-group>  
+
 </glade-catalog>

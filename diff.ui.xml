@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.36.0 -->
+<!-- Generated with glade 3.22.2 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkApplicationWindow" id="mainWindow">
@@ -9,6 +9,9 @@
     <property name="default_height">650</property>
     <property name="icon_name">applications-internet</property>
     <signal name="destroy" handler="onExit" swapped="no"/>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
     <child>
       <object class="GtkBox">
         <property name="visible">True</property>
@@ -34,6 +37,7 @@
                         <property name="label">gtk-open</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Opens a new Directory to display git information.</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
                         <signal name="activate" handler="onFileOpen" swapped="no"/>
@@ -50,6 +54,7 @@
                         <property name="label">gtk-quit</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Exit the Application.</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
                         <signal name="activate" handler="onExit" swapped="no"/>
@@ -74,6 +79,7 @@
                         <property name="label">Git Add</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Add locally modified file to the index of files to be committed.</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">False</property>
                         <signal name="activate" handler="onGitAdd" swapped="no"/>
@@ -84,6 +90,7 @@
                         <property name="label">Git Commit</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Committ local changes to repository.</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">False</property>
                         <signal name="activate" handler="onGitCommit" swapped="no"/>
@@ -106,12 +113,12 @@
                           <object class="GtkMenu" id="GitLocalSubMenu">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-
                             <child>
                               <object class="GtkImageMenuItem" id="GitRestore">
                                 <property name="label">Git Restore</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
+                                <property name="tooltip_text" translatable="yes">Restore local changes not yet added to the index.</property>
                                 <property name="use_underline">True</property>
                                 <property name="use_stock">False</property>
                                 <signal name="activate" handler="onGitRestore" swapped="no"/>
@@ -122,6 +129,7 @@
                                 <property name="label">Git Restore --staged</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
+                                <property name="tooltip_text" translatable="yes">Remove files from index to be committed.</property>
                                 <property name="use_underline">True</property>
                                 <property name="use_stock">False</property>
                                 <signal name="activate" handler="onGitRestoreStaged" swapped="no"/>
@@ -132,17 +140,18 @@
                                 <property name="label">Git Reset</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
+                                <property name="tooltip_text" translatable="yes">Reset last local committ not yet pushed.</property>
                                 <property name="use_underline">True</property>
                                 <property name="use_stock">False</property>
                                 <signal name="activate" handler="onGitRestoreOrigin" swapped="no"/>
                               </object>
                             </child>
-
                             <child>
                               <object class="GtkImageMenuItem" id="GitLocalDiffCached">
                                 <property name="label">Git Diff --cached</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
+                                <property name="tooltip_text" translatable="yes">Show Git diff for files added to the committ index</property>
                                 <property name="use_underline">True</property>
                                 <property name="use_stock">False</property>
                                 <signal name="activate" handler="onGitDiffCached" swapped="no"/>
@@ -153,6 +162,7 @@
                                 <property name="label">Git Branches</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
+                                <property name="tooltip_text" translatable="yes">Show available Git Branches.</property>
                                 <property name="use_underline">True</property>
                                 <property name="use_stock">False</property>
                                 <signal name="activate" handler="onGitShowBranches" swapped="no"/>
@@ -184,6 +194,7 @@
                                 <property name="label">Git Pull</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
+                                <property name="tooltip_text" translatable="yes">Pull upstream changes from origin.</property>
                                 <property name="use_underline">True</property>
                                 <property name="use_stock">False</property>
                                 <signal name="activate" handler="onGitPull" swapped="no"/>
@@ -194,6 +205,7 @@
                                 <property name="label">Git Push</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
+                                <property name="tooltip_text" translatable="yes">Push local committs to origin remote repository.</property>
                                 <property name="use_underline">True</property>
                                 <property name="use_stock">False</property>
                                 <signal name="activate" handler="onGitPush" swapped="no"/>
@@ -204,6 +216,7 @@
                                 <property name="label">Git Diff Origin</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
+                                <property name="tooltip_text" translatable="yes">Show git diff against remote origin repository.</property>
                                 <property name="use_underline">True</property>
                                 <property name="use_stock">False</property>
                                 <signal name="activate" handler="onGitDiffOrigin" swapped="no"/>
@@ -231,6 +244,7 @@
                       <object class="GtkRadioMenuItem" id="ViewStatusMenuItem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Show current git status.</property>
                         <property name="label">View Status</property>
                         <property name="use_underline">True</property>
                         <property name="active">True</property>
@@ -242,6 +256,7 @@
                       <object class="GtkRadioMenuItem" id="ViewDiffMenuItem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Show normal git diff (changes not added or committed).</property>
                         <property name="label">View Diff</property>
                         <property name="use_underline">True</property>
                         <property name="draw_as_radio">True</property>
@@ -253,6 +268,7 @@
                       <object class="GtkRadioMenuItem" id="ViewFileMenuItem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Show file preview.</property>
                         <property name="label">View File</property>
                         <property name="use_underline">True</property>
                         <property name="draw_as_radio">True</property>
@@ -271,6 +287,7 @@
                         <property name="label">Refresh View</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Refresh the directory tree view.</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">False</property>
                         <signal name="activate" handler="onViewRefresh" swapped="no"/>
@@ -295,6 +312,7 @@
                         <property name="label">gtk-about</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Tell us about it, Janet!</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
                         <signal name="activate" handler="onHelp" swapped="no"/>
@@ -319,6 +337,7 @@
               <object class="GtkToolButton" id="tb_open">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">Open new directory to display git info for.</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-open</property>
                 <signal name="clicked" handler="onFileOpen" swapped="no"/>
@@ -342,6 +361,7 @@
               <object class="GtkRadioToolButton" id="tb_status">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">Show git status for selected file.</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-dialog-question</property>
                 <signal name="clicked" handler="onViewStatus" swapped="no"/>
@@ -355,6 +375,7 @@
               <object class="GtkRadioToolButton" id="tb_diff">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">Show git diff for selected file.</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-zoom-fit</property>
                 <property name="group">tb_status</property>
@@ -369,6 +390,7 @@
               <object class="GtkRadioToolButton" id="tb_file">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">Show file preview for file selected.</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-file</property>
                 <property name="group">tb_status</property>
@@ -404,8 +426,8 @@
                     <property name="headers_visible">False</property>
                     <property name="enable_grid_lines">both</property>
                     <property name="activate_on_single_click">True</property>
-                    <signal name="row-activated" handler="onSelect" swapped="no"/>
                     <signal name="button-press-event" handler="onContext" swapped="no"/>
+                    <signal name="row-activated" handler="onSelect" swapped="no"/>
                     <child internal-child="selection">
                       <object class="GtkTreeSelection"/>
                     </child>
@@ -469,9 +491,6 @@
           </packing>
         </child>
       </object>
-    </child>
-    <child type="titlebar">
-      <placeholder/>
     </child>
   </object>
 </interface>

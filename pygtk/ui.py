@@ -132,6 +132,11 @@ class File(object):
                 format(self.file_name, self.directory, self.empty)
 
 
+    def get_tooltip(self):
+
+        return self.file_name
+
+
     def tree_cell_render_file(self,col, renderer, model, tree_iter, user_data):
         label = os.path.basename(self.file_name)
         hidden = os.path.basename(self.file_name)[0] == '.'
@@ -239,7 +244,7 @@ class DirectoryTree:
 
     def compose(self):
         
-        self.treeModel = Gtk.TreeStore(object)
+        self.treeModel = Gtk.TreeStore(object,str)
         self.tree.set_model(self.treeModel)
 
         file_name_column = Gtk.TreeViewColumn('file')
@@ -252,6 +257,8 @@ class DirectoryTree:
         file_name_column.set_cell_data_func(file_name_renderer, self.tree_cell_render_file)
         file_name_column.set_cell_data_func(file_type_renderer, self.tree_cell_render_pix)
         self.tree.append_column(file_name_column)
+
+        self.tree.set_tooltip_column(1)
 
         self.tree.connect("row-expanded",self.onFileTreeViewExpand)
         self.tree.connect("row-activated", self.onSelect)
@@ -277,16 +284,22 @@ class DirectoryTree:
 
     def add_root(self, file):
 
+        is_refresh = file == self.root
         self.root = file
         self.add_entry(file)
+
+        if not is_refresh:
+            iter = self.treeModel.get_iter_first()
+            self.tree.get_selection().select_iter(iter)
+            self.tree.expand_row(self.treeModel.get_path(iter), False)            
         
 
     def add_entry(self, file, ):
 
         if file.directory :
 
-            tree_iter = self.treeModel.append( file.root, [file] )
-            self.treeModel.append(tree_iter, [DirectoryTree.PLACE_HOLDER])
+            tree_iter = self.treeModel.append( file.root, [file,file.get_tooltip()] )
+            self.treeModel.append(tree_iter, [DirectoryTree.PLACE_HOLDER,""])
 
             if self.cursel == file.file_name:
 
@@ -301,7 +314,7 @@ class DirectoryTree:
 
             if re.match(self.filter,file.file_name):
 
-                tree_iter = self.treeModel.append( file.root, [file] )
+                tree_iter = self.treeModel.append( file.root, [file,file.get_tooltip()] )
 
                 if self.cursel == file.file_name:
 

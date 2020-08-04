@@ -19,7 +19,6 @@ export GI_TYPELIB_PATH=$DIR/lib:$GI_TYPELIB_PATH
 # allows the python package under ./pygtk to be found
 export PYTHONPATH=$DIR:$PYTHONPATH
 
-
 #echo $LD_LIBRARY_PATH
 #echo $GI_TYPELIB_PATH
 #echo $PYTHONPATH
