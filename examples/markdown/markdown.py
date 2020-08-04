@@ -13,6 +13,10 @@ from pygtk.ui import UI
 import pygtk.WebKit as WebKit
 import os
 
+# set base path for local resource files
+UI.set_directory(__file__)
+
+
 class Controller(object):
 
     def __init__(self):
