@@ -60,11 +60,22 @@ class Controller(object):
         self.onViewRefresh()
 
 
-    def onGitCheckout(self,*args):
+    def onGitRestore(self,*args):
 
         f = self.selected_file()
 
-        c = Git(f).checkout() 
+        c = Git(f).restore() 
+
+        WebKit.JavaScript(web).setPlainText( *c )
+
+        self.onViewRefresh()
+
+
+    def onGitRestoreOrigin(self,*args):
+
+        f = self.selected_file()
+
+        c = Git(f).restore_origin() 
 
         WebKit.JavaScript(web).setPlainText( *c )
 

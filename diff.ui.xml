@@ -90,16 +90,6 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="GitCheckout">
-                        <property name="label">Git Checkout</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="use_underline">True</property>
-                        <property name="use_stock">False</property>
-                        <signal name="activate" handler="onGitCheckout" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
                       <object class="GtkSeparatorMenuItem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
@@ -116,6 +106,28 @@
                           <object class="GtkMenu" id="GitLocalSubMenu">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+
+                            <child>
+                              <object class="GtkImageMenuItem" id="GitRestore">
+                                <property name="label">Git Restore</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="use_underline">True</property>
+                                <property name="use_stock">False</property>
+                                <signal name="activate" handler="onGitRestore" swapped="no"/>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkImageMenuItem" id="GitRestoreOrigin">
+                                <property name="label">Git Restore --staged --worktree</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="use_underline">True</property>
+                                <property name="use_stock">False</property>
+                                <signal name="activate" handler="onGitRestoreOrigin" swapped="no"/>
+                              </object>
+                            </child>
+
                             <child>
                               <object class="GtkImageMenuItem" id="GitLocalDiffCached">
                                 <property name="label">Git Diff --cached</property>

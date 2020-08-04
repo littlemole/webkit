@@ -171,9 +171,17 @@ class Git(object):
         return data
 
 
-    def checkout(self):
+    def restore(self):
 
-        txt = self.bash( self.cmd_target("git rev-parse --show-toplevel && git checkout") )
+        txt = self.bash( self.cmd_target("git rev-parse --show-toplevel && git restore") )
+        line = txt.split("\n")[0]
+        body = txt[len(line)+1:]
+        return [ line, body ]
+
+
+    def restore_origin(self):
+
+        txt = self.bash( self.cmd_target("git rev-parse --show-toplevel && git restore --staged --worktree") )
         line = txt.split("\n")[0]
         body = txt[len(line)+1:]
         return [ line, body ]
