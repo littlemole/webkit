@@ -58,7 +58,10 @@ class Git(object):
 
     def has_local_commits(self):
 
-        txt = self.bash( self.cmd("git log 'origin/$(git branch --show-current)..HEAD' ") )
+        txt = self.bash( self.cmd("git log \"origin/$(git branch --show-current)..HEAD\" ") )
+
+
+        print("local commits: (" + txt + ")")
         if txt == "":
             return False
         return True
@@ -197,7 +200,7 @@ class Git(object):
 
     def restore_origin(self):
  
-        if self.has_local_commits():
+        if self.has_local_commits() == False:
             return ["no local commits","reset aborted." ]
 
         txt = self.bash( self.cmd("git rev-parse --show-toplevel && git reset HEAD~  ") )
