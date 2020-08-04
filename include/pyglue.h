@@ -48,7 +48,8 @@ struct PythonTypeObject : public PyTypeObject
         /* Methods to implement standard operations */
 
         tp_dealloc = 0;
-        tp_vectorcall_offset = 0;
+        tp_print = 0; // rename to vectorcall but old name for backward compat
+        //tp_vectorcall_offset = 0;
         tp_getattr = 0;
         tp_setattr = 0;
         tp_as_async = 0; /* formerly known as tp_compare (Python 2)

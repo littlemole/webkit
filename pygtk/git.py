@@ -58,7 +58,7 @@ class Git(object):
 
     def has_local_commits(self):
 
-        txt = self.bash( self.cmd("git log \"origin/$(git branch --show-current)..HEAD\" ") )
+        txt = self.bash( self.cmd("git log \"origin/$(git branch | grep "*" | cut -d' ' -f2)..HEAD\" ") )
 
 
         print("local commits: (" + txt + ")")
@@ -97,7 +97,7 @@ class Git(object):
 
     def diff_origin(self):
 
-        txt = self.bash( self.cmd_target( "git rev-parse --show-toplevel && git diff origin/$(git branch --show-current) -- ") )
+        txt = self.bash( self.cmd_target( "git rev-parse --show-toplevel && git diff origin/$(git branch | grep '*' | cut -d' ' -f2) -- ") )
         line = txt.split("\n")[0]
         body = txt[len(line)+1:]
         return [ line, body ]
@@ -113,7 +113,7 @@ class Git(object):
 
     def origin_status(self):
 
-        txt = self.bash( self.cmd_target("git rev-parse --show-toplevel && git diff --name-status origin/$(git branch --show-current) -- " ) )
+        txt = self.bash( self.cmd_target("git rev-parse --show-toplevel && git diff --name-status origin/$(git branch | grep '*' | cut -d' ' -f2) -- " ) )
 
         result = {}
         lines = txt.split("\n")
