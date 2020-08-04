@@ -56,6 +56,14 @@ class Git(object):
         return ["selected branch", txt]
 
 
+    def has_local_commits(self):
+
+        txt = self.bash( self.cmd("git log 'origin/$(git branch --show-current)..HEAD' ") )
+        if txt == "":
+            return False
+        return True
+
+
     def status(self):
 
         txt = self.bash( self.cmd_target("git rev-parse --show-toplevel ; echo && git status") ).strip()
@@ -189,6 +197,9 @@ class Git(object):
 
     def restore_origin(self):
  
+        if self.has_local_commits():
+            return ["no local commits","reset aborted." ]
+
         txt = self.bash( self.cmd("git rev-parse --show-toplevel && git reset HEAD~  ") )
         line = txt.split("\n")[0]
         body = txt[len(line)+1:]
