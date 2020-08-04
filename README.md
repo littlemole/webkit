@@ -23,10 +23,12 @@ to launch the test application implemented in curl.py and curl.html.
 # pre-requisites
 
 ## debian/ubuntu
+```
 sudo apt install build-essential 
-sudo apt install python-gobject-2 python-gobject-2-dev libwebkit2gtk-4.0-dev gobject-introspection libgirepository1.0-dev libtool-bin
-
+sudo apt install python3-dev python-gobject-2 python-gobject-2-dev libwebkit2gtk-4.0-dev gobject-introspection libgirepository1.0-dev libtool-bin
+``` 
 ## fedora
+```
 sudo dnf install @development-tools
 sudo dnf install python3-devel gtk3-devel webkit2gtk3-devel gobject-introspection-devel
-
+```
