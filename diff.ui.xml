@@ -118,8 +118,18 @@
                               </object>
                             </child>
                             <child>
+                              <object class="GtkImageMenuItem" id="GitRestoreStaged">
+                                <property name="label">Git Restore --staged</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="use_underline">True</property>
+                                <property name="use_stock">False</property>
+                                <signal name="activate" handler="onGitRestoreStaged" swapped="no"/>
+                              </object>
+                            </child>
+                            <child>
                               <object class="GtkImageMenuItem" id="GitRestoreOrigin">
-                                <property name="label">Git Restore --staged --worktree</property>
+                                <property name="label">Git Restore Origin</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="use_underline">True</property>

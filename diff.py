@@ -71,6 +71,17 @@ class Controller(object):
         self.onViewRefresh()
 
 
+    def onGitRestoreStaged(self,*args):
+
+        f = self.selected_file()
+
+        c = Git(f).restore_staged() 
+
+        WebKit.JavaScript(web).setPlainText( *c )
+
+        self.onViewRefresh()
+
+
     def onGitRestoreOrigin(self,*args):
 
         f = self.selected_file()
