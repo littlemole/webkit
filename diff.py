@@ -197,6 +197,7 @@ class Controller(object):
             m = self.ui["GitSubMenu"] 
             Gtk.Menu.popup_at_pointer(m,event)             
 
+        return False
 
     def onWebContext(self,web,menue,event,*args):
 
