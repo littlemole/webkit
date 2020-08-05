@@ -200,6 +200,7 @@ class Controller(object):
 
     def onSelect(self,*args):
 
+        print("onSelect")
         f = self.last_action
         if not f == None:
             self.last_action = None
