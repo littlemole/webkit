@@ -33,15 +33,17 @@ class Controller(object):
         return f
 
 
-    def doGit(self, cmd, file=None, action=None, refresh=False, *args,**kargs):
+    def doGit(self, cmd, file=None, param=None, action=None, refresh=False, *args,**kargs):
 
         if file is None:
             file = self.selected_file()
 
         git = Git(file)
 
+        params = () if param is None else (param)
+
         print("doGit: " + str(args) )
-        c = cmd(git,*args)
+        c = cmd(git,*params)
 
         if not action is None:
             self.last_action = action
@@ -65,14 +67,6 @@ class Controller(object):
         action = self.last_action if not self.last_action is None else self.onViewStatus
 
         self.doGitPlainText( Git.status, file = os.getcwd(), action=action )
-
-#        f = os.getcwd()
-
-#        c = Git(f).status()
-
-#        WebKit.JavaScript(web).setPlainText( *c ) #c[0], c[1] )
-
-#        self.last_action = self.onViewStatus
 
 
     def onViewRefresh(self,*args):
@@ -127,33 +121,13 @@ class Controller(object):
 
 
     def onSubmitCommit(self,msg):
-
-        print("COMMIT")
-        try:
-            self.doGitPlainText( Git.commit, None, None, True, msg)
-        except BaseException as e:
-            print(e)
-
-#        f = self.selected_file()
-
-#        c = Git(f).commit(msg)
-
-#        WebKit.JavaScript(web).setPlainText( *c )
-
-#        self.onViewRefresh()
+            
+        self.doGitPlainText( Git.commit, param=msg, refresh=True)
 
 
     def onSelectBranch(self,branch):
 
-        self.doGitPlainText( Git.select_branch, branch, refresh=True)
-
-#        f = self.selected_file()
-
-#        c = Git(f).select_branch(branch)
-
-#        WebKit.JavaScript(web).setPlainText( *c )
-
-#        self.onViewRefresh()
+        self.doGitPlainText( Git.select_branch, param=branch, refresh=True )
 
 
     def onFileOpen(self,*args):
@@ -169,18 +143,10 @@ class Controller(object):
 
             self.doGitPlainText( Git.status, file=dir )
 
-#            c = Git(dir).status()
-
-#            WebKit.JavaScript(web).setPlainText( *c )
-
 
     def onGitDiffOrigin(self,*args):
 
         c = self.doGit( Git.diff_origin )
-
-#        f = self.selected_file()
-
-#        c = Git(f).diff_origin() 
 
         WebKit.JavaScript(web).setDiff("ORIGIN: " + c[0],c[1])
 
@@ -188,10 +154,6 @@ class Controller(object):
     def onGitDiffCached(self,*args):
 
         c = self.doGit( Git.diff_cached )
-
-#       f = self.selected_file()
-
- #       c = Git(f).diff_cached() 
 
         WebKit.JavaScript(web).setDiff("Indexed but not committed: " + c[0],c[1])
 
@@ -201,13 +163,7 @@ class Controller(object):
 
         c = self.doGit( Git.diff, action=self.onViewDiff )
 
-#        f = self.selected_file()
-
-#        c = Git(f).diff() 
-
         WebKit.JavaScript(web).setDiff( *c )
-
-#        self.last_action = self.onViewDiff
 
 
     @radio_group(menu="ViewStatusMenuItem", tb="tb_status")
@@ -215,33 +171,14 @@ class Controller(object):
 
         self.doGitPlainText( Git.status, action=self.onViewStatus )
             
-#        f = self.selected_file()
-
-#        print("STATUS: " + str(f))
-#        c = Git(f).status()
-
-#        WebKit.JavaScript(web).setPlainText( *c )
-
-#        self.last_action = self.onViewStatus
-
 
     @radio_group(menu="ViewFileMenuItem", tb="tb_file")
     def onViewFile(self,*args):
 
         self.doGitPlainText( Git.view_file, action=self.onViewFile )
 
-#        f = self.selected_file()
-
-#        txt = Git(f).view_file()           
-
-#        WebKit.JavaScript(web).setPlainText( *txt )
-
-#        self.last_action = self.onViewFile
-
 
     def onContext(self,treeview, event,*args):
-
-        #event = pygtk.ui.event(args)
 
         if event.button == 3: # right click
        
@@ -249,14 +186,14 @@ class Controller(object):
             Gtk.Menu.popup_at_pointer(m,event)             
 
 
-    def onWebContext(self,*args):
+    def onWebContext(self,web,menue,event,*args):
 
-        event = pygtk.ui.event(args)
-        m = ui["ViewSubMenu"]
-        
+        m = ui["ViewSubMenu"]        
         Gtk.Menu.popup_at_pointer(m,event)             
-        return True
 
+        # suppress standard webview context menue
+        return True 
+        
 
     def onSelect(self,*args):
 
