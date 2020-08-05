@@ -424,7 +424,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="headers_visible">False</property>
-                    <property name="enable_grid_lines">both</property>
+                    <property name="enable_grid_lines">None</property>
                     <property name="activate_on_single_click">True</property>
                     <signal name="button-press-event" handler="onContext" swapped="no"/>
                     <signal name="row-activated" handler="onSelect" swapped="no"/>

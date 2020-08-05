@@ -8,7 +8,7 @@ gi.require_versions({
 
 from gi.repository import Gtk, Gdk, GObject, GLib, Pywebkit
 from gi.repository.Pywebkit import Webview 
-from pygtk.bind import bind,synced,idle_add
+from pygtk.bind import synced,idle_add
 from pygtk.ui import UI,DirectoryTree,radio_group
 from pygtk.git import Git, GitFile
 from pygtk import WebKit

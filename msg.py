@@ -11,7 +11,7 @@ import os,sys,socket,json,threading,pprint
 from gi.repository.Pywebkit import Webview 
 import pygtk.WebKit as WebKit
 import pygtk.WebKit as WebKit
-from pygtk.bind import bind,synced
+from pygtk.bind import synced
 from pygtk.menumaker import MenuMaker
 
 

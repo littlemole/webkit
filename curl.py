@@ -12,7 +12,6 @@ import pygtk.WebKit as WebKit
 import os,sys,socket,json,threading,pprint
 from pygtk.worker import Worker
 from pygtk.worker import background
-from pygtk.bind import bind
 from pygtk.bind import synced
 from pygtk.menumaker import MenuMaker
 

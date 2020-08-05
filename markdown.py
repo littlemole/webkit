@@ -8,12 +8,11 @@ gi.require_versions({
 
 from gi.repository import Gtk, Pywebkit
 from gi.repository.Pywebkit import Webview 
-from pygtk.bind import bind,synced
+from pygtk.bind import synced
 from pygtk.ui import UI
 import pygtk.WebKit as WebKit
 
 
-@bind(UI,WebKit)
 class Controller(object):
 
     def getText(self):
@@ -76,7 +75,7 @@ web.load_local_uri("markdown.html")
 
 # without @bind we would have to:
 # WebKit.bind(web,controller)
-# ui.bind(controller)
+ui.bind(controller)
 
 #show main window
 ui.show("mainWindow")
