@@ -33,15 +33,46 @@ class Controller(object):
         return f
 
 
+    def doGit(self, cmd, file=None, action=None, refresh=False, *args,**kargs):
+
+        if file is None:
+            file = self.selected_file()
+
+        git = Git(file)
+
+        print("doGit: " + str(args) )
+        c = cmd(git,*args)
+
+        if not action is None:
+            self.last_action = action
+
+        if refresh == True:
+            self.onViewRefresh()
+
+        return c
+
+
+    def doGitPlainText(self, cmd, file=None, action=None, refresh=False, *args,**kargs):
+
+        print("doGitPlainText: " + str(args) + " " + "file:" + str(file) )
+        c = self.doGit(cmd,file,action,refresh,*args,**kargs)
+
+        WebKit.JavaScript(web).setPlainText( *c )
+
+
     def onDocumentLoad(self,*args):
 
-        f = os.getcwd()
+        action = self.last_action if not self.last_action is None else self.onViewStatus
 
-        c = Git(f).status()
+        self.doGitPlainText( Git.status, file = os.getcwd(), action=action )
 
-        WebKit.JavaScript(web).setPlainText( *c ) #c[0], c[1] )
+#        f = os.getcwd()
 
-        self.last_action = self.onViewStatus
+#        c = Git(f).status()
+
+#        WebKit.JavaScript(web).setPlainText( *c ) #c[0], c[1] )
+
+#        self.last_action = self.onViewStatus
 
 
     def onViewRefresh(self,*args):
@@ -51,110 +82,78 @@ class Controller(object):
 
     def onGitAdd(self,*args):
 
-        f = self.selected_file()
-
-        c = Git(f).add() 
-
-        WebKit.JavaScript(web).setPlainText( *c ) #c[0],c[1])
- 
-        self.onViewRefresh()
+        self.doGitPlainText( Git.add, refresh=True)
 
 
     def onGitRestore(self,*args):
 
-        f = self.selected_file()
-
-        c = Git(f).restore() 
-
-        WebKit.JavaScript(web).setPlainText( *c )
-
-        self.onViewRefresh()
+        self.doGitPlainText( Git.restore, refresh=True )
 
 
     def onGitRestoreStaged(self,*args):
 
-        f = self.selected_file()
-
-        c = Git(f).restore_staged() 
-
-        WebKit.JavaScript(web).setPlainText( *c )
-
-        self.onViewRefresh()
+        self.doGitPlainText( Git.restore_staged, refresh=True )
 
 
     def onGitRestoreOrigin(self,*args):
 
-        f = self.selected_file()
-
-        c = Git(f).restore_origin() 
-
-        WebKit.JavaScript(web).setPlainText( *c )
-
-        self.onViewRefresh()
+        self.doGitPlainText( Git.restore_origin, refresh=True )
 
 
     @synced()
     async def onGitPull(self,*args):
 
-        f = self.selected_file()
-
-        txt = Git(f).pull()
-
-        WebKit.JavaScript(web).setPlainText( *txt )
-
-        self.onViewRefresh()
+        self.doGitPlainText( Git.pull, refresh=True )
 
 
     @synced()
     async def onGitPush(self,*args):
 
-        f = self.selected_file()
-
-        txt = Git(f).push()
-
-        WebKit.JavaScript(web).setPlainText( *txt )
-
-        self.onViewRefresh()
+        self.doGitPlainText( Git.push, refresh=True )
 
 
     def onGitShowBranches(self,*args):
 
-        f = self.selected_file()
-
-        c = Git(f).branches() 
+        c = self.doGit( Git.branches )
 
         WebKit.JavaScript(web).setBranches(c["current"], c["branches"])
 
 
     def onGitCommit(self,*args):
 
-        f = self.selected_file()
-
-        c = Git(f).diff_cached() 
+        c = self.doGit( Git.diff_cached )
 
         WebKit.JavaScript(web).setCommit( *c )
 
 
     def onSubmitCommit(self,msg):
 
-        f = self.selected_file()
+        print("COMMIT")
+        try:
+            self.doGitPlainText( Git.commit, None, None, True, msg)
+        except BaseException as e:
+            print(e)
 
-        c = Git(f).commit(msg)
+#        f = self.selected_file()
 
-        WebKit.JavaScript(web).setPlainText( *c )
+#        c = Git(f).commit(msg)
 
-        self.onViewRefresh()
+#        WebKit.JavaScript(web).setPlainText( *c )
+
+#        self.onViewRefresh()
 
 
     def onSelectBranch(self,branch):
 
-        f = self.selected_file()
+        self.doGitPlainText( Git.select_branch, branch, refresh=True)
 
-        c = Git(f).select_branch(branch)
+#        f = self.selected_file()
 
-        WebKit.JavaScript(web).setPlainText( *c )
+#        c = Git(f).select_branch(branch)
 
-        self.onViewRefresh()
+#        WebKit.JavaScript(web).setPlainText( *c )
+
+#        self.onViewRefresh()
 
 
     def onFileOpen(self,*args):
@@ -166,27 +165,33 @@ class Controller(object):
             ui.statusBar( "statusBar", dir )
 
             tree.clear()
-            tree.add_root(GitFile( dir ) )
+            tree.add_root( GitFile(dir) )
 
-            c = Git(dir).status()
+            self.doGitPlainText( Git.status, file=dir )
 
-            WebKit.JavaScript(web).setPlainText( *c )
+#            c = Git(dir).status()
+
+#            WebKit.JavaScript(web).setPlainText( *c )
 
 
     def onGitDiffOrigin(self,*args):
 
-        f = self.selected_file()
+        c = self.doGit( Git.diff_origin )
 
-        c = Git(f).diff_origin() 
+#        f = self.selected_file()
+
+#        c = Git(f).diff_origin() 
 
         WebKit.JavaScript(web).setDiff("ORIGIN: " + c[0],c[1])
 
 
     def onGitDiffCached(self,*args):
 
-        f = self.selected_file()
+        c = self.doGit( Git.diff_cached )
 
-        c = Git(f).diff_cached() 
+#       f = self.selected_file()
+
+ #       c = Git(f).diff_cached() 
 
         WebKit.JavaScript(web).setDiff("Indexed but not committed: " + c[0],c[1])
 
@@ -194,38 +199,44 @@ class Controller(object):
     @radio_group(menu="ViewDiffMenuItem", tb="tb_diff")
     def onViewDiff(self,*args):
 
-        f = self.selected_file()
+        c = self.doGit( Git.diff, action=self.onViewDiff )
 
-        c = Git(f).diff() 
+#        f = self.selected_file()
+
+#        c = Git(f).diff() 
 
         WebKit.JavaScript(web).setDiff( *c )
 
-        self.last_action = self.onViewDiff
+#        self.last_action = self.onViewDiff
 
 
     @radio_group(menu="ViewStatusMenuItem", tb="tb_status")
     def onViewStatus(self,*args):
+
+        self.doGitPlainText( Git.status, action=self.onViewStatus )
             
-        f = self.selected_file()
+#        f = self.selected_file()
 
-        print("STATUS: " + str(f))
-        c = Git(f).status()
+#        print("STATUS: " + str(f))
+#        c = Git(f).status()
 
-        WebKit.JavaScript(web).setPlainText( *c )
+#        WebKit.JavaScript(web).setPlainText( *c )
 
-        self.last_action = self.onViewStatus
+#        self.last_action = self.onViewStatus
 
 
     @radio_group(menu="ViewFileMenuItem", tb="tb_file")
     def onViewFile(self,*args):
 
-        f = self.selected_file()
+        self.doGitPlainText( Git.view_file, action=self.onViewFile )
 
-        txt = Git(f).view_file()           
+#        f = self.selected_file()
 
-        WebKit.JavaScript(web).setPlainText( *txt )
+#        txt = Git(f).view_file()           
 
-        self.last_action = self.onViewFile
+#        WebKit.JavaScript(web).setPlainText( *txt )
+
+#        self.last_action = self.onViewFile
 
 
     def onContext(self,treeview, event,*args):
