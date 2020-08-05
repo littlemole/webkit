@@ -33,27 +33,40 @@ class UI(object):
 
 
     def show(self,mainWindow):
-        for ui in uis:
-            self.bind(ui)
+#        for ui in uis:
+#            self.bind(ui)
+#
+#        objs = self.builder.get_objects()
 
-        objs = self.builder.get_objects()
+ #       if not WebKit.callback is None:
 
-        if not WebKit.callback is None:
+  #          for obj in objs:
 
-            for obj in objs:
+   #             clazzName = type(obj).__module__ + "." + type(obj).__qualname__
 
-                clazzName = type(obj).__module__ + "." + type(obj).__qualname__
+    #            if clazzName == "gi.repository.Pywebkit.Webview":
 
-                if clazzName == "gi.repository.Pywebkit.Webview":
-
-                    WebKit.bind(obj,WebKit.callback)
+     #               WebKit.bind(obj,WebKit.callback)
 
         self.main = self.builder.get_object(mainWindow)
         self.main.show_all()
 
 
     def bind(self,controller):
+
         self.builder.connect_signals(controller)
+
+        objs = self.builder.get_objects()
+
+        for obj in objs:
+
+            clazzName = type(obj).__module__ + "." + type(obj).__qualname__
+
+            if clazzName == "gi.repository.Pywebkit.Webview":
+
+                WebKit.bind(obj,controller)
+
+        return self
 
 
     def showFileDialog(self,action,title):
@@ -344,6 +357,8 @@ class DirectoryTree:
 
     def onSelect(self,selection,*args):
 
+        print("onTreeSelect")
+
         self.cursel = self.get_selection().file_name
 
 
@@ -373,19 +388,15 @@ def radio_group(**kargs):
         
             if not wrapper.ui:
 
-                main = sys.modules[mod]
+                if len(args) > 0:
+                    controller = args[0]
 
-                for i in dir(main):
+                for a in dir(controller):
 
-                    t = getattr(main,i)
-
-                    if t is None:
-                        continue
-
-                    clazzName = type(t).__module__ + "." + t.__class__.__name__
+                    clazzName = type(a).__module__ + "." + a.__class__.__name__
                     if clazzName == "pygtk.ui.UI":
-
-                        wrapper.ui = t
+                        wrapper.ui = a
+                        break
 
             if len(args)>1 and ( args[1].get_active() == 0 ):
                 return
@@ -395,7 +406,6 @@ def radio_group(**kargs):
                     if not wrapper.ui[tb].get_active():
                         wrapper.ui[tb].set_active(True)
                     return
-            print("SELF: " + str(args[0]) )
 
             r = func(*args,*kargs)
 
