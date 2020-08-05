@@ -110,6 +110,10 @@ document.addEventListener("DOMContentLoaded", function(e)
         onCommit : function() {
 
           let msg = document.getElementById("commitMsg").value;
+
+          document.getElementById("html").innerHTML = "commit in progress ...";
+          document.getElementById("commit").style.display = "none";
+
           WebKit.Python.onSubmitCommit(msg);
         }
 
