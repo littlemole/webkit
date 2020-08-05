@@ -395,6 +395,7 @@ def radio_group(**kargs):
                     if not wrapper.ui[tb].get_active():
                         wrapper.ui[tb].set_active(True)
                     return
+            print("SELF: " + str(args[0]) )
 
             r = func(*args,*kargs)
 
