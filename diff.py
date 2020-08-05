@@ -17,18 +17,34 @@ import pygtk
 dir = os.path.dirname(os.path.realpath(__file__))
 
 
-@bind(UI,WebKit)
 class Controller(object):
 
     def __init__(self,*args):
 
         self.last_action = self.onViewStatus
 
+        #create UI
+        self.ui = UI(dir + "/diff.ui.xml")
+
+        # tree view
+        self.tree = DirectoryTree( self.ui["fileTreeView"] ) #, filter=".*\\.py" )
+        self.tree.add_root( GitFile(os.getcwd()) )
+
+        # web view 
+        self.web = self.ui["web"]
+        self.web.load_uri("file://" + dir + "/diff.html")
+
+        # status bar
+        self.ui.statusBar( "statusBar", os.getcwd() )
+
+        # bind event handlers and show main window
+        self.ui.bind(self).show("mainWindow")
+
 
     def selected_file(self):
 
-        f = tree.get_selection().file_name
-        f = f if not f is None else tree.root.file_name
+        f = self.tree.get_selection().file_name
+        f = f if not f is None else self.tree.root.file_name
         f = f if not f is None else os.getcwd()
         return f
 
@@ -42,7 +58,6 @@ class Controller(object):
 
         params = () if param is None else (param,)
 
-        print("doGit: " + str(params) )
         try:
             c = cmd(git,*params)
         except BaseException as e:
@@ -59,10 +74,9 @@ class Controller(object):
 
     def doGitPlainText(self, cmd, file=None, param=None,action=None, refresh=False, *args,**kargs):
 
-        print("doGitPlainText: " + str(args) + " " + "file:" + str(file) )
         c = self.doGit(cmd,file,param,action,refresh,*args,**kargs)
 
-        WebKit.JavaScript(web).setPlainText( *c )
+        WebKit.JavaScript(self.web).setPlainText( *c )
 
 
     def onDocumentLoad(self,*args):
@@ -70,11 +84,6 @@ class Controller(object):
         action = self.last_action if not self.last_action is None else self.onViewStatus
 
         self.doGitPlainText( Git.status, file = os.getcwd(), action=action )
-
-
-    def onViewRefresh(self,*args):
-
-        tree.refresh()
 
 
     def onGitAdd(self,*args):
@@ -113,14 +122,14 @@ class Controller(object):
 
         c = self.doGit( Git.branches )
 
-        WebKit.JavaScript(web).setBranches(c["current"], c["branches"])
+        WebKit.JavaScript(self.web).setBranches(c["current"], c["branches"])
 
 
     def onGitCommit(self,*args):
 
         c = self.doGit( Git.diff_cached )
 
-        WebKit.JavaScript(web).setCommit( *c )
+        WebKit.JavaScript(self.web).setCommit( *c )
 
 
     def onSubmitCommit(self,msg):
@@ -135,14 +144,14 @@ class Controller(object):
 
     def onFileOpen(self,*args):
 
-        dir = ui.showFileDialog(Gtk.FileChooserAction.SELECT_FOLDER,"Please choose a folder")
+        dir = self.ui.showFileDialog(Gtk.FileChooserAction.SELECT_FOLDER,"Please choose a folder")
 
         if not dir is None:
 
-            ui.statusBar( "statusBar", dir )
+            self.ui.statusBar( "statusBar", dir )
 
-            tree.clear()
-            tree.add_root( GitFile(dir) )
+            self.tree.clear()
+            self.tree.add_root( GitFile(dir) )
 
             self.doGitPlainText( Git.status, file=dir )
 
@@ -151,14 +160,14 @@ class Controller(object):
 
         c = self.doGit( Git.diff_origin )
 
-        WebKit.JavaScript(web).setDiff("ORIGIN: " + c[0],c[1])
+        WebKit.JavaScript(self.web).setDiff("ORIGIN: " + c[0],c[1])
 
 
     def onGitDiffCached(self,*args):
 
         c = self.doGit( Git.diff_cached )
 
-        WebKit.JavaScript(web).setDiff("Indexed but not committed: " + c[0],c[1])
+        WebKit.JavaScript(self.web).setDiff("Indexed but not committed: " + c[0],c[1])
 
 
     @radio_group(menu="ViewDiffMenuItem", tb="tb_diff")
@@ -166,7 +175,7 @@ class Controller(object):
 
         c = self.doGit( Git.diff, action=self.onViewDiff )
 
-        WebKit.JavaScript(web).setDiff( *c )
+        WebKit.JavaScript(self.web).setDiff( *c )
 
 
     @radio_group(menu="ViewStatusMenuItem", tb="tb_status")
@@ -185,13 +194,13 @@ class Controller(object):
 
         if event.button == 3: # right click
        
-            m = ui["GitSubMenu"] 
+            m = self.ui["GitSubMenu"] 
             Gtk.Menu.popup_at_pointer(m,event)             
 
 
     def onWebContext(self,web,menue,event,*args):
 
-        m = ui["ViewSubMenu"]        
+        m = self.ui["ViewSubMenu"]        
         Gtk.Menu.popup_at_pointer(m,event)             
 
         # suppress standard webview context menue
@@ -206,11 +215,16 @@ class Controller(object):
             self.last_action = None
             f()
             self.last_action = f
- 
+
+
+    def onViewRefresh(self,*args):
+
+        self.tree.refresh()
+
 
     def onHelp(self,*args):
 
-        ui.alert("This is the simple pygtk diff viewer using webkit2 based HTML rendering.")
+        self.ui.alert("This is the simple pygtk diff viewer using webkit2 based HTML rendering.")
 
 
     def onExit(self,*args):
@@ -220,23 +234,6 @@ class Controller(object):
 
 #create controller
 controller = Controller()        
-
-#create UI
-ui = UI(dir + "/diff.ui.xml")
-
-# tree view
-tree = DirectoryTree( ui["fileTreeView"] ) #, filter=".*\\.py" )
-tree.add_root( GitFile(os.getcwd()) )
-
-# web view 
-web = ui["web"]
-web.load_uri("file://" + dir + "/diff.html")
-
-# status bar
-ui.statusBar( "statusBar", os.getcwd() )
-
-#show main window
-ui.show("mainWindow")
 
 # start the GUI event main loop
 Gtk.main()
