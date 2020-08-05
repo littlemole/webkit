@@ -40,10 +40,13 @@ class Controller(object):
 
         git = Git(file)
 
-        params = () if param is None else (param)
+        params = () if param is None else (param,)
 
-        print("doGit: " + str(args) )
-        c = cmd(git,*params)
+        print("doGit: " + str(params) )
+        try:
+            c = cmd(git,*params)
+        except BaseException as e:
+            print(e)
 
         if not action is None:
             self.last_action = action
@@ -54,10 +57,10 @@ class Controller(object):
         return c
 
 
-    def doGitPlainText(self, cmd, file=None, action=None, refresh=False, *args,**kargs):
+    def doGitPlainText(self, cmd, file=None, param=None,action=None, refresh=False, *args,**kargs):
 
         print("doGitPlainText: " + str(args) + " " + "file:" + str(file) )
-        c = self.doGit(cmd,file,action,refresh,*args,**kargs)
+        c = self.doGit(cmd,file,param,action,refresh,*args,**kargs)
 
         WebKit.JavaScript(web).setPlainText( *c )
 
