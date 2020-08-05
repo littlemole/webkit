@@ -19,7 +19,7 @@ dir = os.path.dirname(os.path.realpath(__file__))
 
 class Controller(object):
 
-    def __init__(self,*args):
+    def __init__(self,dir,*args):
 
         self.last_action = self.onViewStatus
 
@@ -35,10 +35,20 @@ class Controller(object):
         self.web.load_uri("file://" + dir + "/diff.html")
 
         # status bar
-        self.ui.statusBar( "statusBar", os.getcwd() )
+        self.status_bar( os.getcwd() )
 
-        # bind event handlers and show main window
-        self.ui.bind(self).show("mainWindow")
+        # bind event handlers 
+        self.ui.bind(self)
+
+        # IPC channel
+        self.JavaScript = WebKit.JavaScript(self.web)
+
+        self.ui.show("mainWindow")
+
+
+    def status_bar(self,status):
+
+        self.ui.statusBar( "statusBar", status )
 
 
     def selected_file(self):
@@ -76,14 +86,31 @@ class Controller(object):
 
         c = self.doGit(cmd,file,param,action,refresh,*args,**kargs)
 
-        WebKit.JavaScript(self.web).setPlainText( *c )
+        self.JavaScript.setPlainText( *c )
 
 
     def onDocumentLoad(self,*args):
 
-        action = self.last_action if not self.last_action is None else self.onViewStatus
+        self.doGitPlainText( Git.status, file = os.getcwd(), action=self.last_action )
 
-        self.doGitPlainText( Git.status, file = os.getcwd(), action=action )
+
+    def onFileOpen(self,*args):
+
+        dir = self.ui.showFileDialog(Gtk.FileChooserAction.SELECT_FOLDER,"Please choose a folder")
+
+        if not dir is None:
+
+            self.status_bar( dir )
+
+            self.tree.clear()
+            self.tree.add_root( GitFile(dir) )
+
+            self.doGitPlainText( Git.status, file=dir )
+
+
+    def onExit(self,*args):
+
+        Gtk.main_quit()
 
 
     def onGitAdd(self,*args):
@@ -106,14 +133,12 @@ class Controller(object):
         self.doGitPlainText( Git.restore_origin, refresh=True )
 
 
-    @synced()
-    async def onGitPull(self,*args):
+    def onGitPull(self,*args):
 
         self.doGitPlainText( Git.pull, refresh=True )
 
 
-    @synced()
-    async def onGitPush(self,*args):
+    def onGitPush(self,*args):
 
         self.doGitPlainText( Git.push, refresh=True )
 
@@ -122,14 +147,14 @@ class Controller(object):
 
         c = self.doGit( Git.branches )
 
-        WebKit.JavaScript(self.web).setBranches(c["current"], c["branches"])
+        self.JavaScript.setBranches(c["current"], c["branches"])
 
 
     def onGitCommit(self,*args):
 
         c = self.doGit( Git.diff_cached )
 
-        WebKit.JavaScript(self.web).setCommit( *c )
+        self.JavaScript.setCommit( *c )
 
 
     def onSubmitCommit(self,msg):
@@ -142,32 +167,18 @@ class Controller(object):
         self.doGitPlainText( Git.select_branch, param=branch, refresh=True )
 
 
-    def onFileOpen(self,*args):
-
-        dir = self.ui.showFileDialog(Gtk.FileChooserAction.SELECT_FOLDER,"Please choose a folder")
-
-        if not dir is None:
-
-            self.ui.statusBar( "statusBar", dir )
-
-            self.tree.clear()
-            self.tree.add_root( GitFile(dir) )
-
-            self.doGitPlainText( Git.status, file=dir )
-
-
     def onGitDiffOrigin(self,*args):
 
         c = self.doGit( Git.diff_origin )
 
-        WebKit.JavaScript(self.web).setDiff("ORIGIN: " + c[0],c[1])
+        self.JavaScript.setDiff("ORIGIN: " + c[0],c[1])
 
 
     def onGitDiffCached(self,*args):
 
         c = self.doGit( Git.diff_cached )
 
-        WebKit.JavaScript(self.web).setDiff("Indexed but not committed: " + c[0],c[1])
+        self.JavaScript.setDiff("Indexed but not committed: " + c[0],c[1])
 
 
     @radio_group(menu="ViewDiffMenuItem", tb="tb_diff")
@@ -175,7 +186,7 @@ class Controller(object):
 
         c = self.doGit( Git.diff, action=self.onViewDiff )
 
-        WebKit.JavaScript(self.web).setDiff( *c )
+        self.JavaScript.setDiff( *c )
 
 
     @radio_group(menu="ViewStatusMenuItem", tb="tb_status")
@@ -199,6 +210,7 @@ class Controller(object):
 
         return False
 
+
     def onWebContext(self,web,menue,event,*args):
 
         m = self.ui["ViewSubMenu"]        
@@ -210,7 +222,6 @@ class Controller(object):
 
     def onSelect(self,*args):
 
-        print("onSelect")
         f = self.last_action
         if not f == None:
             self.last_action = None
@@ -228,13 +239,9 @@ class Controller(object):
         self.ui.alert("This is the simple pygtk diff viewer using webkit2 based HTML rendering.")
 
 
-    def onExit(self,*args):
-
-        Gtk.main_quit()
-
 
 #create controller
-controller = Controller()        
+controller = Controller(dir)        
 
 # start the GUI event main loop
 Gtk.main()

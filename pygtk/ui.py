@@ -357,8 +357,6 @@ class DirectoryTree:
 
     def onSelect(self,selection,*args):
 
-        print("onTreeSelect")
-
         self.cursel = self.get_selection().file_name
 
 
@@ -370,14 +368,12 @@ def radio_group(**kargs):
 
     menu = None
     tb = None
-    mod = "__main__"
 
     if "menu" in kargs:
         menu = kargs["menu"]
+
     if "tb" in kargs:
         tb = kargs["tb"]
-    if "mod" in kargs:
-        mod = kargs["mod"]
     
 
     def wrapper(func):
@@ -393,9 +389,13 @@ def radio_group(**kargs):
 
                 for a in dir(controller):
 
-                    clazzName = type(a).__module__ + "." + a.__class__.__name__
+                    clazzName = type(getattr(controller,a)).__module__ + "." 
+                    clazz = getattr(controller,a).__class__
+                    clazzName = clazzName + getattr(clazz,"__name__","unknown")
+
                     if clazzName == "pygtk.ui.UI":
-                        wrapper.ui = a
+                        #print("* " + clazzName)
+                        wrapper.ui = getattr(controller,a)
                         break
 
             if len(args)>1 and ( args[1].get_active() == 0 ):
