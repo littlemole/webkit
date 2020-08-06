@@ -14,6 +14,7 @@ export LD_LIBRARY_PATH=$DIR/lib:$LD_LIBRARY_PATH
 
 # allows Gnome Introspection (gi) to find our custom GtkWidget via gir/typelib
 # allows gi repository to find our Pywebkit-0.1.typelib
+#export GI_TYPELIB_PATH=$DIR/lib:/usr/lib/x86_64-linux-gnu/gedit/girepository-1.0/:$GI_TYPELIB_PATH
 export GI_TYPELIB_PATH=$DIR/lib:$GI_TYPELIB_PATH
 
 # allows the python package under ./pygtk to be found

@@ -1,0 +1,144 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script src="js/diff2html.min.js"></script>
+  <script src="wasm.min.js"></script>
+  <script src="d3.v5.min.js"></script>
+  <script src="d3-graphviz.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/diff2html.min.css">
+  <style type="text/css">
+
+    body {
+        background-color: white;
+        padding:0px;
+        margin:0px;
+    }
+
+  </style>
+</head>
+<body>
+
+  <h5><span id="git"></span></h5>
+  <div class="main">
+   <div id="commit">
+     commit message:<br>
+     <textarea id="commitMsg" rows=5 cols=80></textarea>
+     <button id="commitButton">commit</button>
+   </div>
+   <div id="html" class="html">
+     <pre id="git"></pre>  
+   </div>
+  </div>
+
+<script type="text/javascript">
+
+
+window.onerror = function(e) {
+    alert(e);
+}
+
+function escapeHtml(unsafe) {
+    return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
+ }
+
+
+document.addEventListener("DOMContentLoaded", function(e)
+{
+    let View = {
+
+        setPlainText : function( gitdir,output) {
+            if(!output) {
+                output = "";
+            }
+            document.getElementById("commit").style.display = "none";
+            document.getElementById("html").innerHTML = "<pre>"  + escapeHtml(output) + "</pre>";
+            document.getElementById("git").innerHTML = gitdir;
+        },
+/*
+        setDot : function(dummy, dot ) {
+
+            alert(dummy+dot);
+            //document.getElementById("commit").style.display = "none";
+            //document.getElementById("html").innerHTML = "<pre>"  + escapeHtml(dot) + "</pre>";
+            //document.getElementById("git").innerHTML = "dot";
+
+        },
+*/
+        setDiff : function( gitdir, output) {
+
+            var diffHtml = window.Diff2Html.html( output, {
+                drawFileList: true,
+                matching: 'lines',
+//                outputFormat: 'side-by-side',
+            });
+
+            document.getElementById("commit").style.display = "none";
+            document.getElementById("html").innerHTML = diffHtml;
+            document.getElementById("git").innerHTML = gitdir;
+        },
+
+        setCommit : function( gitdir, output) {
+
+          var diffHtml = window.Diff2Html.html( output, {
+            drawFileList: true,
+            matching: 'lines',
+            //                outputFormat: 'side-by-side',
+          });
+
+          document.getElementById("html").innerHTML = diffHtml;
+          document.getElementById("commit").style.display = "block";
+          document.getElementById("git").innerHTML = gitdir;
+        },
+
+        setBranches : function( gitdir, output) {
+
+          let html = "<ul>";
+          output.forEach(function(branch)
+          {
+              html += "<li><a class='branch' href='#' data-branch='"+branch+"'>";
+              html += escapeHtml(branch);
+              html += "</a></li>"
+          });
+          html += "</ul>";
+
+          document.getElementById("html").innerHTML = html;
+          document.getElementById("commit").style.display = "none";
+          document.getElementById("git").innerHTML = gitdir;
+
+          document.querySelectorAll("a.branch").forEach( function(branch) {
+              branch.onclick = function(e) {
+                e.preventDefault();
+                //alert(e.target.getAttribute("data-branch"));
+                WebKit.Python.onSelectBranch( e.target.getAttribute("data-branch") );
+              };
+          });
+        },
+
+        onCommit : function() {
+
+          let msg = document.getElementById("commitMsg").value;
+
+          document.getElementById("html").innerHTML = "commit in progress ...";
+          document.getElementById("commit").style.display = "none";
+
+          WebKit.Python.onSubmitCommit(msg);
+        }
+
+    };
+
+
+    WebKit.bind(View);
+
+    WebKit.Python.onDocumentLoad();
+    document.getElementById("commitButton").onclick=View.onCommit;
+});
+
+</script>
+</body>
+</html>
+
