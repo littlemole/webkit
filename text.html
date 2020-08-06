@@ -3,7 +3,7 @@
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<!--  <script src="js/diff2html.min.js"></script> -->
+  <script src="js/diff2html.min.js"></script> 
   <script src="js/d3.v5.min.js"></script>
 <!--  <script src="js/wasm.min.js" type="javascript/worker"></script>
   -->
@@ -14,22 +14,41 @@
   <link rel="stylesheet" type="text/css" href="css/diff2html.min.css">
   <style type="text/css">
 
+    .scale
+    {
+        xfont-size: calc(1vw + 1vh);
+        width: calc(100% - 4px);
+        height: calc(100% - 64px);
+        spadding: calc(1vw + 1vh);
+    }
+
     body {
         background-color: white;
         padding:0px;
         margin:0px;
-        position:relative;
+        height:100%;
+    }
+
+    html {
+      height:100%;
     }
 
     div.html {
-      width:100%;
-      height:100%;
-      position:absolute;
+      xposition: absolute;
+      xwidth:100%;
+      xheight:100%;
+      border: 1px solid gray;
+      margin:2px;
+      background-color: white;
     }
 
     div.main {
+      display: flex;
+      xposition: absolute;
       width:100%;
       height:100%;
+      padding:0px;
+      background-color:white);
     }
 
   </style>
@@ -37,13 +56,13 @@
 <body>
 
   <h5><span id="git"></span></h5>
-  <div class="main">
+  <div class="main ">
    <div id="commit">
      commit message:<br>
      <textarea id="commitMsg" rows=5 cols=80></textarea>
      <button id="commitButton">commit</button>
    </div>
-   <div id="html" class="html">
+   <div id="html" class="html scale">
      <pre id="git"></pre>  
    </div>
   </div>
@@ -67,6 +86,8 @@ function escapeHtml(unsafe) {
 
 document.addEventListener("DOMContentLoaded", function(e)
 {
+    let self = {};
+
     let View = {
 
         setPlainText : function( gitdir,output) {
@@ -78,14 +99,16 @@ document.addEventListener("DOMContentLoaded", function(e)
             document.getElementById("git").innerHTML = gitdir;
         },
 
-        setDot : function(dummy, dot ) {
+        setDot : function(headline, dot ) {
 
           try {            
               document.getElementById("html").innerHTML = "";
+              self.dot = dot;
 
-              let height = (window.innerHeight / 100) * 85;
-              //let height = document.getElementById("html").clientHeight;
-              let width = document.getElementById("html").clientWidth;
+              //let height = (window.innerHeight / 100) * 85;
+              //let height = (window.innerHeight / 100) * 85;
+              let height = document.getElementById("html").clientHeight;
+              let width = document.getElementById("html").clientWidth;// / 100 * 95;
 //                  alert(height.toString()+":"+width);        
               d3.select("#html")
               .graphviz()
@@ -100,7 +123,7 @@ document.addEventListener("DOMContentLoaded", function(e)
               .renderDot(dot);
               //alert(dummy+dot);
               document.getElementById("commit").style.display = "none";
-              document.getElementById("git").innerHTML = "dot";
+              document.getElementById("git").innerHTML = escapeHtml(headline);
           }
           catch(e) {
             //alert(e);
@@ -166,6 +189,23 @@ document.addEventListener("DOMContentLoaded", function(e)
           document.getElementById("commit").style.display = "none";
 
           WebKit.Python.onSubmitCommit(msg);
+        },
+
+        onResize : function() {
+
+          let height = parseInt((window.innerHeight / 100) * 85);
+          //let height = document.getElementById("html").clientHeight;
+          let width = document.getElementById("html").clientWidth / 100 * 95;
+//                  alert(height.toString()+":"+width);        
+
+//          document.getElementById("git").innerHTML = "" + width + ":" + height;
+          View.setDot("" + width + ":" + height, self.dot);
+//          document.getElementById("html").style.width = width + "px";
+  //        document.getElementById("html").style.height = height + "px";
+         // d3.select("svg")
+         // .graphviz()
+         // .height(height)
+         // .width(width); 
         }
 
     };
@@ -175,6 +215,7 @@ document.addEventListener("DOMContentLoaded", function(e)
 
     WebKit.Python.onDocumentLoad();
     document.getElementById("commitButton").onclick=View.onCommit;
+    window.onresize = View.onResize;
 /*
     let g = d3.select("#graph");
 

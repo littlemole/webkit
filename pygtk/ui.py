@@ -139,6 +139,8 @@ class File(object):
         self.directory = directory
         self.root = root
         self.empty = empty
+        self.hidden = os.path.basename(self.file_name)[0] == '.'
+
 
     def __str__(self):
         return 'File: name: {}, dir: {}, empty: {}'.\
@@ -152,9 +154,8 @@ class File(object):
 
     def tree_cell_render_file(self,col, renderer, model, tree_iter, user_data):
         label = os.path.basename(self.file_name)
-        hidden = os.path.basename(self.file_name)[0] == '.'
         label = GLib.markup_escape_text(label)
-        if hidden:
+        if self.hidden:
             label = '<i>' + label + '</i>'
         renderer.set_property('markup', label)
 
@@ -190,13 +191,14 @@ class DirectoryTree:
     PLACE_HOLDER = File('<should never be visible>', place_holder=True)
     EMPTY_DIR = File('<empty>', empty=True)
 
-    def __init__(self,tree,filter=".*",*args,**kargs):
+    def __init__(self,tree,filter=".*",showHidden=True,*args,**kargs):
 
         self.filter = filter
         self.root = None
         self.cursel = ""
         self.tree = tree
         self.treeModel = None
+        self.showHidden = showHidden
 
         self.compose()
 
@@ -308,6 +310,10 @@ class DirectoryTree:
         
 
     def add_entry(self, file, ):
+
+        if not self.showHidden:
+            if file.hidden :
+                return
 
         if file.directory :
 

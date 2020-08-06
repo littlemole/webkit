@@ -12,6 +12,7 @@ from gi.repository.GtkSource import View
 from pygtk.bind import synced,idle_add
 from pygtk.ui import UI,DirectoryTree,radio_group
 from pygtk.git import Git, GitFile
+from pygtk.editor import Editor
 from pygtk import WebKit
 import pygtk
 
@@ -28,7 +29,7 @@ class Controller(object):
         self.ui = UI(dir + "/text.ui.xml")
 
         # tree view
-        self.tree = DirectoryTree( self.ui["fileTreeView"], filter=".*\\.dot" )
+        self.tree = DirectoryTree( self.ui["fileTreeView"], filter=".*\\.dot", showHidden=False )
         self.tree.add_root( GitFile(os.getcwd()) )
 
         # web view 
@@ -44,21 +45,26 @@ class Controller(object):
         # IPC channel
         self.JavaScript = WebKit.JavaScript(self.web)
 
-        self.sourceView = self.ui["sourceView"]
-        self.buffer = self.sourceView.get_buffer()        
+        # editor
+        self.editor = Editor( self.ui["sourceView"])
+        self.editor.onChanged(self.onSourceChanged)
+        #self.editor.load()
+
+        #self.sourceView = self.ui["sourceView"]
+        #self.buffer = self.sourceView.get_buffer()        
         
-        self.sourcefile = GtkSource.File()
-        self.lang_manager = GtkSource.LanguageManager()
+        #self.sourcefile = GtkSource.File()
+        #self.lang_manager = GtkSource.LanguageManager()
         
-        self.sourcefile.set_location(Gio.File.new_for_path("example.dot"))
-        self.buffer.set_language(self.lang_manager.get_language("dot"))
-        loader = GtkSource.FileLoader.new(self.buffer, self.sourcefile)
+        #self.sourcefile.set_location(Gio.File.new_for_path("example.dot"))
+        #self.buffer.set_language(self.lang_manager.get_language("dot"))
+        #loader = GtkSource.FileLoader.new(self.buffer, self.sourcefile)
 
         self.ui.show("mainWindow")
 
-        loader.load_async(0, None, None, None, None, None)
+        #loader.load_async(0, None, None, None, None, None)
         
-        self.buffer.connect( "changed", self.onSourceChanged )
+        #self.buffer.connect( "changed", self.onSourceChanged )
 
 
 
@@ -220,24 +226,14 @@ class Controller(object):
     def onSourceChanged(self,*args):
     
         buffer = self.ui["sourceView"].get_buffer()
-        #self.ui.alert("change" + buffer.get_text( buffer.get_start_iter(), buffer.get_end_iter(),False))
         dot = buffer.get_text( buffer.get_start_iter(), buffer.get_end_iter(),False)
+
         if dot:
-            #print(dot)
             try:
-                #pass
-                #print(self.web)
-                self.JavaScript.setDot( "dummy", dot )
-                #self.JavaScript.setPlainText( "dummy",  dot )
-                #GLib.idle_add(self.updateSource)
+                self.JavaScript.setDot( self.editor.path, dot )
             except BaseException as e:
                 print(e)
 
-
-    def updateSource(self):
-        pass
-#        self.JavaScript.setPlainText( "dummy",  dot )
-        #WebKit.JavaScript(self.web).setPlainText( "dummy", "dot")# dot )
 
     def onContext(self,treeview, event,*args):
 
@@ -260,11 +256,17 @@ class Controller(object):
 
     def onSelect(self,*args):
 
-        f = self.last_action
-        if not f == None:
-            self.last_action = None
-            f()
-            self.last_action = f
+        print("onSelect")
+        f = self.selected_file()
+        print(f)
+        self.editor.load(f)
+        self.ui["sidePane"].set_current_page(1)
+
+#        f = self.last_action
+#        if not f == None:
+#            self.last_action = None
+#            f()
+#            self.last_action = f
 
 
     def onViewRefresh(self,*args):
