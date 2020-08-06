@@ -1,10 +1,16 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-  <script src="js/diff2html.min.js"></script>
-  <script src="wasm.min.js"></script>
-  <script src="d3.v5.min.js"></script>
-  <script src="d3-graphviz.js"></script>
+<!--  <script src="js/diff2html.min.js"></script> -->
+  <script src="js/d3.v5.min.js"></script>
+<!--  <script src="js/wasm.min.js" type="javascript/worker"></script>
+  -->
+
+  <script src="https://unpkg.com/@hpcc-js/wasm@0.3.11/dist/index.min.js"></script>
+  <script src="js/viz.js"></script>
+  <script src="js/d3-graphviz.js"></script>
   <link rel="stylesheet" type="text/css" href="css/diff2html.min.css">
   <style type="text/css">
 
@@ -12,6 +18,18 @@
         background-color: white;
         padding:0px;
         margin:0px;
+        position:relative;
+    }
+
+    div.html {
+      width:100%;
+      height:100%;
+      position:absolute;
+    }
+
+    div.main {
+      width:100%;
+      height:100%;
     }
 
   </style>
@@ -59,16 +77,37 @@ document.addEventListener("DOMContentLoaded", function(e)
             document.getElementById("html").innerHTML = "<pre>"  + escapeHtml(output) + "</pre>";
             document.getElementById("git").innerHTML = gitdir;
         },
-/*
+
         setDot : function(dummy, dot ) {
 
-            alert(dummy+dot);
-            //document.getElementById("commit").style.display = "none";
-            //document.getElementById("html").innerHTML = "<pre>"  + escapeHtml(dot) + "</pre>";
-            //document.getElementById("git").innerHTML = "dot";
+          try {            
+              document.getElementById("html").innerHTML = "";
+
+              let height = (window.innerHeight / 100) * 85;
+              //let height = document.getElementById("html").clientHeight;
+              let width = document.getElementById("html").clientWidth;
+//                  alert(height.toString()+":"+width);        
+              d3.select("#html")
+              .graphviz()
+              .transition(function() {
+                return d3.transition().duration(1000);
+              })              
+              .fit(true)
+              .height(height)
+              .width(width)
+             // .scale(1.0)
+              .onerror(function(e){})
+              .renderDot(dot);
+              //alert(dummy+dot);
+              document.getElementById("commit").style.display = "none";
+              document.getElementById("git").innerHTML = "dot";
+          }
+          catch(e) {
+            //alert(e);
+          }
 
         },
-*/
+
         setDiff : function( gitdir, output) {
 
             var diffHtml = window.Diff2Html.html( output, {
@@ -136,6 +175,20 @@ document.addEventListener("DOMContentLoaded", function(e)
 
     WebKit.Python.onDocumentLoad();
     document.getElementById("commitButton").onclick=View.onCommit;
+/*
+    let g = d3.select("#graph");
+
+    g.html("armageddon");
+    let v = g.graphviz({ "useWorker" : false, "useSharedWorker" : false });
+
+          v.logEvents(true)
+          .width(400)
+          .height(400)
+          .onerror(function(e){})
+          .dot('digraph {a -> b}')
+          .render();
+//    alert(d3.select("svg").node().innerHTML);
+*/
 });
 
 </script>

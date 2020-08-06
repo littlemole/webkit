@@ -336,6 +336,13 @@ static PyObject* javascript_object_call(PyObject* self, PyObject* args, PyObject
 
     //g_print (PROG " javascript_object_call uid: %s\n", pyobj(uid).str().c_str() );
 
+    const char* id = pyobj(uid).str();
+
+    if(channels().count(id) == 0)
+    {
+        Py_RETURN_NONE;
+    }
+
     Channel* channel = channels()[pyobj(uid).str()];
 
     //g_print (PROG " javascript_object_call %i\n", (void*)channel);
@@ -483,6 +490,12 @@ static void signal_handler(WebKitWebView *web, GVariant* message)
 
     // get channel and call callback
     PywebkitWebview* py = (PywebkitWebview*)web;
+
+    if(channels().count(py->uid) == 0)
+    {
+        g_print (PROG " received signal without channel \n");
+        return;
+    }
 
     Channel* channel = channels()[py->uid];
 

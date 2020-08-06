@@ -64,6 +64,12 @@ void response_handler(GVariant* message)
 {
     //g_print (PROG " received response  %s\n", g_variant_get_type_string (message));
 
+    if(!theCallback.obj.isValid())
+    {
+        g_print (PROG "response without callback \n" );
+        return;
+    }
+
     jsctx js(theCallback.obj.ctx());
 
     // extract JSON
@@ -119,6 +125,12 @@ void response_handler(GVariant* message)
 
 void signal_handler(GVariant* message)
 {
+    if(!theCallback.obj.isValid())
+    {
+        g_print (PROG "signal without callback \n" );
+        return;
+    }
+
     jsctx js(theCallback.obj.ctx());
 
     // unpack json

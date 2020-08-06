@@ -373,7 +373,7 @@
                 <property name="can_focus">False</property>
                 <property name="tooltip_text" translatable="yes">Show git status for selected file.</property>
                 <property name="use_underline">True</property>
-                <property name="stock_id">gtk-dialog-question</property>
+                <property name="stock_id">gtk-convert</property>
                 <signal name="clicked" handler="onViewStatus" swapped="no"/>
               </object>
               <packing>

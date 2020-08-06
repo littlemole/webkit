@@ -34,7 +34,7 @@ class Controller(object):
         # web view 
         self.web = self.ui["web"]
         self.web.load_uri("file://" + dir + "/text.html")
-
+  #      self.web.load_uri("https://bl.ocks.org/magjac/a23d1f1405c2334f288a9cca4c0ef05b")
         # status bar
         self.status_bar( os.getcwd() )
 
@@ -223,22 +223,21 @@ class Controller(object):
         #self.ui.alert("change" + buffer.get_text( buffer.get_start_iter(), buffer.get_end_iter(),False))
         dot = buffer.get_text( buffer.get_start_iter(), buffer.get_end_iter(),False)
         if dot:
-            print(dot)
+            #print(dot)
             try:
                 #pass
                 #print(self.web)
-                #self.JavaScript.setDot( "dummy", dot )
-                #self.JavaScript.setPlainText( "dummy", "dot")# dot )
-                GLib.idle_add(self.updateSource)
+                self.JavaScript.setDot( "dummy", dot )
+                #self.JavaScript.setPlainText( "dummy",  dot )
+                #GLib.idle_add(self.updateSource)
             except BaseException as e:
                 print(e)
 
 
     def updateSource(self):
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        #self.JavaScript.setPlainText( "dummy", "dot")# dot )
-        WebKit.JavaScript(self.web).setPlainText( "dummy", "dot")# dot )
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        pass
+#        self.JavaScript.setPlainText( "dummy",  dot )
+        #WebKit.JavaScript(self.web).setPlainText( "dummy", "dot")# dot )
 
     def onContext(self,treeview, event,*args):
 
