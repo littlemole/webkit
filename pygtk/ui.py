@@ -114,7 +114,8 @@ class UI(object):
             kargs["buttons"] = Gtk.ButtonsType.OK
 
         default = Gtk.ButtonsType.OK if not "default" in kargs else kargs["default"]
-        del kargs["default"]
+        if "default" in kargs:
+            del kargs["default"]
 
         messagedialog = Gtk.MessageDialog( self.main, message_format=msg, **kargs )
         messagedialog.set_default_response(default)

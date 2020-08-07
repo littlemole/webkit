@@ -394,7 +394,8 @@ class GitFile(pygtk.ui.File):
 
     def get_children(self, tree_iter):
 
-        result = []
+        dirs = []
+        files = []
 
         git_paths = Git(self.file_name).porcelain()
         origin = Git(self.file_name).origin_status()
@@ -413,6 +414,10 @@ class GitFile(pygtk.ui.File):
                 
                 target = os.path.join(self.file_name, child_path)
                 is_dir = os.path.isdir( target )
-                result.append( GitFile( target, status,directory=is_dir, root=tree_iter) )
+                f = GitFile( target, status,directory=is_dir, root=tree_iter)
+                if is_dir:
+                    dirs.append( f )
+                else:
+                    files.append( f )
 
-        return result
+        return dirs + files

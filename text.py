@@ -1,4 +1,4 @@
-import os.path 
+import os.path ,base64 
 from pathlib import Path
 
 import gi
@@ -6,7 +6,6 @@ gi.require_versions({
     'Gtk':  '3.0',
     'Pywebkit': '0.1'
 })
-#gi.require_version("GtkSource", "4.0")
 from gi.repository import Gio, Gtk, Gdk, GObject, GLib, Pywebkit, GtkSource
 from gi.repository.Pywebkit import Webview 
 from gi.repository.GtkSource import View
@@ -37,9 +36,11 @@ class Controller(object):
         # web view 
         self.web = self.ui["web"]
         self.web.load_uri("file://" + dir + "/text.html")
-  #      self.web.load_uri("https://bl.ocks.org/magjac/a23d1f1405c2334f288a9cca4c0ef05b")
+
         # status bar
         self.status_bar( os.getcwd() )
+
+        # window title
         self.ui["mainWindow"].set_title( os.getcwd() )
 
         # bind event handlers 
@@ -51,25 +52,12 @@ class Controller(object):
         # editor
         self.editor = Editor( self.ui["sourceView"])
         self.editor.onChanged(self.onSourceChanged)
-        #self.editor.load()
 
-        #self.sourceView = self.ui["sourceView"]
-        #self.buffer = self.sourceView.get_buffer()        
-        
-        #self.sourcefile = GtkSource.File()
-        #self.lang_manager = GtkSource.LanguageManager()
-        
-        #self.sourcefile.set_location(Gio.File.new_for_path("example.dot"))
-        #self.buffer.set_language(self.lang_manager.get_language("dot"))
-        #loader = GtkSource.FileLoader.new(self.buffer, self.sourcefile)
-
+        # show the UI
         self.ui.show("mainWindow")
 
-        #loader.load_async(0, None, None, None, None, None)
-        
-        #self.buffer.connect( "changed", self.onSourceChanged )
 
-
+    # UI helpers
 
     def status_bar(self,status):
 
@@ -83,6 +71,8 @@ class Controller(object):
         f = f if not f is None else os.getcwd()
         return f
 
+
+    # Git  helpers
 
     def doGit(self, cmd, file=None, param=None, action=None, refresh=False, *args,**kargs):
 
@@ -114,10 +104,162 @@ class Controller(object):
         self.JavaScript.setPlainText( *c )
 
 
+    # Callbacks for JavaScript
+
     def onDocumentLoad(self,*args):
 
         self.doGitPlainText( Git.status, file = os.getcwd(), action=self.last_action )
 
+
+    def onSubmitCommit(self,msg):
+            
+        self.doGitPlainText( Git.commit, param=msg, refresh=True)
+
+
+    def onSelectBranch(self,branch):
+
+        self.doGitPlainText( Git.select_branch, param=branch, refresh=True )
+
+
+    def onSaveImage(self,data):
+
+        print(data)
+        png_header = "data:image/png;base64,"
+        if not data.startswith(png_header):
+            return
+
+        data = data[len(png_header):]
+
+        bytes = base64.b64decode(data)
+
+        f = self.ui.showFileDialog(
+            Gtk.FileChooserAction.SAVE,
+            "Please choose target to save this .png image file", 
+            #filter=self.ui["dotFilter"] 
+        )
+
+        if not f is None:
+
+            newfile=open(f,'wb')
+            newfile.write(bytes)
+            newfile.close()
+    
+    # track User Input
+
+    def onSelect(self,*args):
+
+        if self.editor.is_modified():
+
+            r = self.ui.alert(
+               "scrape unsaved changes in editor?", 
+               buttons=("OK",Gtk.ButtonsType.OK,"Cancel",Gtk.ButtonsType.CANCEL),
+               default=Gtk.ButtonsType.CANCEL
+            )
+            if r == Gtk.ButtonsType.CANCEL:
+
+                self.ui["sidePane"].set_current_page(1)
+                return
+
+        f = self.selected_file()
+        self.status_bar( f )
+
+        if os.path.isdir(f):
+            self.onViewStatus()
+        else:
+            self.editor.load(f)
+
+
+    def onSourceChanged(self,*args):
+
+        dot = self.editor.get_text()
+
+        if dot:
+            try:
+                self.JavaScript.setDot( self.editor.path, dot )
+            except BaseException as e:
+                print(e)
+
+
+    def onSwitchPage(self,notebook,page,num,*args):
+
+        if num == 0:
+            self.ui["ViewFilesMenuItem"].set_active(True)
+        else:
+            self.ui["ViewEditorMenuItem"].set_active(True)
+
+
+    def onWindowState(self,*args):
+
+        if len(args) > 1:
+
+            state = args[1]
+
+            if state.new_window_state & Gdk.WindowState.FULLSCREEN:
+
+                self.fullscreen = True
+            else:
+
+                self.fullscreen = False
+
+
+    # context menues
+
+    def onContext(self,treeview, event,*args):
+
+        if event.button == 3: # right click
+       
+            m = None
+            f = self.selected_file()
+
+            if os.path.isdir(f):
+                m = self.ui["directoryContextMenu"]        
+            else:
+                m = self.ui["fileContextMenu"]        
+            
+            Gtk.Menu.popup_at_pointer(m,event)             
+
+        return False
+
+
+    def onWebContext(self,web,menue,event,*args):
+
+        m = self.ui["ViewSubMenu"]        
+
+        Gtk.Menu.popup_at_pointer(m,event)             
+
+        # suppress standard webview context menue
+        return True 
+
+
+    # View Menu and Toolbar Handlers
+
+    def onViewFiles(self,*args):
+
+        self.ui["sidePane"].set_current_page(0)
+
+
+    def onViewFile(self,*args):
+
+        self.ui["sidePane"].set_current_page(1)
+
+
+    def onViewRefresh(self,*args):
+
+        self.tree.refresh()
+
+
+    def onViewFullscreen(self,*args):
+        
+        if self.fullscreen :
+
+            self.ui["mainWindow"].unfullscreen()
+
+        else:
+
+            self.ui["mainWindow"].fullscreen()
+        
+
+    # File Menu and Toolbar handlers
 
     def onFileOpenDir(self,*args):
 
@@ -137,6 +279,20 @@ class Controller(object):
             self.doGitPlainText( Git.status, file=dir )
 
 
+    def onNewDotfile(self,*args):
+
+        f = self.selected_file()
+        d = f if os.path.isdir(f) else os.path.dirname(f)
+
+        r = self.ui.showFileDialog(Gtk.FileChooserAction.SAVE,"path to new .dot file",dir=d)
+
+        if not r is None:
+
+            Path(r).touch()
+            self.editor.load(f)
+            self.onViewRefresh()
+
+
     def onFileOpen(self,*args):
 
         f = self.ui.showFileDialog(
@@ -152,10 +308,9 @@ class Controller(object):
             self.editor.load(f)
 
 
-
     def onFileSave(self,*args):
 
-        self.editor.save(f)
+        self.editor.save()
 
 
     def onFileSaveAs(self,*args):
@@ -175,6 +330,8 @@ class Controller(object):
 
         Gtk.main_quit()
 
+
+    # Git Menu handlers
 
     def onGitAdd(self,*args):
 
@@ -220,16 +377,6 @@ class Controller(object):
         self.JavaScript.setCommit( *c )
 
 
-    def onSubmitCommit(self,msg):
-            
-        self.doGitPlainText( Git.commit, param=msg, refresh=True)
-
-
-    def onSelectBranch(self,branch):
-
-        self.doGitPlainText( Git.select_branch, param=branch, refresh=True )
-
-
     def onGitDiffOrigin(self,*args):
 
         c = self.doGit( Git.diff_origin )
@@ -255,132 +402,6 @@ class Controller(object):
 
         self.doGitPlainText( Git.status, action=self.onViewStatus )
             
-
-    def onViewFile(self,*args):
-
-        self.ui["sidePane"].set_current_page(1)
-
-
-    def onViewFullscreen(self,*args):
-        
-        if self.fullscreen :
-
-            self.ui["mainWindow"].unfullscreen()
-
-        else:
-
-            self.ui["mainWindow"].fullscreen()
-
-
-    def onWindowState(self,*args):
-
-        if len(args) > 1:
-
-            state = args[1]
-
-            if state.new_window_state & Gdk.WindowState.FULLSCREEN:
-
-                self.fullscreen = True
-            else:
-
-                self.fullscreen = False
-
-
-    def onSourceChanged(self,*args):
-    
-        buffer = self.ui["sourceView"].get_buffer()
-        dot = buffer.get_text( buffer.get_start_iter(), buffer.get_end_iter(),False)
-
-        if dot:
-            try:
-                self.JavaScript.setDot( self.editor.path, dot )
-            except BaseException as e:
-                print(e)
-
-
-    def onContext(self,treeview, event,*args):
-
-        if event.button == 3: # right click
-       
-            #m = self.ui["GitSubMenu"] 
-            m = self.ui["fileContextMenu"]        
-            Gtk.Menu.popup_at_pointer(m,event)             
-
-        return False
-
-
-    def onWebContext(self,web,menue,event,*args):
-
-        m = self.ui["ViewSubMenu"]        
-
-        Gtk.Menu.popup_at_pointer(m,event)             
-
-        # suppress standard webview context menue
-        return True 
-        
-
-    def onNewDotfile(self,*args):
-
-        f = self.selected_file()
-        d = f if os.path.isdir(f) else os.path.dirname(f)
-
-        r = self.ui.showFileDialog(Gtk.FileChooserAction.SAVE,"path to new .dot file",dir=d)
-
-        if not r is None:
-
-            Path(r).touch()
-            self.editor.load(f)
-            self.onViewRefresh()
-
-    def onViewFiles(self,*args):
-
-        self.ui["sidePane"].set_current_page(0)
-
-
-    def onSwitchPage(self,notebook,page,num,*args):
-
-        if num == 0:
-            self.ui["ViewFilesMenuItem"].set_active(True)
-        else:
-            self.ui["ViewEditorMenuItem"].set_active(True)
-
-
-    def onSelect(self,*args):
-
-        if self.editor.is_modified():
-
-            r = self.ui.alert(
-               "scrape unsaved changes in editor?", 
-               buttons=("OK",Gtk.ButtonsType.OK,"Cancel",Gtk.ButtonsType.CANCEL),
-               default=Gtk.ButtonsType.CANCEL
-            )
-            if r == Gtk.ButtonsType.CANCEL:
-
-                self.ui["sidePane"].set_current_page(1)
-                return
-
-        f = self.selected_file()
-        self.status_bar( f )
-
-        if os.path.isdir(f):
-            self.onViewStatus()
-        else:
-            self.editor.load(f)
-
-
-        #self.ui["sidePane"].set_current_page(1)
-
-#        f = self.last_action
-#        if not f == None:
-#            self.last_action = None
-#            f()
-#            self.last_action = f
-
-
-    def onViewRefresh(self,*args):
-
-        self.tree.refresh()
-
 
     def onHelp(self,*args):
 

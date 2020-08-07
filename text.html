@@ -39,6 +39,7 @@
 
     div.main {
       display: flex;
+      flex-direction: column;
       width:100%;
       height:calc(100% - 36px);
       padding:0px;
@@ -68,6 +69,8 @@
    </div>
   </div>
 
+  <canvas id="canvas" width="960" height="500" style="display:none"></canvas>
+
 <script type="text/javascript">
 
 
@@ -89,6 +92,7 @@ document.addEventListener("DOMContentLoaded", function(e)
 {
     let self = {
       dot : "",
+      headline : "",
       timeout : null,
     };
 
@@ -98,6 +102,7 @@ document.addEventListener("DOMContentLoaded", function(e)
             if(!output) {
                 output = "";
             }
+            self.headline = gitdir;
             document.getElementById("commit").style.display = "none";
             document.getElementById("html").innerHTML = "<pre>"  + escapeHtml(output) + "</pre>";
             document.getElementById("git").innerHTML = gitdir;
@@ -126,6 +131,7 @@ document.addEventListener("DOMContentLoaded", function(e)
 
           try {            
               self.dot = dot;
+              self.headline = headline;
 
               document.getElementById("commit").style.display = "none";
               document.getElementById("git").innerHTML = escapeHtml(headline);
@@ -146,6 +152,8 @@ document.addEventListener("DOMContentLoaded", function(e)
 
         setDiff : function( gitdir, output) {
 
+          self.headline = gitdir;
+
             var diffHtml = window.Diff2Html.html( output, {
                 drawFileList: true,
                 matching: 'lines',
@@ -159,6 +167,8 @@ document.addEventListener("DOMContentLoaded", function(e)
 
         setCommit : function( gitdir, output) {
 
+          self.headline = gitdir;
+
           var diffHtml = window.Diff2Html.html( output, {
             drawFileList: true,
             matching: 'lines',
@@ -171,6 +181,8 @@ document.addEventListener("DOMContentLoaded", function(e)
         },
 
         setBranches : function( gitdir, output) {
+
+          self.headline = gitdir;
 
           let html = "<ul>";
           output.forEach(function(branch)
@@ -204,21 +216,49 @@ document.addEventListener("DOMContentLoaded", function(e)
           WebKit.Python.onSubmitCommit(msg);
         },
 
+        onGetGraphImage : function() {
+
+          let html = d3.select("svg")
+            .attr("version", 1.1)
+            .attr("xmlns", "http://www.w3.org/2000/svg")
+            .node().parentNode.innerHTML;
+
+            let imgsrc = 'data:image/svg+xml;base64,'+ btoa(html);
+            let img = '<img src="'+imgsrc+'">'; 
+
+            let height = document.getElementById("html").clientHeight;
+            let width = document.getElementById("html").clientWidth;
+
+            let canvas = document.querySelector("canvas");
+            canvas.height=height;
+            canvas.width=width;
+            
+            let context = canvas.getContext("2d");
+
+            let image = new Image;
+            image.src = imgsrc;
+            image.onload = function() {
+              context.drawImage(image, 0, 0);
+
+              let canvasdata = canvas.toDataURL("image/png");
+
+              //var pngimg = '<img src="'+canvasdata+'">'; 
+               // d3.select("#pngdataurl").html(pngimg);
+
+               canvasdata = decodeURIComponent(canvasdata);
+
+               document.getElementById("git").innerHTML = canvasdata;//escape(canvasdata);
+
+               WebKit.Python.onSaveImage(canvasdata);
+
+               //return canvasdata;
+            };
+
+        },
+
         onResize : function() {
 
-          let height = parseInt((window.innerHeight / 100) * 85);
-          //let height = document.getElementById("html").clientHeight;
-          let width = document.getElementById("html").clientWidth / 100 * 95;
-//                  alert(height.toString()+":"+width);        
-
-//          document.getElementById("git").innerHTML = "" + width + ":" + height;
-          View.setDot("" + width + ":" + height, self.dot);
-//          document.getElementById("html").style.width = width + "px";
-  //        document.getElementById("html").style.height = height + "px";
-         // d3.select("svg")
-         // .graphviz()
-         // .height(height)
-         // .width(width); 
+          View.setDot(self.headline, self.dot);
         }
 
     };
@@ -228,6 +268,9 @@ document.addEventListener("DOMContentLoaded", function(e)
 
     WebKit.Python.onDocumentLoad();
     document.getElementById("commitButton").onclick=View.onCommit;
+
+    document.getElementById("git").onclick=View.onGetGraphImage;
+
     window.onresize = View.onResize;
 /*
     let g = d3.select("#graph");
