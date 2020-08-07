@@ -121,7 +121,11 @@ class Controller(object):
 
     def onFileOpenDir(self,*args):
 
-        dir = self.ui.showFileDialog(Gtk.FileChooserAction.SELECT_FOLDER,"Please choose a folder")
+        dir = self.ui.showFileDialog(
+            Gtk.FileChooserAction.SELECT_FOLDER,
+            "Please choose a folder", 
+            filter=self.ui["dotFilter"] 
+        )
 
         if not dir is None:
 
@@ -131,6 +135,40 @@ class Controller(object):
             self.tree.add_root( GitFile(dir) )
 
             self.doGitPlainText( Git.status, file=dir )
+
+
+    def onFileOpen(self,*args):
+
+        f = self.ui.showFileDialog(
+            Gtk.FileChooserAction.OPEN,
+            "Please choose a .dot file", 
+            filter=self.ui["dotFilter"] 
+        )
+
+        if not f is None:
+
+            self.status_bar(f)
+
+            self.editor.load(f)
+
+
+
+    def onFileSave(self,*args):
+
+        self.editor.save(f)
+
+
+    def onFileSaveAs(self,*args):
+
+        f = self.ui.showFileDialog(
+            Gtk.FileChooserAction.SAVE,
+            "Please choose target to save this .dot file", 
+            filter=self.ui["dotFilter"] 
+        )
+
+        if not f is None:
+
+            self.editor.saveAs(f)
 
 
     def onExit(self,*args):
@@ -308,6 +346,18 @@ class Controller(object):
 
 
     def onSelect(self,*args):
+
+        if self.editor.is_modified():
+
+            r = self.ui.alert(
+               "scrape unsaved changes in editor?", 
+               buttons=("OK",Gtk.ButtonsType.OK,"Cancel",Gtk.ButtonsType.CANCEL),
+               default=Gtk.ButtonsType.CANCEL
+            )
+            if r == Gtk.ButtonsType.CANCEL:
+
+                self.ui["sidePane"].set_current_page(1)
+                return
 
         f = self.selected_file()
         self.status_bar( f )

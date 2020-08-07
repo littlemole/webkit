@@ -29,6 +29,12 @@ class Editor(object):
             self.sourceView.set_monospace(True)
 
 
+    def is_modified(self):
+
+        buffer = self.sourceView.get_buffer()        
+        return buffer.get_modified()
+
+
     def load(self,file):
 
         self.path = file
@@ -47,6 +53,7 @@ class Editor(object):
 
         saver = GtkSource.FileSaver.new(buffer, self.sourcefile)
         saver.save_async(0, None, None, None, None, None)
+        buffer.set_modified(False)
 
 
     def saveAs(self,file):

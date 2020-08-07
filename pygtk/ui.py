@@ -69,7 +69,7 @@ class UI(object):
         return self
 
 
-    def showFileDialog(self,action,title, dir=None):
+    def showFileDialog(self,action,title, dir=None, filter=None):
 
         actionButton = Gtk.STOCK_OPEN if (
             action == Gtk.FileChooserAction.OPEN or 
@@ -93,6 +93,9 @@ class UI(object):
         if not dir is None:
             dlg.set_current_folder(dir)
 
+        if not filter is None:
+            dlg.set_filter(filter)
+
         dlg.set_default_response(Gtk.ButtonsType.OK)
         response = dlg.run()
 
@@ -110,8 +113,11 @@ class UI(object):
         if not "buttons" in kargs:
             kargs["buttons"] = Gtk.ButtonsType.OK
 
+        default = Gtk.ButtonsType.OK if not "default" in kargs else kargs["default"]
+        del kargs["default"]
+
         messagedialog = Gtk.MessageDialog( self.main, message_format=msg, **kargs )
-        messagedialog.set_default_response(Gtk.ButtonsType.OK)
+        messagedialog.set_default_response(default)
         response = messagedialog.run()
         messagedialog.hide()
         return response
