@@ -25,6 +25,7 @@ class Controller(object):
     def __init__(self,dir,*args):
 
         self.last_action = self.onViewStatus
+        self.fullscreen = False
 
         #create UI
         self.ui = UI(dir + "/text.ui.xml")
@@ -118,7 +119,7 @@ class Controller(object):
         self.doGitPlainText( Git.status, file = os.getcwd(), action=self.last_action )
 
 
-    def onFileOpen(self,*args):
+    def onFileOpenDir(self,*args):
 
         dir = self.ui.showFileDialog(Gtk.FileChooserAction.SELECT_FOLDER,"Please choose a folder")
 
@@ -205,7 +206,6 @@ class Controller(object):
         self.JavaScript.setDiff("Indexed but not committed: " + c[0],c[1])
 
 
-    #@radio_group(menu="ViewDiffMenuItem", tb="tb_diff")
     def onViewDiff(self,*args):
 
         c = self.doGit( Git.diff, action=self.onViewDiff )
@@ -213,23 +213,39 @@ class Controller(object):
         self.JavaScript.setDiff( *c )
 
 
-    #@radio_group(menu="ViewStatusMenuItem", tb="tb_status")
     def onViewStatus(self,*args):
 
         self.doGitPlainText( Git.status, action=self.onViewStatus )
             
 
-    #@radio_group(menu="ViewFileMenuItem", tb="tb_file")
     def onViewFile(self,*args):
 
-        #self.doGitPlainText( Git.view_file, action=self.onViewFile )
-        f = self.selected_file()
+        self.ui["sidePane"].set_current_page(1)
 
-        if os.path.isdir(f):
-            self.doGitPlainText( Git.status, action=self.onViewStatus )
+
+    def onViewFullscreen(self,*args):
+        
+        if self.fullscreen :
+
+            self.ui["mainWindow"].unfullscreen()
+
         else:
-            self.ui["sidePane"].set_current_page(1)
 
+            self.ui["mainWindow"].fullscreen()
+
+
+    def onWindowState(self,*args):
+
+        if len(args) > 1:
+
+            state = args[1]
+
+            if state.new_window_state & Gdk.WindowState.FULLSCREEN:
+
+                self.fullscreen = True
+            else:
+
+                self.fullscreen = False
 
 
     def onSourceChanged(self,*args):
@@ -248,7 +264,8 @@ class Controller(object):
 
         if event.button == 3: # right click
        
-            m = self.ui["GitSubMenu"] 
+            #m = self.ui["GitSubMenu"] 
+            m = self.ui["fileContextMenu"]        
             Gtk.Menu.popup_at_pointer(m,event)             
 
         return False
@@ -257,6 +274,7 @@ class Controller(object):
     def onWebContext(self,web,menue,event,*args):
 
         m = self.ui["ViewSubMenu"]        
+
         Gtk.Menu.popup_at_pointer(m,event)             
 
         # suppress standard webview context menue
@@ -275,6 +293,18 @@ class Controller(object):
             Path(r).touch()
             self.editor.load(f)
             self.onViewRefresh()
+
+    def onViewFiles(self,*args):
+
+        self.ui["sidePane"].set_current_page(0)
+
+
+    def onSwitchPage(self,notebook,page,num,*args):
+
+        if num == 0:
+            self.ui["ViewFilesMenuItem"].set_active(True)
+        else:
+            self.ui["ViewEditorMenuItem"].set_active(True)
 
 
     def onSelect(self,*args):
@@ -304,7 +334,7 @@ class Controller(object):
 
     def onHelp(self,*args):
 
-        self.ui.alert("This is the simple pygtk diff viewer using webkit2 based HTML rendering.")
+        self.ui.alert("This is the simple python dotfile viewer using webkit2 based HTML rendering.")
 
 
 

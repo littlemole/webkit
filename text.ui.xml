@@ -12,6 +12,90 @@
       <placeholder/>
     </child>
   </object>
+  <object class="GtkMenu">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+  </object>
+  <object class="GtkMenu" id="fileContextMenu">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkImageMenuItem" id="fileContextEdit">
+        <property name="label">gtk-edit</property>
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="tooltip_text" translatable="yes">Open this file in Editor.</property>
+        <property name="use_underline">True</property>
+        <property name="use_stock">True</property>
+        <signal name="activate" handler="onViewFile" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkSeparatorMenuItem">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkImageMenuItem" id="fileContextGitAdd">
+        <property name="label">Git Add</property>
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="tooltip_text" translatable="yes">Add locally modified file to the index of files to be committed.</property>
+        <property name="use_stock">False</property>
+        <signal name="activate" handler="onGitAdd" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkImageMenuItem" id="fileContextGitCommit">
+        <property name="label">Git Commit</property>
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="tooltip_text" translatable="yes">Committ local changes to repository.</property>
+        <property name="use_stock">False</property>
+        <signal name="activate" handler="onGitCommit" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="fileContextGitDiffSubmenu">
+        <property name="visible">True</property>
+        <property name="label">Git Diff</property>
+        <property name="can_focus">False</property>
+        <child type="submenu">
+          <object class="GtkMenu">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkMenuItem" id="fileContextGitDiffSubmenuDiff">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label">Git diff</property>
+                <signal name="activate" handler="onViewDiff" swapped="no"/>
+              </object>
+            </child>
+            <child>
+              <object class="GtkImageMenuItem" id="fileContextGitLocalDiffCached">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">Show Git diff for files added to the committ index</property>
+                <property name="label">Git diff --cached</property>
+                <signal name="activate" handler="onGitDiffCached" swapped="no"/>
+              </object>
+            </child>
+            <child>
+              <object class="GtkImageMenuItem" id="fileContextGitRemoteDiffOrigin">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">Show git diff against remote origin repository.</property>
+                <property name="label">Git diff --origin</property>
+                <signal name="activate" handler="onGitDiffOrigin" swapped="no"/>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkApplicationWindow" id="mainWindow">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">pydiff</property>
@@ -19,6 +103,8 @@
     <property name="default_height">650</property>
     <property name="icon_name">applications-internet</property>
     <signal name="destroy" handler="onExit" swapped="no"/>
+    <signal name="window-state-event" handler="onWindowState" swapped="no"/>
+    
     <child type="titlebar">
       <placeholder/>
     </child>
@@ -33,24 +119,24 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
-              <object class="GtkMenuItem" id="ActionMenu">
+              <object class="GtkMenuItem" id="FileMenu">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">_File</property>
                 <property name="use_underline">True</property>
                 <child type="submenu">
-                  <object class="GtkMenu" id="ActionSubMenu">
+                  <object class="GtkMenu" id="FileSubMenu">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkImageMenuItem" id="ActionOpen">
-                        <property name="label">gtk-open</property>
+                      <object class="GtkImageMenuItem" id="FileOpenDir">
+                        <property name="label">Open Directory</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="tooltip_text" translatable="yes">Opens a new Directory to display git information.</property>
+                        <property name="tooltip_text" translatable="yes">Opens a new directory to display git information.</property>
                         <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
-                        <signal name="activate" handler="onFileOpen" swapped="no"/>
+                        <property name="use_stock">False</property>
+                        <signal name="activate" handler="onFileOpenDir" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -60,7 +146,46 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="ActionExit">
+                      <object class="GtkImageMenuItem" id="FileOpenFile">
+                        <property name="label">gtk-open</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Opens a new file in the editor.</property>
+                        <property name="use_underline">True</property>
+                        <property name="use_stock">True</property>
+                        <signal name="activate" handler="onFileOpen" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem" id="FileSaveFile">
+                        <property name="label">gtk-save</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Opens a new file in the editor.</property>
+                        <property name="use_underline">True</property>
+                        <property name="use_stock">True</property>
+                        <signal name="activate" handler="onFileSave" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem" id="FileSaveAsFile">
+                        <property name="label">gtk-save-as</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Opens a new file in the editor.</property>
+                        <property name="use_underline">True</property>
+                        <property name="use_stock">True</property>
+                        <signal name="activate" handler="onFileSaveAs" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkSeparatorMenuItem">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem" id="FileExit">
                         <property name="label">gtk-quit</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
@@ -113,6 +238,51 @@
                       </object>
                     </child>
                     <child>
+                      <object class="GtkMenuItem" id="gitDiffSubmenu">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Git diff</property>
+                        <property name="use_underline">True</property>
+                        <child type="submenu">
+                          <object class="GtkMenu">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <child>
+                              <object class="GtkMenuItem" id="gitDiffSubmenuDiff">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Git diff</property>
+                                <property name="use_underline">True</property>
+                                <signal name="activate" handler="onViewDiff" swapped="no"/>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkImageMenuItem" id="GitLocalDiffCached">
+                                <property name="label">Git diff --cached</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="tooltip_text" translatable="yes">Show Git diff for files added to the committ index</property>
+                                <property name="use_underline">True</property>
+                                <property name="use_stock">False</property>
+                                <signal name="activate" handler="onGitDiffCached" swapped="no"/>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkImageMenuItem" id="GitRemoteDiffOrigin">
+                                <property name="label">Git diff origin</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="tooltip_text" translatable="yes">Show git diff against remote origin repository.</property>
+                                <property name="use_underline">True</property>
+                                <property name="use_stock">False</property>
+                                <signal name="activate" handler="onGitDiffOrigin" swapped="no"/>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
                       <object class="GtkImageMenuItem" id="GitLocal">
                         <property name="label">Git Local</property>
                         <property name="visible">True</property>
@@ -123,6 +293,21 @@
                           <object class="GtkMenu" id="GitLocalSubMenu">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <child>
+                              <object class="GtkMenuItem" id="GitLocalViewStatusMenuItem">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="tooltip_text" translatable="yes">Show current git status.</property>
+                                <property name="label">Git status</property>
+                                <signal name="activate" handler="onViewStatus" swapped="no"/>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkSeparatorMenuItem">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                              </object>
+                            </child>
                             <child>
                               <object class="GtkImageMenuItem" id="GitRestore">
                                 <property name="label">Git Restore</property>
@@ -157,14 +342,9 @@
                               </object>
                             </child>
                             <child>
-                              <object class="GtkImageMenuItem" id="GitLocalDiffCached">
-                                <property name="label">Git Diff --cached</property>
+                              <object class="GtkSeparatorMenuItem">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="tooltip_text" translatable="yes">Show Git diff for files added to the committ index</property>
-                                <property name="use_underline">True</property>
-                                <property name="use_stock">False</property>
-                                <signal name="activate" handler="onGitDiffCached" swapped="no"/>
                               </object>
                             </child>
                             <child>
@@ -180,12 +360,6 @@
                             </child>
                           </object>
                         </child>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkSeparatorMenuItem">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
                       </object>
                     </child>
                     <child>
@@ -221,17 +395,6 @@
                                 <signal name="activate" handler="onGitPush" swapped="no"/>
                               </object>
                             </child>
-                            <child>
-                              <object class="GtkImageMenuItem" id="GitRemoteDiffOrigin">
-                                <property name="label">Git Diff Origin</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="tooltip_text" translatable="yes">Show git diff against remote origin repository.</property>
-                                <property name="use_underline">True</property>
-                                <property name="use_stock">False</property>
-                                <signal name="activate" handler="onGitDiffOrigin" swapped="no"/>
-                              </object>
-                            </child>
                           </object>
                         </child>
                       </object>
@@ -251,38 +414,26 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkRadioMenuItem" id="ViewStatusMenuItem">
+                      <object class="GtkRadioMenuItem" id="ViewFilesMenuItem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="tooltip_text" translatable="yes">Show current git status.</property>
-                        <property name="label">View Status</property>
+                        <property name="label">Show Files</property>
                         <property name="use_underline">True</property>
                         <property name="active">True</property>
                         <property name="draw_as_radio">True</property>
-                        <signal name="activate" handler="onViewStatus" swapped="no"/>
+                        <signal name="activate" handler="onViewFiles" swapped="no"/>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkRadioMenuItem" id="ViewDiffMenuItem">
+                      <object class="GtkRadioMenuItem" id="ViewEditorMenuItem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="tooltip_text" translatable="yes">Show normal git diff (changes not added or committed).</property>
-                        <property name="label">View Diff</property>
+                        <property name="label">Show Editor</property>
                         <property name="use_underline">True</property>
                         <property name="draw_as_radio">True</property>
-                        <property name="group">ViewStatusMenuItem</property>
-                        <signal name="activate" handler="onViewDiff" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkRadioMenuItem" id="ViewFileMenuItem">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="tooltip_text" translatable="yes">Show file preview.</property>
-                        <property name="label">View File</property>
-                        <property name="use_underline">True</property>
-                        <property name="draw_as_radio">True</property>
-                        <property name="group">ViewStatusMenuItem</property>
+                        <property name="group">ViewFilesMenuItem</property>
                         <signal name="activate" handler="onViewFile" swapped="no"/>
                       </object>
                     </child>
@@ -290,6 +441,17 @@
                       <object class="GtkSeparatorMenuItem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkCheckMenuItem" id="ViewFullscreen">
+                        <property name="label">Fullscreen</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Toggle Fullscreen.</property>
+                        <property name="use_underline">True</property>
+                        <property name="active">False</property>
+                        <signal name="activate" handler="onViewFullscreen" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -350,6 +512,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="tab_pos">bottom</property>
+                <signal name="switch-page" handler="onSwitchPage" swapped="no"/>
                 <child>
                   <object class="GtkBox">
                     <property name="visible">True</property>
@@ -366,6 +529,7 @@
                             <property name="tooltip_text" translatable="yes">Open new directory to display git info for.</property>
                             <property name="use_underline">True</property>
                             <property name="stock_id">gtk-open</property>
+                            <signal name="clicked" handler="onFileOpenDir" swapped="no"/>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -376,20 +540,6 @@
                           <object class="GtkSeparatorToolItem">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="homogeneous">True</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkToolButton" id="tb_graph">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="tooltip_text" translatable="yes">Show graph for selected file.</property>
-                            <property name="use_underline">True</property>
-                            <property name="stock_id">gtk-convert</property>
-                            <signal name="clicked" handler="onSelect" swapped="no"/>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -414,7 +564,7 @@
                           <object class="GtkToolButton" id="tb_file">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="tooltip_text" translatable="yes">Show file preview for file selected.</property>
+                            <property name="tooltip_text" translatable="yes">Show file in editor.</property>
                             <property name="halign">end</property>
                             <property name="hexpand">False</property>
                             <property name="use_underline">True</property>
@@ -480,12 +630,27 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <child>
-                          <object class="GtkToolButton" id="tb_open1">
+                          <object class="GtkToolButton" id="tb_editor_save">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="tooltip_text" translatable="yes">Open new directory to display git info for.</property>
+                            <property name="tooltip_text" translatable="yes">Save file opened in editor.</property>
                             <property name="use_underline">True</property>
-                            <property name="stock_id">gtk-open</property>
+                            <property name="stock_id">gtk-floppy</property>
+                            <signal name="clicked" handler="onFileSave" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="homogeneous">True</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkToolButton" id="tb_editor_saveAs">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="tooltip_text" translatable="yes">Save file opened in editor as a copy.</property>
+                            <property name="use_underline">True</property>
+                            <property name="stock_id">gtk-save</property>
+                            <signal name="clicked" handler="onFileSaveAs" swapped="no"/>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -503,42 +668,18 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkRadioToolButton" id="tb_status1">
+                          <object class="GtkToolButton" id="tb_editor_viewdir">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="tooltip_text" translatable="yes">Show git status for selected file.</property>
+                            <property name="tooltip_text" translatable="yes">Show directory tree.</property>
                             <property name="use_underline">True</property>
-                            <property name="stock_id">gtk-convert</property>
-                            <property name="active">True</property>
+                            <property name="halign">end</property>
+                            <property name="hexpand">False</property>
+                            <property name="stock_id">gtk-open</property>
+                            <signal name="clicked" handler="onViewFiles" swapped="no"/>
                           </object>
                           <packing>
-                            <property name="expand">False</property>
-                            <property name="homogeneous">True</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkRadioToolButton" id="tb_diff1">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="tooltip_text" translatable="yes">Show git diff for selected file.</property>
-                            <property name="use_underline">True</property>
-                            <property name="stock_id">gtk-zoom-fit</property>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="homogeneous">True</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkRadioToolButton" id="tb_file1">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="tooltip_text" translatable="yes">Show file preview for file selected.</property>
-                            <property name="use_underline">True</property>
-                            <property name="stock_id">gtk-file</property>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
+                            <property name="expand">True</property>
                             <property name="homogeneous">True</property>
                           </packing>
                         </child>
