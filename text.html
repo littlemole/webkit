@@ -86,7 +86,10 @@ function escapeHtml(unsafe) {
 
 document.addEventListener("DOMContentLoaded", function(e)
 {
-    let self = {};
+    let self = {
+      dot : "",
+      timeout : null,
+    };
 
     let View = {
 
@@ -99,17 +102,13 @@ document.addEventListener("DOMContentLoaded", function(e)
             document.getElementById("git").innerHTML = gitdir;
         },
 
-        setDot : function(headline, dot ) {
+        render : function() {
 
-          try {            
               document.getElementById("html").innerHTML = "";
-              self.dot = dot;
 
-              //let height = (window.innerHeight / 100) * 85;
-              //let height = (window.innerHeight / 100) * 85;
               let height = document.getElementById("html").clientHeight;
-              let width = document.getElementById("html").clientWidth;// / 100 * 95;
-//                  alert(height.toString()+":"+width);        
+              let width = document.getElementById("html").clientWidth;
+
               d3.select("#html")
               .graphviz()
               .transition(function() {
@@ -118,17 +117,30 @@ document.addEventListener("DOMContentLoaded", function(e)
               .fit(true)
               .height(height)
               .width(width)
-             // .scale(1.0)
               .onerror(function(e){})
-              .renderDot(dot);
-              //alert(dummy+dot);
+              .renderDot(self.dot);
+        },
+
+        setDot : function(headline, dot ) {
+
+          try {            
+              self.dot = dot;
+
               document.getElementById("commit").style.display = "none";
               document.getElementById("git").innerHTML = escapeHtml(headline);
+
+              if ( self.timeout ) {
+                clearTimeout(self.timeout);
+                self.timeout = setTimeout(function(){ View.render(); }, 500);
+              }
+              else {
+                View.render();
+                self.timeout = setTimeout(function(){ }, 1000);
+              }
           }
           catch(e) {
             //alert(e);
           }
-
         },
 
         setDiff : function( gitdir, output) {

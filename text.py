@@ -1,4 +1,5 @@
 import os.path 
+from pathlib import Path
 
 import gi
 gi.require_versions({
@@ -203,7 +204,7 @@ class Controller(object):
         self.JavaScript.setDiff("Indexed but not committed: " + c[0],c[1])
 
 
-    @radio_group(menu="ViewDiffMenuItem", tb="tb_diff")
+    #@radio_group(menu="ViewDiffMenuItem", tb="tb_diff")
     def onViewDiff(self,*args):
 
         c = self.doGit( Git.diff, action=self.onViewDiff )
@@ -211,16 +212,23 @@ class Controller(object):
         self.JavaScript.setDiff( *c )
 
 
-    @radio_group(menu="ViewStatusMenuItem", tb="tb_status")
+    #@radio_group(menu="ViewStatusMenuItem", tb="tb_status")
     def onViewStatus(self,*args):
 
         self.doGitPlainText( Git.status, action=self.onViewStatus )
             
 
-    @radio_group(menu="ViewFileMenuItem", tb="tb_file")
+    #@radio_group(menu="ViewFileMenuItem", tb="tb_file")
     def onViewFile(self,*args):
 
-        self.doGitPlainText( Git.view_file, action=self.onViewFile )
+        #self.doGitPlainText( Git.view_file, action=self.onViewFile )
+        f = self.selected_file()
+
+        if os.path.isdir(f):
+            self.doGitPlainText( Git.status, action=self.onViewStatus )
+        else:
+            self.ui["sidePane"].set_current_page(1)
+
 
 
     def onSourceChanged(self,*args):
@@ -254,13 +262,31 @@ class Controller(object):
         return True 
         
 
+    def onNewDotfile(self,*args):
+
+        f = self.selected_file()
+        d = f if os.path.isdir(f) else os.path.dirname(f)
+
+        r = self.ui.showFileDialog(Gtk.FileChooserAction.SAVE,"path to new .dot file",dir=d)
+
+        if not r is None:
+
+            print("neW:" + r)
+            Path(r).touch()
+            self.editor.load(f)
+            self.onViewRefresh()
+
+
     def onSelect(self,*args):
 
         print("onSelect")
         f = self.selected_file()
         print(f)
-        self.editor.load(f)
-        self.ui["sidePane"].set_current_page(1)
+        if os.path.isdir(f):
+            self.onViewStatus()
+        else:
+            self.editor.load(f)
+        #self.ui["sidePane"].set_current_page(1)
 
 #        f = self.last_action
 #        if not f == None:

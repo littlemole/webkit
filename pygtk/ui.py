@@ -69,7 +69,7 @@ class UI(object):
         return self
 
 
-    def showFileDialog(self,action,title):
+    def showFileDialog(self,action,title, dir=None):
 
         actionButton = Gtk.STOCK_OPEN if (
             action == Gtk.FileChooserAction.OPEN or 
@@ -89,6 +89,9 @@ class UI(object):
                 Gtk.ButtonsType.OK,
             ),
         )
+
+        if not dir is None:
+            dlg.set_current_folder(dir)
 
         dlg.set_default_response(Gtk.ButtonsType.OK)
         response = dlg.run()
