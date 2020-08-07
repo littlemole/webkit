@@ -39,6 +39,7 @@ class Controller(object):
   #      self.web.load_uri("https://bl.ocks.org/magjac/a23d1f1405c2334f288a9cca4c0ef05b")
         # status bar
         self.status_bar( os.getcwd() )
+        self.ui["mainWindow"].set_title( os.getcwd() )
 
         # bind event handlers 
         self.ui.bind(self)
@@ -123,7 +124,7 @@ class Controller(object):
 
         if not dir is None:
 
-            self.status_bar( dir )
+            self.ui["mainWindow"].set_title( dir )
 
             self.tree.clear()
             self.tree.add_root( GitFile(dir) )
@@ -271,7 +272,6 @@ class Controller(object):
 
         if not r is None:
 
-            print("neW:" + r)
             Path(r).touch()
             self.editor.load(f)
             self.onViewRefresh()
@@ -279,13 +279,15 @@ class Controller(object):
 
     def onSelect(self,*args):
 
-        print("onSelect")
         f = self.selected_file()
-        print(f)
+        self.status_bar( f )
+
         if os.path.isdir(f):
             self.onViewStatus()
         else:
             self.editor.load(f)
+
+
         #self.ui["sidePane"].set_current_page(1)
 
 #        f = self.last_action
