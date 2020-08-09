@@ -24,6 +24,7 @@ import pygtk
 
 dir = os.path.dirname(os.path.realpath(__file__))
 
+e = Editor()
 
 
 
@@ -52,8 +53,10 @@ class Controller(object):
         self.ui.main.set_title( os.getcwd() )
 
         # editor
-        self.editor = Editor( self.ui["sourceView"] )
-        self.editor.onChanged(self.onSourceChanged)
+        self.editor = self.ui["sourceView"] #Editor( self.ui["sourceView"] )
+        #self.editor.set_property("language","dot")
+        #self.editor.set_monospace(True)
+        #self.editor.onChanged(self.onSourceChanged)
 
         # bind event handlers 
         self.ui.bind(self)
