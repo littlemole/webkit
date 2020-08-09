@@ -3,29 +3,15 @@
 <interface>
   <requires lib="gtk+" version="3.20"/>
   <requires lib="gtksourceview" version="4.0"/>
-  <object class="GtkWindow">
-    <property name="can_focus">False</property>
-    <child type="titlebar">
-      <placeholder/>
-    </child>
-    <child>
-      <placeholder/>
-    </child>
-  </object>
-  <object class="GtkImage">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-missing-image</property>
-  </object>
   <object class="GtkMenu" id="directoryContextMenu">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <child>
       <object class="GtkMenuItem" id="directoryContextStatus">
-        <property name="label">Git status</property>
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="tooltip_text" translatable="yes">Open this file in Editor.</property>
+        <property name="label">Git status</property>
         <signal name="activate" handler="onViewStatus" swapped="no"/>
       </object>
     </child>
@@ -37,8 +23,8 @@
     </child>
     <child>
       <object class="GtkImageMenuItem" id="directoryContextGitAdd">
-        <property name="visible">True</property>
         <property name="label">Git add</property>
+        <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="tooltip_text" translatable="yes">Add locally modified file to the index of files to be committed.</property>
         <property name="use_stock">False</property>
@@ -47,8 +33,8 @@
     </child>
     <child>
       <object class="GtkImageMenuItem" id="directoryContextGitCommit">
-        <property name="visible">True</property>
         <property name="label">Git commit</property>
+        <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="tooltip_text" translatable="yes">Committ local changes to repository.</property>
         <property name="use_stock">False</property>
@@ -69,7 +55,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label">Git diff</property>
-                <signal name="activate" handler="onGitDiff" swapped="no"/>
+                <signal name="activate" handler="onViewDiff" swapped="no"/>
               </object>
             </child>
             <child>
@@ -889,6 +875,19 @@
             <property name="position">2</property>
           </packing>
         </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkMenu" id="webContextMenu">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkMenuItem" id="exportGraph">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Export Graph</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="onExportGraph" swapped="no"/>
       </object>
     </child>
   </object>

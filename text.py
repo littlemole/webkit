@@ -1,22 +1,30 @@
+# std python batteries
 import os.path ,base64 
 from pathlib import Path
 
+# Gtk introspection magic
 import gi
 gi.require_versions({
     'Gtk':  '3.0',
     'Pywebkit': '0.1'
 })
 from gi.repository import Gio, Gtk, Gdk, GObject, GLib, Pywebkit, GtkSource
+
+# import custom Gtk types explicitely to allow loading from xml
 from gi.repository.Pywebkit import Webview 
 from gi.repository.GtkSource import View
+
+# pygtk mini framework specific imports
 from pygtk.bind import synced,idle_add
-from pygtk.ui import UI,DirectoryTree,radio_group
+from pygtk.ui import UI,DirectoryTree,radio_group,accelerator
 from pygtk.git import Git, GitFile
 from pygtk.editor import Editor
 from pygtk import WebKit
 import pygtk
 
 dir = os.path.dirname(os.path.realpath(__file__))
+
+
 
 
 class Controller(object):
@@ -27,7 +35,7 @@ class Controller(object):
         self.fullscreen = False
 
         #create UI
-        self.ui = UI(dir + "/text.ui.xml")
+        self.ui = UI(dir + "/text.ui.xml", win="mainWindow")
 
         # tree view
         self.tree = DirectoryTree( self.ui["fileTreeView"], filter=".*\\.dot", showHidden=False )
@@ -41,20 +49,20 @@ class Controller(object):
         self.status_bar( os.getcwd() )
 
         # window title
-        self.ui["mainWindow"].set_title( os.getcwd() )
+        self.ui.main.set_title( os.getcwd() )
+
+        # editor
+        self.editor = Editor( self.ui["sourceView"] )
+        self.editor.onChanged(self.onSourceChanged)
 
         # bind event handlers 
         self.ui.bind(self)
 
+        # show the UI
+        self.ui.show()#"mainWindow")
+
         # IPC channel
         self.JavaScript = WebKit.JavaScript(self.web)
-
-        # editor
-        self.editor = Editor( self.ui["sourceView"])
-        self.editor.onChanged(self.onSourceChanged)
-
-        # show the UI
-        self.ui.show("mainWindow")
 
 
     # UI helpers
@@ -66,9 +74,9 @@ class Controller(object):
 
     def selected_file(self):
 
-        f = self.tree.get_selection().file_name
-        f = f if not f is None else self.tree.root.file_name
-        f = f if not f is None else os.getcwd()
+        f = self.tree.get_selection()
+        f = f if not f is None else self.tree.root
+        f = f if not f is None else GitFile( os.getcwd() )
         return f
 
 
@@ -77,7 +85,9 @@ class Controller(object):
     def doGit(self, cmd, file=None, param=None, action=None, refresh=False, *args,**kargs):
 
         if file is None:
-            file = self.selected_file()
+            file = self.selected_file().file_name
+
+        print(file)
 
         git = Git(file)
 
@@ -108,7 +118,11 @@ class Controller(object):
 
     def onDocumentLoad(self,*args):
 
-        self.doGitPlainText( Git.status, file = os.getcwd(), action=self.last_action )
+        print("DOM")
+        try:
+            self.doGitPlainText( Git.status, file = os.getcwd(), action=self.last_action )
+        except BaseException as e:
+            print(e)
 
 
     def onSubmitCommit(self,msg):
@@ -157,16 +171,16 @@ class Controller(object):
             )
             if r == Gtk.ButtonsType.CANCEL:
 
-                self.ui["sidePane"].set_current_page(1)
+                self.onViewFile()
                 return
 
         f = self.selected_file()
-        self.status_bar( f )
+        self.status_bar( f.file_name )
 
-        if os.path.isdir(f):
+        if f.directory:
             self.onViewStatus()
         else:
-            self.editor.load(f)
+            self.editor.load(f.file_name)
 
 
     def onSourceChanged(self,*args):
@@ -208,10 +222,10 @@ class Controller(object):
 
         if event.button == 3: # right click
        
-            m = None
-            f = self.selected_file()
+            f = self.tree.file_at_pos(event.x,event.y)
 
-            if os.path.isdir(f):
+            m = None
+            if f.directory: 
                 m = self.ui["directoryContextMenu"]        
             else:
                 m = self.ui["fileContextMenu"]        
@@ -223,7 +237,7 @@ class Controller(object):
 
     def onWebContext(self,web,menue,event,*args):
 
-        m = self.ui["ViewSubMenu"]        
+        m = self.ui["webContextMenu"]        
 
         Gtk.Menu.popup_at_pointer(m,event)             
 
@@ -236,6 +250,7 @@ class Controller(object):
     def onViewFiles(self,*args):
 
         self.ui["sidePane"].set_current_page(0)
+        self.onViewRefresh()
 
 
     def onViewFile(self,*args):
@@ -257,10 +272,17 @@ class Controller(object):
         else:
 
             self.ui["mainWindow"].fullscreen()
-        
+
+
+    def onExportGraph(self,*args):
+
+        self.JavaScript.onGetGraphImage()
+
+
 
     # File Menu and Toolbar handlers
 
+    @accelerator("<Control>d")
     def onFileOpenDir(self,*args):
 
         dir = self.ui.showFileDialog(
@@ -276,23 +298,25 @@ class Controller(object):
             self.tree.clear()
             self.tree.add_root( GitFile(dir) )
 
+            self.onViewFiles()
             self.doGitPlainText( Git.status, file=dir )
 
 
     def onNewDotfile(self,*args):
 
         f = self.selected_file()
-        d = f if os.path.isdir(f) else os.path.dirname(f)
+        d = f.filename if f.direcotry else os.path.dirname(f.file_name)
 
         r = self.ui.showFileDialog(Gtk.FileChooserAction.SAVE,"path to new .dot file",dir=d)
 
         if not r is None:
 
             Path(r).touch()
-            self.editor.load(f)
+            self.editor.load(f.file_name)
             self.onViewRefresh()
 
 
+    @accelerator("<Control>o")
     def onFileOpen(self,*args):
 
         f = self.ui.showFileDialog(
@@ -308,11 +332,15 @@ class Controller(object):
             self.editor.load(f)
 
 
+    @accelerator("<Control>s")
     def onFileSave(self,*args):
 
         self.editor.save()
+        path = os.path.basename(self.editor.path)
+        self.status_bar("file " + path + " saved.")
 
 
+    @accelerator("<Control><Shift>s")
     def onFileSaveAs(self,*args):
 
         f = self.ui.showFileDialog(
@@ -324,18 +352,52 @@ class Controller(object):
         if not f is None:
 
             self.editor.saveAs(f)
+            path = os.path.basename(f)
+            self.status_bar("file " + path + " saved.")
+            self.onViewRefresh()
 
 
     def onExit(self,*args):
 
         Gtk.main_quit()
 
+    
 
     # Git Menu handlers
+
+
+    def onViewStatus(self,*args):
+
+        self.doGitPlainText( Git.status, action=self.onViewStatus )
+            
+
+    def onGitPull(self,*args):
+
+        self.doGitPlainText( Git.pull, refresh=True )
+
 
     def onGitAdd(self,*args):
 
         self.doGitPlainText( Git.add, refresh=True)
+
+
+    def onGitCommit(self,*args):
+
+        c = self.doGit( Git.diff_cached )
+
+        self.JavaScript.setCommit( *c )
+
+
+    def onGitPush(self,*args):
+
+        self.doGitPlainText( Git.push, refresh=True )
+
+
+    def onGitShowBranches(self,*args):
+
+        c = self.doGit( Git.branches )
+
+        self.JavaScript.setBranches(c["current"], c["branches"])
 
 
     def onGitRestore(self,*args):
@@ -351,30 +413,6 @@ class Controller(object):
     def onGitRestoreOrigin(self,*args):
 
         self.doGitPlainText( Git.restore_origin, refresh=True )
-
-
-    def onGitPull(self,*args):
-
-        self.doGitPlainText( Git.pull, refresh=True )
-
-
-    def onGitPush(self,*args):
-
-        self.doGitPlainText( Git.push, refresh=True )
-
-
-    def onGitShowBranches(self,*args):
-
-        c = self.doGit( Git.branches )
-
-        self.JavaScript.setBranches(c["current"], c["branches"])
-
-
-    def onGitCommit(self,*args):
-
-        c = self.doGit( Git.diff_cached )
-
-        self.JavaScript.setCommit( *c )
 
 
     def onGitDiffOrigin(self,*args):
@@ -398,10 +436,7 @@ class Controller(object):
         self.JavaScript.setDiff( *c )
 
 
-    def onViewStatus(self,*args):
-
-        self.doGitPlainText( Git.status, action=self.onViewStatus )
-            
+    # help menu
 
     def onHelp(self,*args):
 

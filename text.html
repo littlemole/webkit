@@ -57,7 +57,7 @@
 </head>
 <body>
 
-  <h5 id="git"></h5>
+  <h5 id="status"></h5>
   <div class="main ">
    <div id="commit">
      commit message:<br>
@@ -65,7 +65,6 @@
      <button id="commitButton">commit</button>
    </div>
    <div id="html" class="html scale">
-     <pre id="git"></pre>  
    </div>
   </div>
 
@@ -75,7 +74,7 @@
 
 
 window.onerror = function(e) {
-    alert(e);
+    document.getElementById("status").innerHTML = escapeHTML( JSON.stringify(e) );
 }
 
 function escapeHtml(unsafe) {
@@ -90,10 +89,16 @@ function escapeHtml(unsafe) {
 
 document.addEventListener("DOMContentLoaded", function(e)
 {
+
     let self = {
       dot : "",
       headline : "",
       timeout : null,
+      html : document.getElementById("html"),
+      commit : document.getElementById("commit"),
+      status : document.getElementById("status"),
+      canvas : document.getElementById("canvas"),
+      commitMsg : document.getElementById("commitMsg")
     };
 
     let View = {
@@ -103,14 +108,12 @@ document.addEventListener("DOMContentLoaded", function(e)
                 output = "";
             }
             self.headline = gitdir;
-            document.getElementById("commit").style.display = "none";
-            document.getElementById("html").innerHTML = "<pre>"  + escapeHtml(output) + "</pre>";
-            document.getElementById("git").innerHTML = gitdir;
+            self.commit.style.display = "none";
+            self.html.innerHTML = "<pre>"  + escapeHtml(output) + "</pre>";
+            self.status.innerHTML = gitdir;
         },
 
         render : function() {
-
-              document.getElementById("html").innerHTML = "";
 
               let height = document.getElementById("html").clientHeight;
               let width = document.getElementById("html").clientWidth;
@@ -133,8 +136,9 @@ document.addEventListener("DOMContentLoaded", function(e)
               self.dot = dot;
               self.headline = headline;
 
-              document.getElementById("commit").style.display = "none";
-              document.getElementById("git").innerHTML = escapeHtml(headline);
+              self.html.innerHTML = "";
+              self.commit.style.display = "none";
+              self.status.innerHTML = escapeHtml(headline);
 
               if ( self.timeout ) {
                 clearTimeout(self.timeout);
@@ -157,12 +161,12 @@ document.addEventListener("DOMContentLoaded", function(e)
             var diffHtml = window.Diff2Html.html( output, {
                 drawFileList: true,
                 matching: 'lines',
-//                outputFormat: 'side-by-side',
+                // outputFormat: 'side-by-side',
             });
 
-            document.getElementById("commit").style.display = "none";
-            document.getElementById("html").innerHTML = diffHtml;
-            document.getElementById("git").innerHTML = gitdir;
+            self.html.innerHTML = diffHtml;
+            self.commit.style.display = "none";
+            self.status.innerHTML = escapeHtml(gitdir);
         },
 
         setCommit : function( gitdir, output) {
@@ -171,13 +175,12 @@ document.addEventListener("DOMContentLoaded", function(e)
 
           var diffHtml = window.Diff2Html.html( output, {
             drawFileList: true,
-            matching: 'lines',
-            //                outputFormat: 'side-by-side',
+            matching: 'lines'
           });
 
-          document.getElementById("html").innerHTML = diffHtml;
-          document.getElementById("commit").style.display = "block";
-          document.getElementById("git").innerHTML = gitdir;
+          self.html.innerHTML = diffHtml;
+          self.commit.style.display = "block";
+          self.status.innerHTML = escapeHtml(gitdir);
         },
 
         setBranches : function( gitdir, output) {
@@ -193,14 +196,13 @@ document.addEventListener("DOMContentLoaded", function(e)
           });
           html += "</ul>";
 
-          document.getElementById("html").innerHTML = html;
-          document.getElementById("commit").style.display = "none";
-          document.getElementById("git").innerHTML = gitdir;
+          self.html.innerHTML = html;
+          self.commit.style.display = "none";
+          self.status.innerHTML = escapeHtml(gitdir);
 
           document.querySelectorAll("a.branch").forEach( function(branch) {
               branch.onclick = function(e) {
                 e.preventDefault();
-                //alert(e.target.getAttribute("data-branch"));
                 WebKit.Python.onSelectBranch( e.target.getAttribute("data-branch") );
               };
           });
@@ -208,10 +210,10 @@ document.addEventListener("DOMContentLoaded", function(e)
 
         onCommit : function() {
 
-          let msg = document.getElementById("commitMsg").value;
+          let msg = self.commitMsg.value;
 
-          document.getElementById("html").innerHTML = "commit in progress ...";
-          document.getElementById("commit").style.display = "none";
+          self.html.innerHTML = "commit in progress ...";
+          self.commit.style.display = "none";
 
           WebKit.Python.onSubmitCommit(msg);
         },
@@ -232,7 +234,7 @@ document.addEventListener("DOMContentLoaded", function(e)
             let canvas = document.querySelector("canvas");
             canvas.height=height;
             canvas.width=width;
-            
+
             let context = canvas.getContext("2d");
 
             let image = new Image;
@@ -242,50 +244,34 @@ document.addEventListener("DOMContentLoaded", function(e)
 
               let canvasdata = canvas.toDataURL("image/png");
 
-              //var pngimg = '<img src="'+canvasdata+'">'; 
-               // d3.select("#pngdataurl").html(pngimg);
+              canvasdata = decodeURIComponent(canvasdata);
 
-               canvasdata = decodeURIComponent(canvasdata);
-
-               document.getElementById("git").innerHTML = canvasdata;//escape(canvasdata);
-
-               WebKit.Python.onSaveImage(canvasdata);
-
-               //return canvasdata;
+              WebKit.Python.onSaveImage(canvasdata);
             };
-
         },
 
         onResize : function() {
 
-          View.setDot(self.headline, self.dot);
+          //View.setDot(self.headline, self.dot);
+
+          if ( self.timeout ) {
+            clearTimeout(self.timeout);
+            self.timeout = setTimeout(function(){ View.render(); }, 500);
+          }
+          else {
+            View.render();
+            self.timeout = setTimeout(function(){ }, 1000);
+          }
         }
 
     };
 
-
     WebKit.bind(View);
 
     WebKit.Python.onDocumentLoad();
-    document.getElementById("commitButton").onclick=View.onCommit;
-
-    document.getElementById("git").onclick=View.onGetGraphImage;
+    //document.getElementById("commitButton").onclick=View.onCommit;
 
     window.onresize = View.onResize;
-/*
-    let g = d3.select("#graph");
-
-    g.html("armageddon");
-    let v = g.graphviz({ "useWorker" : false, "useSharedWorker" : false });
-
-          v.logEvents(true)
-          .width(400)
-          .height(400)
-          .onerror(function(e){})
-          .dot('digraph {a -> b}')
-          .render();
-//    alert(d3.select("svg").node().innerHTML);
-*/
 });
 
 </script>

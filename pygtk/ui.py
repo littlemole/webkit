@@ -20,42 +20,75 @@ def event(args):
     return None
 
 
+def accelerator(accel,win="__main__"):
+
+    def wrapper(func):
+
+        def wrap(*args,**kargs):
+
+            return func(*args,**kargs)
+
+        wrap.accelerator_accel = accel
+        wrap.accelerator_win = win
+        return wrap
+
+    return wrapper
+
+
 class UI(object):
 
-    def __init__(self,xml):
+    def __init__( self, xml, win="mainWindow" ):
+
         self.builder = Gtk.Builder()
         self.builder.add_from_file(xml)
-        self.main = None
+        self.mainWindow = win
+        self.main = self.builder.get_object(win)
         self.ctx = None
+        self.accelerators = {}
+
 
     def __getitem__(self,key):
+
         return self.builder.get_object(key)
 
 
-    def show(self,mainWindow):
-#        for ui in uis:
-#            self.bind(ui)
-#
-#        objs = self.builder.get_objects()
+    def add_accelerator(self,accel,cb,win):
 
- #       if not WebKit.callback is None:
+        if not win in self.accelerators:
+            self.accelerators[win] = []
 
-  #          for obj in objs:
+        self.accelerators[win].append( [accel,cb] )
 
-   #             clazzName = type(obj).__module__ + "." + type(obj).__qualname__
 
-    #            if clazzName == "gi.repository.Pywebkit.Webview":
+    def show(self,mainWindow=""):
 
-     #               WebKit.bind(obj,WebKit.callback)
+        w = mainWindow if mainWindow != "" else self.mainWindow
 
-        self.main = self.builder.get_object(mainWindow)
+        self.main = self.builder.get_object(w)
+
+        for k in self.accelerators:
+
+            g = self.accelerators[k]
+            w = self.builder.get_object(k) if k != "__main__" else self.main
+
+            ag = Gtk.AccelGroup()
+
+            for a in g:
+
+                key, mod = Gtk.accelerator_parse( a[0] )
+                ag.connect(key,mod, 0, a[1] )
+                
+            w.add_accel_group(ag)
+
         self.main.show_all()
 
 
     def bind(self,controller):
 
+        # bind xml signal handlers
         self.builder.connect_signals(controller)
 
+        # bind any web widgets handlers
         objs = self.builder.get_objects()
 
         for obj in objs:
@@ -65,6 +98,28 @@ class UI(object):
             if clazzName == "gi.repository.Pywebkit.Webview":
 
                 WebKit.bind(obj,controller)
+
+
+        # walk controller methods
+        for i in dir(controller):
+
+            f = getattr(controller,i,None)
+
+            if callable(f):
+
+                # function with @accelerator
+                if hasattr(f,"accelerator_accel") :
+
+                    # install accelerator
+                    accel = getattr(f,"accelerator_accel")
+                    win = getattr(f,"accelerator_win")
+                    self.add_accelerator(accel,f,win)
+
+                # function with @radio_group
+                if hasattr(f,"radio_group_ui"):
+
+                    # give function a reference to this UI
+                    f.__dict__["radio_group_ui"] = self
 
         return self
 
@@ -217,6 +272,21 @@ class DirectoryTree:
 
         self.clear()
         self.add_root(self.root)
+
+
+    def file_at_pos(self,x,y):
+
+        try:
+            (path,col,x,y) = self.tree.get_path_at_pos(x,y)
+
+            iter = self.treeModel.get_iter(path)
+                
+            f = self.treeModel[iter][0]
+            return f
+        except:
+            pass
+
+        return None
 
 
     def search(self, treeiter, path):
@@ -394,43 +464,32 @@ def radio_group(**kargs):
 
     def wrapper(func):
 
-        wrapper.ui = None
-
         def wrap(*args,**kargs):
         
-            if not wrapper.ui:
-
-                if len(args) > 0:
-                    controller = args[0]
-
-                for a in dir(controller):
-
-                    clazzName = type(getattr(controller,a)).__module__ + "." 
-                    clazz = getattr(controller,a).__class__
-                    clazzName = clazzName + getattr(clazz,"__name__","unknown")
-
-                    if clazzName == "pygtk.ui.UI":
-                        #print("* " + clazzName)
-                        wrapper.ui = getattr(controller,a)
-                        break
-
             if len(args)>1 and ( args[1].get_active() == 0 ):
+
                 return
 
-            if wrapper.ui:
+            if getattr( wrap, "radio_group_ui", None):
+
                 if len(args)>1 and ( type(args[1]) == gi.repository.Gtk.RadioMenuItem ):
-                    if not wrapper.ui[tb].get_active():
-                        wrapper.ui[tb].set_active(True)
+
+                    if not wrap.radio_group_ui[tb].get_active():
+                        wrap.radio_group_ui[tb].set_active(True)
+
                     return
 
             r = func(*args,*kargs)
 
-            if wrapper.ui:
-                if wrapper.ui[menu].get_active() == False:
-                    wrapper.ui[menu].set_active(True)
+            if getattr( wrap, "radio_group_ui", None):
+
+                if wrap.radio_group_ui[menu].get_active() == False:
+                    wrap.radio_group_ui[menu].set_active(True)
 
             return r
 
+        wrap.radio_group_ui = False
         return wrap
+
 
     return wrapper
