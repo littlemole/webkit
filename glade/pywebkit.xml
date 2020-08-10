@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<glade-catalog name="Pywebkit" depends="webkit2gtk">
+<glade-catalog name="Pywebkit" library="webview" depends="webkit2gtk">
 
   <glade-widget-classes>
-    <glade-widget-class parent="WebKitWebView" name="PywebkitWebview" generic-name="webview" title="Web View" />
+    <glade-widget-class  name="PywebkitWebview" generic-name="webview" title="Web View" >
+    </glade-widget-class>
   </glade-widget-classes>
   
   <glade-widget-group name="py" title="Pywebkit">

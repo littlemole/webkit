@@ -74,10 +74,75 @@ static void pywebkit_webview_finalize(GObject *object)
 {
 }
 
+typedef enum
+{
+  PROP_UID = 1,
+  N_PROPERTIES
+} WebProperties;
+
+static GParamSpec* obj_properties[N_PROPERTIES] = { NULL, };
+
+static void pywebkit_webview_set_property (GObject      *object,
+                          guint         property_id,
+                          const GValue *value,
+                          GParamSpec   *pspec)
+{
+  PywebkitWebview *self = (PywebkitWebview*) (object);
+
+  switch ((WebProperties) property_id)
+    {
+    case PROP_UID:
+      g_free (self->uid);
+      self->uid = g_value_dup_string (value);
+      g_print ("uid: %s\n", self->uid);
+      break;
+
+    default:
+      /* We don't have any other property... */
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+      break;
+    }
+}
+
+static void pywebkit_webview_get_property (GObject    *object,
+                          guint       property_id,
+                          GValue     *value,
+                          GParamSpec *pspec)
+{
+  PywebkitWebview *self = (PywebkitWebview*) (object);
+
+  switch ((WebProperties) property_id)
+    {
+    case PROP_UID:
+      g_value_set_string (value, self->uid);
+      break;
+
+    default:
+      /* We don't have any other property... */
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+      break;
+    }
+}
+
 static void pywebkit_webview_class_init(PywebkitWebviewClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
     object_class->finalize     = pywebkit_webview_finalize;
+
+    object_class->set_property = pywebkit_webview_set_property;
+    object_class->get_property = pywebkit_webview_get_property;
+
+    obj_properties[PROP_UID] =
+    g_param_spec_string ("uid",
+                         "Uid",
+                         "unique id.",
+                         "<uid>"  /* default value */,
+                         G_PARAM_READWRITE);
+
+
+   g_object_class_install_properties(object_class,
+                                     N_PROPERTIES,
+                                     obj_properties);
 }
 
 // could have params like this:
