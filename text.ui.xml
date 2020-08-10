@@ -545,6 +545,17 @@
                         <signal name="activate" handler="onViewRefresh" swapped="no"/>
                       </object>
                     </child>
+                    <child>
+                      <object class="GtkImageMenuItem" id="ViewResetZoom">
+                        <property name="label">Reset Zoom</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Reset the zoom of the graph view.</property>
+                        <property name="use_underline">True</property>
+                        <property name="use_stock">False</property>
+                        <signal name="activate" handler="onViewResetZoom" swapped="no"/>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>
@@ -898,6 +909,15 @@
         <property name="label" translatable="yes">Export Graph</property>
         <property name="use_underline">True</property>
         <signal name="activate" handler="onExportGraph" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="resetZoom">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Reset Graph Zoom</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="onViewResetZoom" swapped="no"/>
       </object>
     </child>
   </object>

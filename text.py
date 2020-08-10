@@ -258,6 +258,11 @@ class Controller(object):
         self.tree.refresh()
 
 
+    def onViewResetZoom(self,*args):
+
+        self.JavaScript.resetZoom()
+
+
     def onViewFullscreen(self,*args):
         
         if self.fullscreen :
