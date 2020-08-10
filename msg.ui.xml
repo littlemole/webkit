@@ -96,6 +96,7 @@
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">goCurl</property>
                         <property name="use_underline">True</property>
+                        <signal name="activate" handler="goCurl" swapped="no"/>
                       </object>
                     </child>
                   </object>

@@ -85,14 +85,17 @@ document.addEventListener("DOMContentLoaded", function(e)
 
         setBranches : function( gitdir, output) {
 
-          let html = "<ul>";
+          let html = "<table border=0>";
           output.forEach(function(branch)
           {
-              html += "<li><a class='branch' href='#' data-branch='"+branch+"'>";
+              html += "<tr><td><a class='branch' href='#' data-branch='"+branch+"'>";
               html += escapeHtml(branch);
-              html += "</a></li>"
+              html += "</a></td><td><a href='#' class='del_branch' data-branch='" + branch +"'>[x]</a></td></tr>";
           });
-          html += "</ul>";
+          html += "</table>";
+          html += "<h4>new branch</h4>";
+          html += "<input type='text' id='branch' placeholder='new-branch-name'></input>";
+          html += "<button id='create_branch'>create branch</button>";
 
           document.getElementById("html").innerHTML = html;
           document.getElementById("commit").style.display = "none";
@@ -105,6 +108,18 @@ document.addEventListener("DOMContentLoaded", function(e)
                 WebKit.Python.onSelectBranch( e.target.getAttribute("data-branch") );
               };
           });
+          document.querySelectorAll("a.del_branch").forEach( function(branch) {
+              branch.onclick = function(e) {
+                e.preventDefault();
+                //alert(e.target.getAttribute("data-branch"));
+                WebKit.Python.onDeleteBranch( e.target.getAttribute("data-branch") );
+              };
+          });
+          document.getElementById("create_branch").onclick = function(e) {
+
+            var branch = document.getElementById("branch").value;
+            WebKit.Python.onCreateBranch(branch);
+          };
         },
 
         onCommit : function() {

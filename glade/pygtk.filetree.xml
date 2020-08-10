@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glade-catalog name="pygtk.ui" depends="gtk+" library="gladepython">
+
+  <init-function>glade_python_init</init-function>
+
+  <glade-widget-classes>
+    <glade-widget-class name="DirectoryTree" generic-name="dirtree" title="Directory Tree" />
+  </glade-widget-classes>
+  
+  <glade-widget-group name="pygtk" title="DirectoryTree">
+    <glade-widget-class-ref name="DirectoryTree"/>
+  </glade-widget-group>  
+
+</glade-catalog>

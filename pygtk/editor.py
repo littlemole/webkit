@@ -3,17 +3,10 @@ import os.path
 import gi
 gi.require_versions({
     'Gtk':  '3.0',
-#    'Pywebkit': '0.1'
+    'GtkSource': '4'
 })
-#gi.require_version("GtkSource", "4.0")
-from gi.repository import Gio, Gtk, Gdk, GObject, GLib, GtkSource #Pywebkit, 
-#from gi.repository.Pywebkit import Webview 
+from gi.repository import Gio, Gtk, Gdk, GObject, GLib, GtkSource 
 from gi.repository.GtkSource import View
-from pygtk.bind import synced,idle_add
-from pygtk.ui import UI,DirectoryTree,radio_group
-from pygtk.git import Git, GitFile
-from pygtk import WebKit
-import pygtk
 
 class Editor(GtkSource.View):
 
@@ -80,12 +73,6 @@ class Editor(GtkSource.View):
 
         saver = GtkSource.FileSaver.new_with_target(buffer, self.sourcefile, targetfile)
         saver.save_async(0, None, None, None, None, None)
-
-
-    #def onChanged(self,cb):
-
-       # buffer = self.get_buffer()        
-       # buffer.connect( "changed", cb )
 
 
     def get_text(self):

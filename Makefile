@@ -29,6 +29,9 @@ install:
 	mkdir -p /usr/lib/x86_64-linux-gnu/webkitext
 	cp lib/webkitext/webkit2_web_extension.so /usr/lib/x86_64-linux-gnu/webkitext/
 	cp -r pygtk /usr/lib/python3/dist-packages/
+	cp glade/pywebkit.xml /usr/share/glade/catalogs/
+	cp glade/pygtk.filetree.xml /usr/share/glade/catalogs/
+	cp glade/pygtk.editor.xml /usr/share/glade/catalogs/
 
 # /usr/lib/[/x86_64-linux-gnu/]girepository-1.0/ for the typelib
 # /usr/lib/x86_64-linux-gnu/ for the *.so Pywebkit.so
@@ -42,4 +45,6 @@ uninstall:
 	-rm /usr/lib/x86_64-linux-gnu/libwebview.so
 	-rm /usr/lib/x86_64-linux-gnu/webkitext/webkit2_web_extension.so
 	-rm -rf /usr/lib/python3/dist-packages/pygtk
-
+	-rm /usr/share/glade/catalogs/pywebkit.xml
+	-rm /usr/share/glade/catalogs/pygtk.filetree.xml
+	-rm /usr/share/glade/catalogs/pygtk.editor.xml

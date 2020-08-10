@@ -6,13 +6,14 @@ from pathlib import Path
 import gi
 gi.require_versions({
     'Gtk':  '3.0',
-    'Pywebkit': '0.1'
+    'Pywebkit': '0.1',
+    'GtkSource': '4'
 })
 from gi.repository import Gio, Gtk, Gdk, GObject, GLib, Pywebkit, GtkSource
 
 # import custom Gtk types explicitely to allow loading from xml
 from gi.repository.Pywebkit import Webview 
-from gi.repository.GtkSource import View
+#from gi.repository.GtkSource import View
 
 # pygtk mini framework specific imports
 from pygtk.bind import synced,idle_add
@@ -20,27 +21,28 @@ from pygtk.ui import UI,DirectoryTree,radio_group,accelerator
 from pygtk.git import Git, GitFile
 from pygtk.editor import Editor
 from pygtk import WebKit
-import pygtk
+#import pygtk
 
+
+# path to this script
 dir = os.path.dirname(os.path.realpath(__file__))
-
-e = Editor()
-
 
 
 class Controller(object):
 
     def __init__(self,dir,*args):
 
-        self.last_action = self.onViewStatus
         self.fullscreen = False
 
         #create UI
         self.ui = UI(dir + "/text.ui.xml", win="mainWindow")
 
         # tree view
-        self.tree = DirectoryTree( self.ui["fileTreeView"], filter=".*\\.dot", showHidden=False )
-        self.tree.add_root( GitFile(os.getcwd()) )
+        self.tree = self.ui["fileTreeView"]
+        self.tree.add_root( GitFile(os.getcwd()) , filter=".*\\.dot", showHidden=False )
+
+        # editor
+        self.editor = self.ui["sourceView"] 
 
         # web view 
         self.web = self.ui["web"]
@@ -51,12 +53,6 @@ class Controller(object):
 
         # window title
         self.ui.main.set_title( os.getcwd() )
-
-        # editor
-        self.editor = self.ui["sourceView"] #Editor( self.ui["sourceView"] )
-        #self.editor.set_property("language","dot")
-        #self.editor.set_monospace(True)
-        #self.editor.onChanged(self.onSourceChanged)
 
         # bind event handlers 
         self.ui.bind(self)
@@ -77,7 +73,7 @@ class Controller(object):
 
     def selected_file(self):
 
-        f = self.tree.get_selection()
+        f = self.tree.get_selected_file()
         f = f if not f is None else self.tree.root
         f = f if not f is None else GitFile( os.getcwd() )
         return f
@@ -85,12 +81,10 @@ class Controller(object):
 
     # Git  helpers
 
-    def doGit(self, cmd, file=None, param=None, action=None, refresh=False, *args,**kargs):
+    def doGit(self, cmd, file=None, param=None, refresh=False, *args,**kargs):
 
         if file is None:
             file = self.selected_file().file_name
-
-        print(file)
 
         git = Git(file)
 
@@ -101,18 +95,15 @@ class Controller(object):
         except BaseException as e:
             print(e)
 
-        if not action is None:
-            self.last_action = action
-
         if refresh == True:
             self.onViewRefresh()
 
         return c
 
 
-    def doGitPlainText(self, cmd, file=None, param=None,action=None, refresh=False, *args,**kargs):
+    def doGitPlainText(self, cmd, file=None, param=None, refresh=False, *args,**kargs):
 
-        c = self.doGit(cmd,file,param,action,refresh,*args,**kargs)
+        c = self.doGit(cmd,file,param,refresh,*args,**kargs)
 
         self.JavaScript.setPlainText( *c )
 
@@ -123,7 +114,7 @@ class Controller(object):
 
         print("DOM")
         try:
-            self.doGitPlainText( Git.status, file = os.getcwd(), action=self.last_action )
+            self.doGitPlainText( Git.status, file = os.getcwd()  )
         except BaseException as e:
             print(e)
 
@@ -140,7 +131,7 @@ class Controller(object):
 
     def onSaveImage(self,data):
 
-        print(data)
+        #print(data)
         png_header = "data:image/png;base64,"
         if not data.startswith(png_header):
             return
@@ -152,7 +143,7 @@ class Controller(object):
         f = self.ui.showFileDialog(
             Gtk.FileChooserAction.SAVE,
             "Please choose target to save this .png image file", 
-            #filter=self.ui["dotFilter"] 
+            filter=self.ui["pngFilter"] 
         )
 
         if not f is None:
@@ -161,6 +152,7 @@ class Controller(object):
             newfile.write(bytes)
             newfile.close()
     
+
     # track User Input
 
     def onSelect(self,*args):
@@ -371,7 +363,7 @@ class Controller(object):
 
     def onViewStatus(self,*args):
 
-        self.doGitPlainText( Git.status, action=self.onViewStatus )
+        self.doGitPlainText( Git.status )
             
 
     def onGitPull(self,*args):
@@ -434,7 +426,7 @@ class Controller(object):
 
     def onViewDiff(self,*args):
 
-        c = self.doGit( Git.diff, action=self.onViewDiff )
+        c = self.doGit( Git.diff )
 
         self.JavaScript.setDiff( *c )
 

@@ -27,7 +27,7 @@ class Controller(object):
         self.ui = UI(dir + "/diff.ui.xml")
 
         # tree view
-        self.tree = DirectoryTree( self.ui["fileTreeView"] ) #, filter=".*\\.py" )
+        self.tree = self.ui["fileTreeView"] #, filter=".*\\.py" )
         self.tree.add_root( GitFile(os.getcwd()) )
 
         # web view 
@@ -53,7 +53,7 @@ class Controller(object):
 
     def selected_file(self):
 
-        f = self.tree.get_selection().file_name
+        f = self.tree.get_selected_file().file_name
         f = f if not f is None else self.tree.root.file_name
         f = f if not f is None else os.getcwd()
         return f
@@ -148,6 +148,22 @@ class Controller(object):
         c = self.doGit( Git.branches )
 
         self.JavaScript.setBranches(c["current"], c["branches"])
+
+
+    def onCreateBranch(self,branch):
+
+        self.doGitPlainText( Git.create_branch, param=branch )
+
+
+    def onDeleteBranch(self,branch):
+
+        b = self.doGit( Git.default_branch ).strip()
+
+        if branch == b:
+            self.JavaScript.setPlainText( b, "cannot delete default branch" )
+            return
+
+        self.doGitPlainText( Git.delete_branch, param=branch )
 
 
     def onGitCommit(self,*args):

@@ -251,19 +251,22 @@ class File(object):
         return result
 
 
-class DirectoryTree:
+class DirectoryTree(Gtk.TreeView):
+
+    __gtype_name__ = "DirectoryTree"
 
     PLACE_HOLDER = File('<should never be visible>', place_holder=True)
     EMPTY_DIR = File('<empty>', empty=True)
 
-    def __init__(self,tree,filter=".*",showHidden=True,*args,**kargs):
+    def __init__(self,*args,**kargs):
 
-        self.filter = filter
+        Gtk.TreeView.__init__(self)
+
+        self.filter = ".*"
         self.root = None
         self.cursel = ""
-        self.tree = tree
         self.treeModel = None
-        self.showHidden = showHidden
+        self.showHidden = True
 
         self.compose()
 
@@ -277,7 +280,7 @@ class DirectoryTree:
     def file_at_pos(self,x,y):
 
         try:
-            (path,col,x,y) = self.tree.get_path_at_pos(x,y)
+            (path,col,x,y) = self.get_path_at_pos(x,y)
 
             iter = self.treeModel.get_iter(path)
                 
@@ -315,16 +318,16 @@ class DirectoryTree:
         if r is None:
             return
 
-        selection = self.tree.get_selection()
+        selection = self.get_selection()
         paths = selection.get_selected()
         selection.select_iter(r)
 
-        self.tree.scroll_to_cell( self.treeModel.get_path(r))
+        self.scroll_to_cell( self.treeModel.get_path(r))
 
 
-    def get_selection(self):
+    def get_selected_file(self):
 
-        selection = self.tree.get_selection().get_selected()
+        selection = self.get_selection().get_selected()
         if not selection or selection[1] is None:
             return None
 
@@ -340,7 +343,7 @@ class DirectoryTree:
     def compose(self):
         
         self.treeModel = Gtk.TreeStore(object,str)
-        self.tree.set_model(self.treeModel)
+        self.set_model(self.treeModel)
 
         file_name_column = Gtk.TreeViewColumn('file')
         file_name_renderer = Gtk.CellRendererText()
@@ -351,12 +354,12 @@ class DirectoryTree:
 
         file_name_column.set_cell_data_func(file_name_renderer, self.tree_cell_render_file)
         file_name_column.set_cell_data_func(file_type_renderer, self.tree_cell_render_pix)
-        self.tree.append_column(file_name_column)
+        self.append_column(file_name_column)
 
-        self.tree.set_tooltip_column(1)
+        self.set_tooltip_column(1)
 
-        self.tree.connect("row-expanded",self.onFileTreeViewExpand)
-        self.tree.connect("row-activated", self.onSelect)
+        self.connect("row-expanded",self.onFileTreeViewExpand)
+        self.connect("row-activated", self.onSelect)
 
 
     def tree_cell_render_file(self,col, renderer, model, tree_iter, user_data):
@@ -371,22 +374,26 @@ class DirectoryTree:
         return _file.tree_cell_render_pix(col,renderer,model,tree_iter, user_data)
 
 
-    def add_dir(self, dir_name):
+#    def add_dir(self, dir_name):
+#
+#        file = File(dir_name, root=None)
+#        self.add_root(file)
 
-        file = File(dir_name, root=None)
-        self.add_root(file)
 
-
-    def add_root(self, file):
+    def add_root( self, file, filter=None, showHidden=None ):
 
         is_refresh = file == self.root
         self.root = file
+
+        self.filter = filter if not filter is None else self.filter
+        self.showHidden = showHidden if not showHidden is None else self.showHidden
+
         self.add_entry(file)
 
         if not is_refresh:
             iter = self.treeModel.get_iter_first()
-            self.tree.get_selection().select_iter(iter)
-            self.tree.expand_row(self.treeModel.get_path(iter), False)            
+            self.get_selection().select_iter(iter)
+            self.expand_row(self.treeModel.get_path(iter), False)            
         
 
     def add_entry(self, file, ):
@@ -402,13 +409,13 @@ class DirectoryTree:
 
             if self.cursel == file.file_name:
 
-                self.tree.get_selection().select_iter(tree_iter)
+                self.get_selection().select_iter(tree_iter)
                 #self.tree.scroll_to_cell( self.treeModel.get_path(tree_iter))
-                GLib.idle_add(self.tree.scroll_to_cell, self.treeModel.get_path(tree_iter) )
+                GLib.idle_add(self.scroll_to_cell, self.treeModel.get_path(tree_iter) )
 
             elif self.cursel.startswith(file.file_name):
 
-                self.tree.expand_row(self.treeModel.get_path(tree_iter), False)            
+                self.expand_row(self.treeModel.get_path(tree_iter), False)            
         else:
 
             if re.match(self.filter,file.file_name):
@@ -417,9 +424,9 @@ class DirectoryTree:
 
                 if self.cursel == file.file_name:
 
-                    self.tree.get_selection().select_iter(tree_iter)
+                    self.get_selection().select_iter(tree_iter)
                     #self.tree.scroll_to_cell( self.treeModel.get_path(tree_iter))
-                    GLib.idle_add(self.tree.scroll_to_cell, self.treeModel.get_path(tree_iter) )
+                    GLib.idle_add(self.scroll_to_cell, self.treeModel.get_path(tree_iter) )
 
 
     def onFileTreeViewExpand(self,widget, tree_iter, path):
@@ -443,7 +450,7 @@ class DirectoryTree:
 
     def onSelect(self,selection,*args):
 
-        self.cursel = self.get_selection().file_name
+        self.cursel = self.get_selected_file().file_name
 
 
 

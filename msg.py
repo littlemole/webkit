@@ -89,6 +89,7 @@ class Controller(object):
 
     def goCurl(self,w):
         url = "file://" + os.path.dirname(os.path.realpath(__file__)) + "/curl.html"
+        print(url)
         web.load_uri(url)
 
     def goSignal(self,w):

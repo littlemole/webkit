@@ -49,6 +49,27 @@ class Git(object):
         return result
 
 
+    def default_branch(self):
+
+        txt = self.bash( self.cmd( " git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'" ) )
+
+        return txt
+
+
+    def create_branch(self,name):
+
+        txt = self.bash( self.cmd( "git checkout -b " + name + " && git push -u origin HEAD " ) )
+
+        return ["create new branch " + name, txt]
+
+
+    def delete_branch(self,name):
+
+        txt = self.bash( self.cmd( "git branch -d " + name ) ) #+ " && git push origin --delete " + name ) )
+
+        return ["delete branch " + name, txt]
+
+
     def select_branch(self,branch):
 
         txt = self.bash( self.cmd("git checkout " + branch) )
