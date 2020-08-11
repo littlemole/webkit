@@ -1,10 +1,13 @@
 #include "pywebkit.h"
+#include "gprop.h"
 #include <sstream>
-#include <string>
 #include <dlfcn.h>
 #include <libgen.h>
+#include <map>
 
 #define PROG "[PywebkitWebview] "
+
+
 
 /**
  * SECTION: pywebkit
@@ -30,11 +33,34 @@ static gboolean on_context_menu (
 
 static void init_ext(WebKitWebContext *context, gpointer user_data)
 {
+    if ( !context)
+    {
+        g_print( PROG "init_ext: WebKitWebContext is null \n" );
+        return;
+    }
+/*    if ( !user_data)
+    {
+        g_print( PROG "init_ext: user_data is null \n" );
+        return;
+    }
+
     PywebkitWebview *web = (PywebkitWebview*) user_data;
 
-    GVariant* s = g_variant_new_string(web->uid);
+    if(!G_IS_OBJECT(web))
+    {
+        g_print( PROG "init_ext: user_data is not a gobj \n" );
+        return;
+    }
+
+    if ( !web || !web->uid)
+    {
+        g_print( PROG "init_ext: web->uid is null \n" );
+        return;
+    }
 
     g_print(PROG "init_ext: %s \n", web->uid );
+*/
+    GVariant* s = g_variant_new_string("uid??");//web->uid);
 
     std::ostringstream oss;
 
@@ -52,19 +78,37 @@ static void init_ext(WebKitWebContext *context, gpointer user_data)
 
     webkit_web_context_set_web_extensions_directory(context,oss.str().c_str());
     webkit_web_context_set_web_extensions_initialization_user_data(context,s);
+
+    //g_object_unref(web);
+
+}
+
+static void on_change(PywebkitWebview* web,const char* value)
+{
+        g_print( PROG "CHANGE WE CAN BELIEVE IN: %s\n", value );
 }
 
 static void pywebkit_webview_init(PywebkitWebview *web)
 {
-    g_print(PROG "pywebkit_webview_init\n");
+    if ( !web)
+    {
+        g_print( PROG "pywebkit_webview_init: PywebkitWebview is null \n" );
+        return;
+    }
 
+    
     gchar* c = g_dbus_generate_guid();
     web->uid = g_strdup (c);
     g_free(c);
 
+    g_print(PROG "pywebkit_webview_init %s\n", web->uid);
 
-    WebKitWebContext* ctx = webkit_web_context_get_default();
-    g_signal_connect( G_OBJECT (ctx), "initialize-web-extensions", G_CALLBACK(init_ext), web);
+
+    //g_object_ref(web);
+
+    g_signal_connect( G_OBJECT (web), "changed", G_CALLBACK(on_change), web);
+
+    g_signal_emit_by_name(web,"changed","GRRRRR");
 
     // this would globally disable right click context-menu:
     // g_signal_connect( G_OBJECT (web), "context-menu", G_CALLBACK(on_context_menu), web);
@@ -72,77 +116,38 @@ static void pywebkit_webview_init(PywebkitWebview *web)
 
 static void pywebkit_webview_finalize(GObject *object)
 {
+    PywebkitWebview* web = (PywebkitWebview*)object;
+
+    g_print(PROG "pywebkit_webview_finalize %s\n", web->uid);
 }
 
-typedef enum
-{
-  PROP_UID = 1,
-  N_PROPERTIES
-} WebProperties;
-
-static GParamSpec* obj_properties[N_PROPERTIES] = { NULL, };
-
-static void pywebkit_webview_set_property (GObject      *object,
-                          guint         property_id,
-                          const GValue *value,
-                          GParamSpec   *pspec)
-{
-  PywebkitWebview *self = (PywebkitWebview*) (object);
-
-  switch ((WebProperties) property_id)
-    {
-    case PROP_UID:
-      g_free (self->uid);
-      self->uid = g_value_dup_string (value);
-      g_print ("uid: %s\n", self->uid);
-      break;
-
-    default:
-      /* We don't have any other property... */
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-      break;
-    }
-}
-
-static void pywebkit_webview_get_property (GObject    *object,
-                          guint       property_id,
-                          GValue     *value,
-                          GParamSpec *pspec)
-{
-  PywebkitWebview *self = (PywebkitWebview*) (object);
-
-  switch ((WebProperties) property_id)
-    {
-    case PROP_UID:
-      g_value_set_string (value, self->uid);
-      break;
-
-    default:
-      /* We don't have any other property... */
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-      break;
-    }
-}
 
 static void pywebkit_webview_class_init(PywebkitWebviewClass *klass)
 {
+    if ( !klass)
+    {
+        g_print( PROG "pywebkit_webview_class_init: PywebkitWebviewClass is null \n" );
+        return;
+    }
+    
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
     object_class->finalize     = pywebkit_webview_finalize;
 
-    object_class->set_property = pywebkit_webview_set_property;
-    object_class->get_property = pywebkit_webview_get_property;
+    // GObject properties
+    gprops<PywebkitWebviewClass> pywebkitWebviewProperties{
+        gprop( &PywebkitWebview::dummy, g_param_spec_string( "uid", "Uid", "Unique ID", "<uid>", G_PARAM_READWRITE) )
+    };
 
-    obj_properties[PROP_UID] =
-    g_param_spec_string ("uid",
-                         "Uid",
-                         "unique id.",
-                         "<uid>"  /* default value */,
-                         G_PARAM_READWRITE);
+    pywebkitWebviewProperties.install(klass);
+
+    // GObject signals
+    Signals signals(object_class);
+    signals.install("changed", G_TYPE_STRING );
 
 
-   g_object_class_install_properties(object_class,
-                                     N_PROPERTIES,
-                                     obj_properties);
+    WebKitWebContext* ctx = webkit_web_context_get_default();
+    g_signal_connect( G_OBJECT (ctx), "initialize-web-extensions", G_CALLBACK(init_ext), NULL);
+
 }
 
 // could have params like this:
