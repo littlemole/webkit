@@ -231,12 +231,16 @@ document.addEventListener("DOMContentLoaded", function(e)
 
         onCommit : function() {
 
-          let msg = self.commitMsg.value;
+          try {
+            let msg = self.commitMsg.value;
 
-          self.text.innerHTML = "commit in progress ...";
-          self.commit.style.display = "none";
+            self.text.innerHTML = "commit in progress ...";
+            self.commit.style.display = "none";
 
-          WebKit.Python.onSubmitCommit(msg);
+            WebKit.Python.onSubmitCommit(msg);
+          } catch(e) {
+            alert(e);
+          }
         },
 
         onGetGraphImage : function() {
@@ -281,6 +285,11 @@ document.addEventListener("DOMContentLoaded", function(e)
 
           //View.setDot(self.headline, self.dot);
 
+          if (self.graph.style.display != "block")
+          {
+            return;
+          }
+
           if ( self.timeout ) {
             clearTimeout(self.timeout);
             self.timeout = setTimeout(function(){ View.render(); }, 500);
@@ -296,7 +305,7 @@ document.addEventListener("DOMContentLoaded", function(e)
     WebKit.bind(View);
 
     WebKit.Python.onDocumentLoad();
-    //document.getElementById("commitButton").onclick=View.onCommit;
+    document.getElementById("commitButton").onclick=View.onCommit;
 
     window.onresize = View.onResize;
 });
