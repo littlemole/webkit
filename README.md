@@ -12,13 +12,22 @@ Implementing the Marshaling glue was great fun.
 
 build:
 
-  run make
+```make clean && make```
 
 afterwards:
 
-  bash test.sh
+```run.sh examples/curl/curl.py```
   
-to launch the test application implemented in curl.py and curl.html.
+to launch any of the examples in the examples directory.
+
+to install:
+
+```sudo make install```
+
+which will install into system directories and allows to run without run.sh, eg:
+
+```python3 examples/diff/diff.py ```
+
 
 # pre-requisites
 
