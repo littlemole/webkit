@@ -79,9 +79,9 @@ static void on_change(PywebkitWebview* web,const char* value)
 
 static void on_notify(PywebkitWebview* web,GParamSpec *pspec, void* user_data)
 {
-    g_print( PROG "NOTIFY prop changed: %s %s\n", pspec->name, web->local );
+    g_print( PROG "NOTIFY prop changed: %s %s\n", pspec->name, web->localpath );
 
-    pywebkit_webview_load_local_uri(web,web->local);
+    pywebkit_webview_load_local_uri(web,web->localpath);
 
 }
 
@@ -135,7 +135,7 @@ static void pywebkit_webview_class_init(PywebkitWebviewClass *klass)
 
     // GObject properties
     gprops<PywebkitWebviewClass> pywebkitWebviewProperties{
-        gprop( &PywebkitWebview::local, g_param_spec_string( "local", "Local", "Local file", "index.html", G_PARAM_READWRITE) )
+        gprop( &PywebkitWebview::localpath, g_param_spec_string( "local", "Local", "Local file", "index.html", G_PARAM_READWRITE) )
     };
 
     pywebkitWebviewProperties.install(klass);

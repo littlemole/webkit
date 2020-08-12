@@ -17,7 +17,7 @@ struct _PywebkitWebview {
 /*< public >*/
     WebKitWebView parent;
     gchar* uid;
-    gchar* local;
+    gchar* localpath;
 };
 
 

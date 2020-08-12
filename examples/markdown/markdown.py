@@ -11,9 +11,14 @@ from gi.repository.Pywebkit import Webview
 from pygtk.bind import synced
 from pygtk.ui import UI
 import pygtk.WebKit as WebKit
-
+import os
 
 class Controller(object):
+
+    def __init__(self):
+
+        self.directory = os.getcwd()
+
 
     def getText(self):
 
@@ -21,12 +26,14 @@ class Controller(object):
         range = buffer.get_bounds()
         return buffer.get_text(range[0],range[1],False)
 
+
     def onFileOpen(self,*args):
 
         response = ui.showFileDialog(Gtk.FileChooserAction.OPEN,"Please choose a markdown file")
 
         if not response is None:
             
+            self.directory = os.path.dirname(response)
             txt = Path(response).read_text()
             ui["textEdit"].get_buffer().set_text(txt)
             WebKit.JavaScript(web).setMarkup(txt)
@@ -52,6 +59,23 @@ class Controller(object):
 
         if not response is None:
             self.saveFile(response)
+
+
+    def insertImage(self,fn):
+
+        p = os.path.relpath( fn,self.directory )
+        url = "![embedded image](<"+ p +">)"
+
+        buffer = ui["textEdit"].get_buffer()
+        buffer.insert_at_cursor(url,len(url))
+
+
+    def onInsertImage(self,*args):
+
+        response = ui.showFileDialog(Gtk.FileChooserAction.OPEN,"Please choose an image file to insert")
+
+        if not response is None:
+            self.insertImage(response)
 
 
     def onContext(self,web,menue,event,hit,*args):

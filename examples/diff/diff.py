@@ -14,48 +14,42 @@ from pygtk.git import Git, GitFile
 from pygtk import WebKit
 import pygtk
 
-dir = os.path.dirname(os.path.realpath(__file__))
+# set base path for local resource files
+UI.set_directory(__file__)
 
 
 class Controller(object):
 
-    def __init__(self,dir,*args):
+    def __init__(self,*args):
 
         self.last_action = self.onViewStatus
 
         #create UI
-        self.ui = UI(dir + "/diff.ui.xml")
+        self.ui = UI("diff.ui.xml", win="mainWindow")
 
         # tree view
-        self.tree = self.ui["fileTreeView"] #, filter=".*\\.py" )
-        self.tree.add_root( GitFile(os.getcwd()) )
+        self.ui.tree.add_root( GitFile(os.getcwd()) )
 
         # web view 
-        self.web = self.ui["web"]
-        #self.web.load_uri("file://" + dir + "/diff.html")
-        self.web.uri = "file://" + dir + "/diff.html"
+        self.ui.web.load_local_uri("diff.html")
 
         # status bar
-        self.status_bar( os.getcwd() )
+        self.ui.status_bar( os.getcwd() )
 
         # bind event handlers 
         self.ui.bind(self)
 
         # IPC channel
-        self.JavaScript = WebKit.JavaScript(self.web)
+        self.JavaScript = WebKit.JavaScript(self.ui.web)
 
-        self.ui.show("mainWindow")
+        self.ui.show()
 
-
-    def status_bar(self,status):
-
-        self.ui.statusBar( "statusBar", status )
 
 
     def selected_file(self):
 
-        f = self.tree.get_selected_file().file_name
-        f = f if not f is None else self.tree.root.file_name
+        f = self.ui.tree.get_selected_file().file_name
+        f = f if not f is None else self.ui.tree.root.file_name
         f = f if not f is None else os.getcwd()
         return f
 
@@ -101,10 +95,10 @@ class Controller(object):
 
         if not dir is None:
 
-            self.status_bar( dir )
+            self.ui.status_bar( dir )
 
-            self.tree.clear()
-            self.tree.add_root( GitFile(dir) )
+            self.ui.tree.clear()
+            self.ui.tree.add_root( GitFile(dir) )
 
             self.doGitPlainText( Git.status, file=dir )
 
@@ -222,7 +216,7 @@ class Controller(object):
 
         if event.button == 3: # right click
        
-            m = self.ui["GitSubMenu"] 
+            m = self.ui.GitSubMenu 
             Gtk.Menu.popup_at_pointer(m,event)             
 
         return False
@@ -230,7 +224,7 @@ class Controller(object):
 
     def onWebContext(self,web,menue,event,*args):
 
-        m = self.ui["ViewSubMenu"]        
+        m = self.ui.ViewSubMenu       
         Gtk.Menu.popup_at_pointer(m,event)             
 
         # suppress standard webview context menue
@@ -248,7 +242,7 @@ class Controller(object):
 
     def onViewRefresh(self,*args):
 
-        self.tree.refresh()
+        self.ui.tree.refresh()
 
 
     def onHelp(self,*args):
@@ -258,7 +252,7 @@ class Controller(object):
 
 
 #create controller
-controller = Controller(dir)        
+controller = Controller()        
 
 # start the GUI event main loop
 Gtk.main()

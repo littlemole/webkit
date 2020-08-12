@@ -70,11 +70,26 @@
               </object>
             </child>
             <child>
-              <object class="GtkMenuItem" id="ViewMenu">
+              <object class="GtkMenuItem" id="EditMenu">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">_View</property>
+                <property name="label" translatable="yes">Edit</property>
                 <property name="use_underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu" id="EditSubMenu">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkMenuItem" id="EditInsertImageMenuItem">
+                        <property name="label">Insert Image</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="onInsertImage" swapped="no"/>
+                      </object>
+                    </child>
+                  </object>
+                </child>
               </object>
             </child>
             <child>

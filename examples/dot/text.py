@@ -12,23 +12,17 @@ gi.require_versions({
 from gi.repository import Gio, Gtk, Gdk, GObject, GLib, Pywebkit, GtkSource
 
 # import custom Gtk types explicitely to allow loading from xml
-from gi.repository.Pywebkit import Webview #, WebviewClass
-#from gi.repository.GtkSource import View
+from gi.repository.Pywebkit import Webview 
 
 # pygtk mini framework specific imports
-from pygtk.bind import synced,idle_add
-from pygtk.ui import UI,DirectoryTree,radio_group,accelerator
+from pygtk.ui import UI,DirectoryTree,accelerator
 from pygtk.git import Git, GitFile
 from pygtk.editor import Editor
 from pygtk import WebKit
-#import pygtk
 
 
-# path to this script
-#directory = os.path.dirname(os.path.realpath(__file__))
-
-# set base path for local HTML files
-UI.set_directory(__file__)# directory
+# set base path for local resource files
+UI.set_directory(__file__)
 
 
 class Controller(object):
@@ -41,16 +35,7 @@ class Controller(object):
         self.ui = UI("text.ui.xml", win="mainWindow")
 
         # tree view
-        #self.tree = self.ui["fileTreeView"]
         self.ui.tree.add_root( GitFile(os.getcwd()) , filter=".*\\.dot", showHidden=False )
-
-        # editor
-        #self.editor = self.ui["sourceView"] 
-
-        # web view 
-        #self.web = self.ui["web"]
-        #self.web.load_uri("file://" + dir + "/text.html")
-        #self.web.local = "text.html"
 
         # status bar
         self.ui.status_bar( os.getcwd() )
@@ -62,7 +47,7 @@ class Controller(object):
         self.ui.bind(self)
 
         # show the UI
-        self.ui.show()#"mainWindow")
+        self.ui.show()
 
         # IPC channel
         self.JavaScript = WebKit.JavaScript(self.ui.web)
@@ -142,7 +127,7 @@ class Controller(object):
         f = self.ui.showFileDialog(
             Gtk.FileChooserAction.SAVE,
             "Please choose target to save this .png image file", 
-            filter=self.ui["pngFilter"] 
+            filter=self.ui.pngFilter
         )
 
         if not f is None:
@@ -205,6 +190,7 @@ class Controller(object):
             if state.new_window_state & Gdk.WindowState.FULLSCREEN:
 
                 self.fullscreen = True
+
             else:
 
                 self.fullscreen = False
@@ -219,9 +205,13 @@ class Controller(object):
             f = self.ui.tree.file_at_pos(event.x,event.y)
 
             m = None
+
             if f.directory: 
+
                 m = self.ui.directoryContextMenu        
+
             else:
+
                 m = self.ui.fileContextMenu        
             
             Gtk.Menu.popup_at_pointer(m,event)             
@@ -287,7 +277,7 @@ class Controller(object):
         dir = self.ui.showFileDialog(
             Gtk.FileChooserAction.SELECT_FOLDER,
             "Please choose a folder", 
-            filter=self.ui["dotFilter"] 
+            filter=self.ui.dotFilter
         )
 
         if not dir is None:
@@ -321,7 +311,7 @@ class Controller(object):
         f = self.ui.showFileDialog(
             Gtk.FileChooserAction.OPEN,
             "Please choose a .dot file", 
-            filter=self.ui["dotFilter"] 
+            filter=self.ui.dotFilter
         )
 
         if not f is None:
@@ -345,7 +335,7 @@ class Controller(object):
         f = self.ui.showFileDialog(
             Gtk.FileChooserAction.SAVE,
             "Please choose target to save this .dot file", 
-            filter=self.ui["dotFilter"] 
+            filter=self.ui.dotFilter
         )
 
         if not f is None:
