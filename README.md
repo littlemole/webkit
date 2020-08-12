@@ -30,5 +30,5 @@ sudo apt install python3-dev python-gobject-2 python-gobject-2-dev libwebkit2gtk
 ## fedora
 ```
 sudo dnf install @development-tools
-sudo dnf install python3-devel gtk3-devel webkit2gtk3-devel gobject-introspection-devel
+sudo dnf install python3-devel gtk3-devel webkit2gtk3-devel gobject-introspection-devel gtksourceview4 gtksourceview4-devel
 ```
