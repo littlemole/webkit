@@ -29,7 +29,7 @@ static gboolean on_context_menu (
 {
     return TRUE;
 }
-*/
+*/ 
 
 static void init_ext(WebKitWebContext *context, gpointer user_data)
 {
@@ -38,28 +38,17 @@ static void init_ext(WebKitWebContext *context, gpointer user_data)
         g_print( PROG "init_ext: WebKitWebContext is null \n" );
         return;
     }
-/*    if ( !user_data)
+/*
+    if ( !user_data)
     {
         g_print( PROG "init_ext: user_data is null \n" );
         return;
     }
 
-    PywebkitWebview *web = (PywebkitWebview*) user_data;
+    PywebkitWebviewClass *clazz = (PywebkitWebviewClass*) user_data;
 
-    if(!G_IS_OBJECT(web))
-    {
-        g_print( PROG "init_ext: user_data is not a gobj \n" );
-        return;
-    }
-
-    if ( !web || !web->uid)
-    {
-        g_print( PROG "init_ext: web->uid is null \n" );
-        return;
-    }
-
-    g_print(PROG "init_ext: %s \n", web->uid );
-*/
+    gchar* dir = clazz->dir;
+ */
     GVariant* s = g_variant_new_string("uid??");//web->uid);
 
     std::ostringstream oss;
@@ -88,6 +77,14 @@ static void on_change(PywebkitWebview* web,const char* value)
         g_print( PROG "CHANGE WE CAN BELIEVE IN: %s\n", value );
 }
 
+static void on_notify(PywebkitWebview* web,GParamSpec *pspec, void* user_data)
+{
+    g_print( PROG "NOTIFY prop changed: %s %s\n", pspec->name, web->local );
+
+    pywebkit_webview_load_local_uri(web,web->local);
+
+}
+
 static void pywebkit_webview_init(PywebkitWebview *web)
 {
     if ( !web)
@@ -108,12 +105,15 @@ static void pywebkit_webview_init(PywebkitWebview *web)
 
     g_signal_connect( G_OBJECT (web), "changed", G_CALLBACK(on_change), web);
 
+    g_signal_connect( G_OBJECT (web), "notify::local", G_CALLBACK(on_notify), web);
+
+
     g_signal_emit_by_name(web,"changed","GRRRRR");
 
     // this would globally disable right click context-menu:
     // g_signal_connect( G_OBJECT (web), "context-menu", G_CALLBACK(on_context_menu), web);
 }
-
+ 
 static void pywebkit_webview_finalize(GObject *object)
 {
     PywebkitWebview* web = (PywebkitWebview*)object;
@@ -135,19 +135,19 @@ static void pywebkit_webview_class_init(PywebkitWebviewClass *klass)
 
     // GObject properties
     gprops<PywebkitWebviewClass> pywebkitWebviewProperties{
-        gprop( &PywebkitWebview::dummy, g_param_spec_string( "uid", "Uid", "Unique ID", "<uid>", G_PARAM_READWRITE) )
+        gprop( &PywebkitWebview::local, g_param_spec_string( "local", "Local", "Local file", "index.html", G_PARAM_READWRITE) )
     };
 
     pywebkitWebviewProperties.install(klass);
 
     // GObject signals
-    Signals signals(object_class);
+    Signals signals(klass);
     signals.install("changed", G_TYPE_STRING );
 
 
     WebKitWebContext* ctx = webkit_web_context_get_default();
-    g_signal_connect( G_OBJECT (ctx), "initialize-web-extensions", G_CALLBACK(init_ext), NULL);
-
+    g_signal_connect( G_OBJECT (ctx), "initialize-web-extensions", G_CALLBACK(init_ext), klass);
+ 
 }
 
 // could have params like this:
@@ -190,6 +190,9 @@ static std::string cwd()
 void pywebkit_webview_load_local_uri(PywebkitWebview *web, const gchar* localpath)
 {
     const char* lp = localpath ? localpath : "index.html";
+ 
+    PywebkitWebviewClass* clazz = PY_WEBKIT_GET_CLASS( web) ;
+    gchar* dir = clazz->dir;
 
     std::string fp;
 
@@ -202,9 +205,24 @@ void pywebkit_webview_load_local_uri(PywebkitWebview *web, const gchar* localpat
     else
     {
         std::ostringstream oss;
-        oss << "file://" << cwd() << "/" << lp;
+        if(dir)
+        {
+            oss << "file://" << dir << "/" << lp;
+        }
+        else
+        {
+            oss << "file://" << cwd() << "/" << lp;
+        }
         fp = oss.str();
     }
 
+    g_print( PROG "LOAD URL %s %s\n", fp.c_str(), dir  );
+
     webkit_web_view_load_uri( (WebKitWebView*)web, fp.c_str() );
+}
+
+void  pywebkit_webview_class_set_dir(PywebkitWebviewClass* clazz, const gchar* dir)
+{
+    g_free(clazz->dir);
+    clazz->dir = g_strdup(dir);
 }

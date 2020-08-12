@@ -2,9 +2,11 @@
 import gi
 gi.require_versions({
     'Gtk':  '3.0',
+    'Pywebkit': '0.1',
 })
 
-from gi.repository import Gtk, Gdk, GLib
+from gi.repository import Gtk, Gdk, GLib, Pywebkit
+from gi.repository.Pywebkit import Webview
 
 import pygtk
 import pygtk.WebKit as WebKit
@@ -37,19 +39,44 @@ def accelerator(accel,win="__main__"):
 
 class UI(object):
 
+    directory = os.getcwd()
+
     def __init__( self, xml, win="mainWindow" ):
 
+        Webview.set_dir(UI.directory)
+
         self.builder = Gtk.Builder()
-        self.builder.add_from_file(xml)
+
+        if xml[0:1] == "/":
+            self.builder.add_from_file(xml)
+        else:
+            self.builder.add_from_file(UI.directory + "/" + xml)
+
         self.mainWindow = win
         self.main = self.builder.get_object(win)
         self.ctx = None
         self.accelerators = {}
 
 
+    def set_directory(dir):
+
+        UI.directory = os.path.dirname(os.path.realpath(dir))
+
+
     def __getitem__(self,key):
 
         return self.builder.get_object(key)
+
+
+    def __getattr__(self,key):
+
+        r = self.builder.get_object(key)
+
+        if r is None:
+
+            raise AttributeError
+
+        return r
 
 
     def add_accelerator(self,accel,cb,win):
@@ -178,7 +205,7 @@ class UI(object):
         messagedialog.hide()
         return response
 
-    def statusBar(self,id,txt):
+    def status_bar(self,txt,id="statusBar"):
 
         statusBar = self.builder.get_object(id)
 

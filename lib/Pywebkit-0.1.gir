@@ -20,11 +20,11 @@ and/or use gtk-doc annotations.  -->
            glib:type-name="PywebkitWebview"
            glib:get-type="pywebkit_webview_get_type"
            glib:type-struct="WebviewClass">
-      <source-position filename="include/pywebkit.h" line="26"/>
+      <source-position filename="include/pywebkit.h" line="28"/>
       <implements name="Atk.ImplementorIface"/>
       <implements name="Gtk.Buildable"/>
       <constructor name="new" c:identifier="pywebkit_webview_new">
-        <source-position filename="include/pywebkit.h" line="30"/>
+        <source-position filename="include/pywebkit.h" line="32"/>
         <return-value transfer-ownership="none">
           <type name="Webview" c:type="PywebkitWebview*"/>
         </return-value>
@@ -33,8 +33,8 @@ and/or use gtk-doc annotations.  -->
               c:identifier="pywebkit_webview_load_local_uri">
         <doc xml:space="preserve"
              filename="webkit/pywebkit.cpp"
-             line="134">loads a new HTML document into #PyWebKit.</doc>
-        <source-position filename="include/pywebkit.h" line="32"/>
+             line="180">loads a new HTML document into #PyWebKit.</doc>
+        <source-position filename="include/pywebkit.h" line="34"/>
         <return-value transfer-ownership="none">
           <type name="none" c:type="void"/>
         </return-value>
@@ -42,24 +42,27 @@ and/or use gtk-doc annotations.  -->
           <instance-parameter name="web" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="webkit/pywebkit.cpp"
-                 line="137">#PywebkitWebview*</doc>
+                 line="183">#PywebkitWebview*</doc>
             <type name="Webview" c:type="PywebkitWebview*"/>
           </instance-parameter>
           <parameter name="localpath" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="webkit/pywebkit.cpp"
-                 line="138">#gchar*</doc>
+                 line="184">#gchar*</doc>
             <type name="utf8" c:type="const gchar*"/>
           </parameter>
         </parameters>
       </method>
-      <property name="uid" writable="1" transfer-ownership="none">
+      <property name="local" writable="1" transfer-ownership="none">
         <type name="utf8" c:type="gchar*"/>
       </property>
       <field name="parent">
         <type name="WebKit2.WebView" c:type="WebKitWebView"/>
       </field>
       <field name="uid">
+        <type name="utf8" c:type="gchar*"/>
+      </field>
+      <field name="local">
         <type name="utf8" c:type="gchar*"/>
       </field>
       <glib:signal name="changed" when="last" no-recurse="1" no-hooks="1">
@@ -76,10 +79,27 @@ and/or use gtk-doc annotations.  -->
     <record name="WebviewClass"
             c:type="PywebkitWebviewClass"
             glib:is-gtype-struct-for="Webview">
-      <source-position filename="include/pywebkit.h" line="26"/>
+      <source-position filename="include/pywebkit.h" line="28"/>
       <field name="parent">
         <type name="WebKit2.WebViewClass" c:type="WebKitWebViewClass"/>
       </field>
+      <field name="dir">
+        <type name="utf8" c:type="gchar*"/>
+      </field>
+      <method name="set_dir" c:identifier="pywebkit_webview_class_set_dir">
+        <source-position filename="include/pywebkit.h" line="36"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="clazz" transfer-ownership="none">
+            <type name="WebviewClass" c:type="PywebkitWebviewClass*"/>
+          </instance-parameter>
+          <parameter name="dir" transfer-ownership="none">
+            <type name="utf8" c:type="const gchar*"/>
+          </parameter>
+        </parameters>
+      </method>
     </record>
   </namespace>
 </repository>

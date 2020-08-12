@@ -32,7 +32,8 @@ class Controller(object):
 
         # web view 
         self.web = self.ui["web"]
-        self.web.load_uri("file://" + dir + "/diff.html")
+        #self.web.load_uri("file://" + dir + "/diff.html")
+        self.web.uri = "file://" + dir + "/diff.html"
 
         # status bar
         self.status_bar( os.getcwd() )

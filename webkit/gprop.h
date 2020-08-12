@@ -20,10 +20,12 @@ struct GPROP_BASE
     virtual void get(GValue* v, void* that) = 0;
     virtual void set(void* that, const GValue* v) = 0;
 
-    void set_value( char* c, const GValue* v)
+    void set_value( char*& c, const GValue* v)
     {
         g_free(c);
         c = g_value_dup_string(v);
+        g_print(PROG "set_property %s\n", c);
+
     }
 
     void set_value( int& i, const GValue* v)
@@ -126,7 +128,7 @@ public:
         {
             props_.push_back( std::unique_ptr<GPROP_BASE>(i) );
         }
-            }
+    }
 
     void install(T* klass)
     {
@@ -151,26 +153,28 @@ private:
 
     static void set_property (GObject* object, guint property_id, const GValue *value, GParamSpec *pspec)
     {
-        if( property_id >= props_.size() )
+        if( property_id > props_.size() )
         {
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);      
             return;      
         }
 
-        GPROP_BASE* p = props_[property_id].get();
+        GPROP_BASE* p = props_[property_id-1].get();
+
+        g_print(PROG "set_property %s\n", p->pspec->name);
 
         p->set(object,value);
     }
 
     static void get_property (GObject* object, guint property_id, GValue* value, GParamSpec *pspec)
     {
-        if( property_id >= props_.size() )
+        if( property_id > props_.size() )
         {
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);      
             return;      
         }
 
-        GPROP_BASE* p = props_[property_id].get();
+        GPROP_BASE* p = props_[property_id-1].get();
 
         p->get(value,object);
     }
@@ -188,8 +192,9 @@ inline std::vector<std::unique_ptr<GPROP_BASE>> gprops<T>::props_;
 class Signals
 {
 public:
-    Signals(GObjectClass* klazz)
-        :clazz(klazz)
+    template<class T>
+    Signals(T* klazz)
+        :clazz( G_OBJECT_CLASS(klazz) )
     {}
 
     template<class ... Args>
@@ -222,7 +227,7 @@ public:
             &params[0]  /* param_types */
         );
 
-        g_print( PROG "registed changed signal id: %i\n", signalId );
+        g_print( PROG "registed signal %s id: %i\n", name.c_str(), signalId );
 
         return signalId;
     }

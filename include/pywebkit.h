@@ -17,13 +17,14 @@ struct _PywebkitWebview {
 /*< public >*/
     WebKitWebView parent;
     gchar* uid;
-    gchar* dummy;
+    gchar* local;
 };
 
-struct Signals;
 
 struct _PywebkitWebviewClass {
+/*< public >*/
     WebKitWebViewClass parent;
+    gchar* dir;
 };
 
 GType		pywebkit_webview_get_type	() G_GNUC_CONST;
@@ -32,6 +33,7 @@ PywebkitWebview*	pywebkit_webview_new		();
 
 void	pywebkit_webview_load_local_uri(PywebkitWebview *web, const gchar* localpath);
 
+void  pywebkit_webview_class_set_dir(PywebkitWebviewClass* clazz, const gchar* dir);
 
 #ifdef __cplusplus
 }

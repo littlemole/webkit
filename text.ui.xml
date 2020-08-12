@@ -2,6 +2,7 @@
 <!-- Generated with glade 3.22.2 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
+  <requires lib="pygtk.ui" version="0.0"/>
   <object class="GtkMenu" id="directoryContextMenu">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -86,14 +87,6 @@
     </mime-types>
     <patterns>
       <pattern>*.dot</pattern>
-    </patterns>
-  </object>
-  <object class="GtkFileFilter" id="pngFilter">
-    <mime-types>
-      <mime-type>inode/directory</mime-type>
-    </mime-types>
-    <patterns>
-      <pattern>*.png</pattern>
     </patterns>
   </object>
   <object class="GtkMenu" id="fileContextMenu">
@@ -680,7 +673,7 @@
                         <property name="can_focus">True</property>
                         <property name="shadow_type">in</property>
                         <child>
-                          <object class="DirectoryTree" id="fileTreeView">
+                          <object class="DirectoryTree" id="tree">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="headers_visible">False</property>
@@ -787,13 +780,13 @@
                         <property name="can_focus">True</property>
                         <property name="shadow_type">in</property>
                         <child>
-                          <object class="Editor" id="sourceView">
+                          <object class="Editor" id="editor">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="left_margin">2</property>
                             <property name="right_margin">2</property>
-                            <property name="language">dot</property>
                             <property name="monospace">True</property>
+                            <property name="language">dot</property>
                             <signal name="changed" handler="onSourceChanged" swapped="no"/>
                           </object>
                         </child>
@@ -850,6 +843,7 @@
                           <object class="PywebkitWebview" id="web">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
+                            <property name="local">text.html</property>
                             <signal name="context-menu" handler="onWebContext" swapped="no"/>
                             <child>
                               <placeholder/>
@@ -898,6 +892,14 @@
         </child>
       </object>
     </child>
+  </object>
+  <object class="GtkFileFilter" id="pngFilter">
+    <mime-types>
+      <mime-type>inode/directory</mime-type>
+    </mime-types>
+    <patterns>
+      <pattern>*.png</pattern>
+    </patterns>
   </object>
   <object class="GtkMenu" id="webContextMenu">
     <property name="visible">True</property>
