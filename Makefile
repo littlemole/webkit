@@ -20,6 +20,7 @@ clean:
 	-rm lib/libwebview.so.0
 	-rm lib/libwebview.so
 	-find -name "__pycache__" -exec rm -rf {} \;
+	-find -name "*~" -exec rm -rf {} \;
 
 
 install: 
