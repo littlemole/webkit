@@ -5,7 +5,7 @@
 #include <vector>
 #include <memory>
 
-#define PROG "[PywebkitWebview] "
+#define PROG "[GPROP] "
 
 struct GPROP_BASE
 {
@@ -236,5 +236,6 @@ private:
     GObjectClass* clazz;
 };
 
+#undef PROG
 
 #endif
