@@ -3,9 +3,9 @@ gi.require_versions({
     'Gtk':  '3.0',
 })
 
-from gi.repository import Gtk, Gfiletree, GLib 
+from gi.repository import Gtk, GLib, Mtk
 
-from gi.repository.Gfiletree import Filetree, File, GitFile
+from gi.repository.Mtk import Filetree, File, GitFile
 
 import os,sys,socket,json,threading,pprint
 
@@ -21,10 +21,26 @@ class Controller(object):
         #tree.clear()
         #tree.add_root(tree.root,True,".*")
 
-        out = tree.bash_async("git status .",self.onAsyncBash)
+        f = tree.get_selected_file()
+        #print(dir(Mtk.GitCmd))
+        #exit_code,status,content = Mtk.git_cmd(f,Mtk.GitCmd.STATUS)
+        #print(exit_code)
+        #print(status)
+        #print(content)
+
+        Mtk.git_cmd_async(f,Mtk.GitCmd.STATUS,self.onAsyncGit)
+        #out,status = Mtk.bash("ls -lah /")
+        #print(str(status)+"\n"+out)
+
+        #out = Mtk.bash_async("git status .",self.onAsyncBash)
         #print(out)
 
         return False
+
+    def onAsyncGit(self,exit_code,status,out):
+        print(exit_code)
+        print(status)
+        print(out)
     
     def onAsyncBash(self,status,out):
         print("status : " + str(status))

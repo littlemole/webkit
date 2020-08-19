@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<glade-catalog name="gfiletree" library="filetree" depends="webkit2gtk">
+<glade-catalog name="gfiletree" library="mtk" depends="webkit2gtk">
 
   <glade-widget-classes>
-    <glade-widget-class nick="GFileTree" name="GfiletreeFiletree" generic-name="filetree" title="File Tree" >
+    <glade-widget-class nick="FileTree" name="MtkFiletree" generic-name="filetree" title="File Tree" >
     </glade-widget-class>
   </glade-widget-classes>
   
-  <glade-widget-group name="py" title="FileTree">
-    <glade-widget-class-ref name="GfiletreeFiletree"/>
+  <glade-widget-group name="mtk" title="FileTree">
+    <glade-widget-class-ref name="MtkFiletree"/>
   </glade-widget-group>  
 
 </glade-catalog>

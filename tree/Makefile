@@ -22,7 +22,7 @@ CPPFLAGS = -Wall -I ../include $(DEBUG) $(INCLUDE) $(OPTIONS) $(PKG_INC)
 #################################################
 
 # the shared lib
-NAME = libfiletree.so
+NAME = libmtk.so
 LIB = ./build/$(NAME)
 release : override LIB = ./build/$(NAME)
 
@@ -36,7 +36,7 @@ LIB_SRCFILES =  $(notdir $(LIB_SRCFILESABS))
 LIB_OBJFILES = $(LIB_SRCFILES:%.cpp=$(LIB_BUILD)/%.o)
 
 # output targets
-NAMESPACE=Gfiletree
+NAMESPACE=Mtk
 NSVERSION=0.1
 GIR_FILE=$(NAMESPACE)-$(NSVERSION).gir
 TYPELIB_FILE=$(NAMESPACE)-$(NSVERSION).typelib
@@ -85,8 +85,8 @@ $(LIB_BUILD)/$(TYPELIB_FILE): $(LIB_BUILD)/$(GIR_FILE)
 	g-ir-compiler $(LIB_BUILD)/$(GIR_FILE) --output=$(LIB_BUILD)/$(TYPELIB_FILE)
 
 
-$(LIB_BUILD)/$(GIR_FILE): ../include/gfiletree.h gfiletree.cpp
-	libtool exec g-ir-scanner $^ -L $(LIB_BUILD) --library=filetree --warn-all  --include=Gtk-3.0 --include=GObject-2.0  --namespace=$(NAMESPACE) --nsversion=$(NSVERSION) --output=$@
+$(LIB_BUILD)/$(GIR_FILE): ../include/mtkfiletree.h mtkfiletree.cpp
+	libtool exec g-ir-scanner $^ -L $(LIB_BUILD) --library=mtk --warn-all  --include=Gtk-3.0 --include=GObject-2.0  --namespace=$(NAMESPACE) --nsversion=$(NSVERSION) --output=$@
 		
 #################################################
 # make clean
