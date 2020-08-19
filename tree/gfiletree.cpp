@@ -53,9 +53,9 @@ static void gfiletree_file_finalize(GObject *object)
     }
 }
 
-gchar* virtual_gfiletree_file_get_tooltip(GfiletreeFile* file)
+gchar* virtual_gfiletree_file_get_tooltip(GfiletreeFile* self)
 {
-    return file->file_name;
+    return self->file_name;
 }
 
 std::vector<std::string> listdir(const std::string& dirname)
@@ -86,21 +86,21 @@ std::vector<std::string> listdir(const std::string& dirname)
     return result;
 }
 
-GList* virtual_gfiletree_file_get_children(GfiletreeFile* file, GtkTreeIter* iter)
+GList* virtual_gfiletree_file_get_children(GfiletreeFile* self, GtkTreeIter* iter)
 {
     GList* glist = 0;
 
-    if(!file->is_directory)
+    if(!self->is_directory)
     {
         return glist;
     }
 
-    std::vector<std::string> children =  listdir(file->file_name);
+    std::vector<std::string> children =  listdir(self->file_name);
 
     for( auto& child: children)
     {
         std::ostringstream oss;
-        oss << file->file_name << "/" << child;
+        oss << self->file_name << "/" << child;
 
         GfiletreeFile* f = gfiletree_file_new( oss.str().c_str() );
         f->root = gtk_tree_iter_copy(iter);
@@ -698,8 +698,111 @@ static std::string cwd()
     char result[ PATH_MAX ];
     return getcwd(result, PATH_MAX);
 }
-/*
-gchar* gfiletree_filetree_bash(GfiletreeFiletree *self, gchar* cmd)
+
+class AsyncBash 
+{
+public:
+    int status = 0;
+    bool done = false;
+    GCancellable* cancellable = 0;      
+    GSubprocess* process = 0;
+    GDataInputStream* stream = 0;  
+    gchar* buffer = 0;
+    GfiletreeAsyncBashCallbackFunc cb = 0;
+    gpointer user_data = 0;
+};
+
+
+void gfiletree_filetree_bash_on_finish(GObject *source_object, GAsyncResult *res, gpointer user_data)
+{
+    g_print("gfiletree_filetree_bash_on_finish \n");
+
+    GSubprocess* process = (GSubprocess*)source_object;
+
+    GError* error=0;
+    gboolean success = g_subprocess_wait_check_finish ( process, res, &error);
+
+    AsyncBash* ab = (AsyncBash*) user_data;
+
+    ab->status = g_subprocess_get_exit_status(process);
+
+    g_print("gfiletree_filetree_bash_on_finish : %i\n", ab->status);
+
+    ab->done = true;
+    if(ab->stream == 0)
+    {
+        g_object_unref(ab->process);
+        g_print("DATA1: %s\n", ab->buffer );
+
+        ab->cb(ab->status,ab->buffer,ab->user_data);
+
+        delete ab;
+    }
+}
+
+void gfiletree_filetree_bash_on_data(GObject *source_object, GAsyncResult *res, gpointer user_data);
+
+void gfiletree_filetree_bash_queue_read(AsyncBash *ab)
+{
+
+    g_data_input_stream_read_line_async( ab->stream, 0, ab->cancellable, gfiletree_filetree_bash_on_data, ab );
+}
+
+void gfiletree_filetree_bash_on_data(GObject *source_object, GAsyncResult *res, gpointer user_data)
+{
+    GError* error = 0;
+    gsize len = 0;
+    char* line = g_data_input_stream_read_line_finish_utf8( (GDataInputStream*)source_object, res, &len, &error);
+
+    g_print("DATA: %i %i\n", len, (void*)error);
+    g_print("-----\n %s\n", line);
+    g_print("-----\n \n");
+
+    AsyncBash* ab = (AsyncBash*) user_data;
+
+    if(line && len>0)
+    {
+        gchar* c = 0;
+        if(ab->buffer)
+        {
+            std::ostringstream oss;
+            oss << ab->buffer << line << "\n";
+
+            g_free(ab->buffer);
+            ab->buffer = g_strdup(oss.str().c_str());
+        }
+        else
+        {
+            std::ostringstream oss;
+            oss << line << "\n";
+            ab->buffer = g_strdup(oss.str().c_str());
+        }
+    }
+    if(line && len>=0)
+    {
+        gfiletree_filetree_bash_queue_read(ab);
+    }
+    else if ( !line ||  len<0)
+    {
+        g_input_stream_close((GInputStream*)ab->stream,NULL,NULL);
+        ab->stream = 0;
+
+        if(ab->done == true)
+        {
+            g_object_unref(ab->process);
+            g_print("DATA2: %s\n", ab->buffer );
+
+            ab->cb(ab->status,ab->buffer,ab->user_data);
+
+            delete ab;
+        }
+    }
+}
+
+
+
+
+void gfiletree_filetree_bash_async(GfiletreeFiletree *self, gchar* cmd, GfiletreeAsyncBashCallbackFunc* cb, gpointer user_data)
 {
     std::ostringstream oss;
     //oss << "'";
@@ -720,8 +823,12 @@ gchar* gfiletree_filetree_bash(GfiletreeFiletree *self, gchar* cmd)
 
     g_print("gfiletree_filetree_bash: %s\n", oss.str().c_str() );
 
+    AsyncBash* ab = new AsyncBash;    
+    ab->user_data = user_data;
+    ab->cb = (GfiletreeAsyncBashCallbackFunc) cb;
+
     GError* error=0;
-    GSubprocess* process = g_subprocess_new(
+    ab->process = g_subprocess_new(
         (GSubprocessFlags)(G_SUBPROCESS_FLAGS_STDOUT_PIPE|G_SUBPROCESS_FLAGS_STDERR_MERGE),
         &error,
         "/bin/bash",
@@ -730,21 +837,27 @@ gchar* gfiletree_filetree_bash(GfiletreeFiletree *self, gchar* cmd)
         NULL
     );
 
-    if(!process)
+    if(!ab->process)
     {
         g_print("process error\n");
-        return 0;
+        return ;
     }
 
-    g_subprocess_wait(process,NULL,&error);
+    ab->cancellable = g_cancellable_new ();
 
-    GInputStream* stream = g_subprocess_get_stdout_pipe(process);
+    g_subprocess_wait_check_async(ab->process,ab->cancellable,gfiletree_filetree_bash_on_finish, ab);
 
-    if(!stream)
+    ab->stream = g_data_input_stream_new( g_subprocess_get_stdout_pipe(ab->process) );
+
+    if(!ab->stream)
     {
         g_print("process stream error\n");
-        return 0;
+        return ;
     }
+
+    gfiletree_filetree_bash_queue_read(ab);
+
+/*
     std::ostringstream ooss;
     gchar buffer[1024];
 
@@ -766,8 +879,10 @@ gchar* gfiletree_filetree_bash(GfiletreeFiletree *self, gchar* cmd)
 
     std::string r = ooss.str();
     return g_strdup(r.c_str());
+    */
+    //return g_strdup("DUMMY");
 }
-*/
+
 
 ///////////////////////////////////////////////////
 
@@ -1197,7 +1312,7 @@ const gchar* gfiletree_filetree_bash(GfiletreeFiletree *self, gchar* cmd)
 
 G_DEFINE_TYPE (GfiletreeGitFile, gfiletree_gitfile, GFILETREE_FILE_TYPE   )
 
-struct GitStatus
+struct _GitStatus
 {
     std::string color;
     std::string icon;

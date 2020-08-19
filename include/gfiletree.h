@@ -3,7 +3,6 @@
 
 #include <gtk/gtk.h>
 
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -34,8 +33,8 @@ struct _GfiletreeFileClass {
 /*< public >*/
     GObjectClass parent;
 
-    gchar* (*get_tooltip)(GfiletreeFile* file);
-    GList* (*get_children)(GfiletreeFile* file, GtkTreeIter* iter);
+    gchar* (*get_tooltip)(GfiletreeFile* self);
+    GList* (*get_children)(GfiletreeFile* self, GtkTreeIter* iter);
 
     void (*tree_cell_render_file)(
             GfiletreeFile* self,
@@ -63,7 +62,6 @@ GType		gfiletree_file_get_type	() G_GNUC_CONST;
 
 /**
  * gfiletree_file_new: 
- * @self: A #GfiletreeFile
  * @fn : A #gchar*
  * Returns: (transfer full): a #GfiletreeFile
  */
@@ -74,7 +72,7 @@ GfiletreeFile*	gfiletree_file_new( const gchar* fn);
  * @self: A #GfiletreeFile
  * @fn : A #gchar*
  */
-void gfiletree_file_set_path(GfiletreeFile*,  gchar* fn);
+void gfiletree_file_set_path(GfiletreeFile* self,  gchar* fn);
 
 /**
  * gfiletree_file_get_path: 
@@ -82,7 +80,7 @@ void gfiletree_file_set_path(GfiletreeFile*,  gchar* fn);
  *
  * Returns: (transfer none): a #gchar*
  */
-gchar* gfiletree_file_get_path(GfiletreeFile*);
+gchar* gfiletree_file_get_path(GfiletreeFile* self);
 
 /**
  * gfiletree_file_get_parent: 
@@ -90,7 +88,7 @@ gchar* gfiletree_file_get_path(GfiletreeFile*);
  *
  * Returns: (transfer full): a #gchar*
  */
-gchar* gfiletree_file_get_parent(GfiletreeFile*);
+gchar* gfiletree_file_get_parent(GfiletreeFile* self);
 
 /**
  * gfiletree_file_get_basename: 
@@ -98,7 +96,7 @@ gchar* gfiletree_file_get_parent(GfiletreeFile*);
  *
  * Returns: (transfer full): a #gchar*
  */
-gchar* gfiletree_file_get_basename(GfiletreeFile*);
+gchar* gfiletree_file_get_basename(GfiletreeFile* self);
 
 /**
  * gfiletree_file_get_tooltip: 
@@ -106,7 +104,7 @@ gchar* gfiletree_file_get_basename(GfiletreeFile*);
  *
  * Returns: (transfer none): a #gchar*
  */
-gchar* gfiletree_file_get_tooltip(GfiletreeFile*);
+gchar* gfiletree_file_get_tooltip(GfiletreeFile* self);
 
 /**
  * gfiletree_file_get_children: 
@@ -174,7 +172,6 @@ struct _GfiletreeFiletree {
     gboolean show_hidden;
     gchar* filter;
     gchar* cursel;
-
 };
 
 /**
@@ -199,13 +196,13 @@ GfiletreeFiletree*	gfiletree_filetree_new		();
  * gfiletree_filetree_add_root: 
  * @self: A #GfiletreeFiletree
  * @file: A #GfiletreeFile
- * @self: A #GfiletreeFile
- * @self: A #GfiletreeFile
+ * @show_hidden: A #gboolean
+ * @filter: A #gchar*
  */
 void gfiletree_filetree_add_root(GfiletreeFiletree *self, GfiletreeFile* file, bool show_hidden, const gchar* filter);
 
 /**
- * gfiletree_filetree_get_selected_file: 
+ * gfiletree_filetree_clear: 
  * @self: A #GfiletreeFiletree
  */
 void gfiletree_filetree_clear(GfiletreeFiletree *self);
@@ -237,7 +234,31 @@ GfiletreeFile* gfiletree_filetree_file_at_pos(GfiletreeFiletree *self, gint x, g
  */
 const gchar* gfiletree_filetree_bash(GfiletreeFiletree *self, gchar* cmd);
 
+/**
+ * GfiletreeAsyncBashCallbackFunc: 
+ * @status: A #gint
+ * @out: A #gchar*
+ * @user_data: A #gpointer
+ *
+ */
 
+typedef void (*GfiletreeAsyncBashCallbackFunc)(int status, const gchar* out, gpointer user_data);
+
+#define GFILETREE_ASYNC_BASH_CALLBACK(f) ((GfiletreeAsyncBashCallbackFunc) (void (*)(int,gchar,gpointer)) (f))
+
+/**
+ * gfiletree_filetree_bash_async: 
+ * @self: A #GfiletreeFiletree
+ * @cmd: A #gchar*
+ * @callback: (closure) (scope async): A #GfiletreeAsyncBashCallbackFunc*  
+ * @user_data: (closure callback): a #gpointer
+ *
+ */
+void gfiletree_filetree_bash_async(GfiletreeFiletree *self, gchar* cmd, GfiletreeAsyncBashCallbackFunc*  callback, gpointer user_data);
+
+// @user_data: (closure callback): a #gpointer
+// * Returns: (transfer full): a #gchar*
+ 
 //////////////////////////////////////////////////////////////////////////
 
 
@@ -245,7 +266,7 @@ const gchar* gfiletree_filetree_bash(GfiletreeFiletree *self, gchar* cmd);
 typedef struct _GfiletreeGitFile		GfiletreeGitFile;
 typedef struct _GfiletreeGitFileClass	GfiletreeGitFileClass;
 
-struct GitStatus;
+typedef struct _GitStatus GitStatus;
 
 /**
  * GfiletreeGitFile: 
@@ -272,7 +293,6 @@ GType		gfiletree_gitfile_get_type	() G_GNUC_CONST;
 
 /**
  * gfiletree_gitfile_new: 
- * @self: A #GfiletreeGitFile
  * @fn : A #gchar*
  * Returns: (transfer full): a #GfiletreeGitFile
  */

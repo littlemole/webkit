@@ -15,16 +15,20 @@ class Controller(object):
     def onExit(self,*args):
         Gtk.main_quit()
 
-    def onClick(slef,*args):
+    def onClick(self,*args):
         print("click")
 
         #tree.clear()
         #tree.add_root(tree.root,True,".*")
 
-        out = tree.bash("git status .")
-        print(out)
+        out = tree.bash_async("git status .",self.onAsyncBash)
+        #print(out)
 
         return False
+    
+    def onAsyncBash(self,status,out):
+        print("status : " + str(status))
+        print(out)
 
 d = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 print(d)
@@ -50,7 +54,7 @@ scrolledwindow.add(tree)
 win = Gtk.Window()     
 win.set_default_size(550, 350)   
 win.add(scrolledwindow)
-win.connect("button-press-event", controller.onClick)
+tree.connect("row-activated", controller.onClick)
 win.connect("delete-event", controller.onExit)
 win.show_all()
 

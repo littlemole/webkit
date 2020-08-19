@@ -13,10 +13,50 @@ and/or use gtk-doc annotations.  -->
              shared-library="libfiletree.so"
              c:identifier-prefixes="Gfiletree"
              c:symbol-prefixes="gfiletree">
+    <function-macro name="ASYNC_BASH_CALLBACK"
+                    c:identifier="GFILETREE_ASYNC_BASH_CALLBACK"
+                    introspectable="0">
+      <source-position filename="include/gfiletree.h" line="247"/>
+      <parameters>
+        <parameter name="f">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <callback name="AsyncBashCallbackFunc"
+              c:type="GfiletreeAsyncBashCallbackFunc">
+      <source-position filename="include/gfiletree.h" line="245"/>
+      <return-value transfer-ownership="none">
+        <type name="none" c:type="void"/>
+      </return-value>
+      <parameters>
+        <parameter name="status" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="include/gfiletree.h"
+               line="239">A #gint</doc>
+          <type name="gint" c:type="int"/>
+        </parameter>
+        <parameter name="out" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="include/gfiletree.h"
+               line="240">A #gchar*</doc>
+          <type name="utf8" c:type="const gchar*"/>
+        </parameter>
+        <parameter name="user_data"
+                   transfer-ownership="none"
+                   nullable="1"
+                   allow-none="1"
+                   closure="2">
+          <doc xml:space="preserve"
+               filename="include/gfiletree.h"
+               line="241">A #gpointer</doc>
+          <type name="gpointer" c:type="gpointer"/>
+        </parameter>
+      </parameters>
+    </callback>
     <function-macro name="CLASS"
                     c:identifier="GFILETREE_CLASS"
                     introspectable="0">
-      <source-position filename="include/gfiletree.h" line="303"/>
+      <source-position filename="include/gfiletree.h" line="323"/>
       <parameters>
         <parameter name="c">
         </parameter>
@@ -25,7 +65,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="FILE"
                     c:identifier="GFILETREE_FILE"
                     introspectable="0">
-      <source-position filename="include/gfiletree.h" line="288"/>
+      <source-position filename="include/gfiletree.h" line="308"/>
       <parameters>
         <parameter name="o">
         </parameter>
@@ -34,7 +74,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="FILE_CLASS"
                     c:identifier="GFILETREE_FILE_CLASS"
                     introspectable="0">
-      <source-position filename="include/gfiletree.h" line="290"/>
+      <source-position filename="include/gfiletree.h" line="310"/>
       <parameters>
         <parameter name="c">
         </parameter>
@@ -43,7 +83,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="FILE_GET_CLASS"
                     c:identifier="GFILETREE_FILE_GET_CLASS"
                     introspectable="0">
-      <source-position filename="include/gfiletree.h" line="296"/>
+      <source-position filename="include/gfiletree.h" line="316"/>
       <parameters>
         <parameter name="o">
         </parameter>
@@ -56,63 +96,69 @@ and/or use gtk-doc annotations.  -->
            glib:type-name="GfiletreeFile"
            glib:get-type="gfiletree_file_get_type"
            glib:type-struct="FileClass">
-      <source-position filename="include/gfiletree.h" line="59"/>
+      <source-position filename="include/gfiletree.h" line="58"/>
       <constructor name="new" c:identifier="gfiletree_file_new">
-        <source-position filename="include/gfiletree.h" line="70"/>
+        <source-position filename="include/gfiletree.h" line="68"/>
         <return-value transfer-ownership="full">
           <doc xml:space="preserve"
                filename="include/gfiletree.h"
-               line="68">a #GfiletreeFile</doc>
+               line="66">a #GfiletreeFile</doc>
           <type name="File" c:type="GfiletreeFile*"/>
         </return-value>
         <parameters>
           <parameter name="fn" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="67">A #gchar*</doc>
+                 line="65">A #gchar*</doc>
             <type name="utf8" c:type="const gchar*"/>
           </parameter>
         </parameters>
       </constructor>
       <virtual-method name="get_children" invoker="get_children">
-        <source-position filename="include/gfiletree.h" line="38"/>
+        <source-position filename="include/gfiletree.h" line="37"/>
         <return-value transfer-ownership="full">
           <doc xml:space="preserve"
                filename="include/gfiletree.h"
-               line="116">List of #GfiletreeFile</doc>
+               line="114">List of #GfiletreeFile</doc>
           <type name="GLib.List" c:type="GList*">
             <type name="File"/>
           </type>
         </return-value>
         <parameters>
-          <instance-parameter name="file" transfer-ownership="none">
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/gfiletree.h"
+                 line="111">A #GfiletreeFile</doc>
             <type name="File" c:type="GfiletreeFile*"/>
           </instance-parameter>
           <parameter name="iter" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="114">A #GtkTreeIter</doc>
+                 line="112">A #GtkTreeIter</doc>
             <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
           </parameter>
         </parameters>
       </virtual-method>
       <virtual-method name="get_tooltip" invoker="get_tooltip">
-        <source-position filename="include/gfiletree.h" line="37"/>
+        <source-position filename="include/gfiletree.h" line="36"/>
         <return-value transfer-ownership="none">
           <doc xml:space="preserve"
                filename="include/gfiletree.h"
-               line="107">a #gchar*</doc>
+               line="105">a #gchar*</doc>
           <type name="utf8" c:type="gchar*"/>
         </return-value>
         <parameters>
-          <instance-parameter name="file" transfer-ownership="none">
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/gfiletree.h"
+                 line="103">A #GfiletreeFile</doc>
             <type name="File" c:type="GfiletreeFile*"/>
           </instance-parameter>
         </parameters>
       </virtual-method>
       <virtual-method name="tree_cell_render_file"
                       invoker="tree_cell_render_file">
-        <source-position filename="include/gfiletree.h" line="40"/>
+        <source-position filename="include/gfiletree.h" line="39"/>
         <return-value transfer-ownership="none">
           <type name="none" c:type="void"/>
         </return-value>
@@ -120,31 +166,31 @@ and/or use gtk-doc annotations.  -->
           <instance-parameter name="self" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="122">A #GtkTreeViewColumn</doc>
+                 line="120">A #GtkTreeViewColumn</doc>
             <type name="File" c:type="GfiletreeFile*"/>
           </instance-parameter>
           <parameter name="tree_column" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="123">A #GtkTreeIter</doc>
+                 line="121">A #GtkTreeIter</doc>
             <type name="Gtk.TreeViewColumn" c:type="GtkTreeViewColumn*"/>
           </parameter>
           <parameter name="cell" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="124">A #GtkCellRenderer</doc>
+                 line="122">A #GtkCellRenderer</doc>
             <type name="Gtk.CellRenderer" c:type="GtkCellRenderer*"/>
           </parameter>
           <parameter name="tree_model" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="125">A #GtkTreeModel</doc>
+                 line="123">A #GtkTreeModel</doc>
             <type name="Gtk.TreeModel" c:type="GtkTreeModel*"/>
           </parameter>
           <parameter name="iter" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="126">A #GtkTreeIter</doc>
+                 line="124">A #GtkTreeIter</doc>
             <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
           </parameter>
           <parameter name="data"
@@ -153,14 +199,14 @@ and/or use gtk-doc annotations.  -->
                      allow-none="1">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="127">A #gpointer</doc>
+                 line="125">A #gpointer</doc>
             <type name="gpointer" c:type="gpointer"/>
           </parameter>
         </parameters>
       </virtual-method>
       <virtual-method name="tree_cell_render_pix"
                       invoker="tree_cell_render_pix">
-        <source-position filename="include/gfiletree.h" line="49"/>
+        <source-position filename="include/gfiletree.h" line="48"/>
         <return-value transfer-ownership="none">
           <type name="none" c:type="void"/>
         </return-value>
@@ -168,31 +214,31 @@ and/or use gtk-doc annotations.  -->
           <instance-parameter name="self" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="141">A #GtkTreeViewColumn</doc>
+                 line="139">A #GtkTreeViewColumn</doc>
             <type name="File" c:type="GfiletreeFile*"/>
           </instance-parameter>
           <parameter name="tree_column" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="142">A #GtkTreeIter</doc>
+                 line="140">A #GtkTreeIter</doc>
             <type name="Gtk.TreeViewColumn" c:type="GtkTreeViewColumn*"/>
           </parameter>
           <parameter name="cell" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="143">A #GtkCellRenderer</doc>
+                 line="141">A #GtkCellRenderer</doc>
             <type name="Gtk.CellRenderer" c:type="GtkCellRenderer*"/>
           </parameter>
           <parameter name="tree_model" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="144">A #GtkTreeModel</doc>
+                 line="142">A #GtkTreeModel</doc>
             <type name="Gtk.TreeModel" c:type="GtkTreeModel*"/>
           </parameter>
           <parameter name="iter" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="145">A #GtkTreeIter</doc>
+                 line="143">A #GtkTreeIter</doc>
             <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
           </parameter>
           <parameter name="data"
@@ -201,31 +247,34 @@ and/or use gtk-doc annotations.  -->
                      allow-none="1">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="146">A #gpointer</doc>
+                 line="144">A #gpointer</doc>
             <type name="gpointer" c:type="gpointer"/>
           </parameter>
         </parameters>
       </virtual-method>
       <method name="get_basename" c:identifier="gfiletree_file_get_basename">
-        <source-position filename="include/gfiletree.h" line="101"/>
+        <source-position filename="include/gfiletree.h" line="99"/>
         <return-value transfer-ownership="full">
           <doc xml:space="preserve"
                filename="include/gfiletree.h"
-               line="99">a #gchar*</doc>
+               line="97">a #gchar*</doc>
           <type name="utf8" c:type="gchar*"/>
         </return-value>
         <parameters>
-          <instance-parameter name="arg0" transfer-ownership="none">
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/gfiletree.h"
+                 line="95">A #GfiletreeFile</doc>
             <type name="File" c:type="GfiletreeFile*"/>
           </instance-parameter>
         </parameters>
       </method>
       <method name="get_children" c:identifier="gfiletree_file_get_children">
-        <source-position filename="include/gfiletree.h" line="118"/>
+        <source-position filename="include/gfiletree.h" line="116"/>
         <return-value transfer-ownership="full">
           <doc xml:space="preserve"
                filename="include/gfiletree.h"
-               line="116">List of #GfiletreeFile</doc>
+               line="114">List of #GfiletreeFile</doc>
           <type name="GLib.List" c:type="GList*">
             <type name="File"/>
           </type>
@@ -234,79 +283,91 @@ and/or use gtk-doc annotations.  -->
           <instance-parameter name="self" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="113">A #GfiletreeFile</doc>
+                 line="111">A #GfiletreeFile</doc>
             <type name="File" c:type="GfiletreeFile*"/>
           </instance-parameter>
           <parameter name="iter" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="114">A #GtkTreeIter</doc>
+                 line="112">A #GtkTreeIter</doc>
             <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
           </parameter>
         </parameters>
       </method>
       <method name="get_parent" c:identifier="gfiletree_file_get_parent">
-        <source-position filename="include/gfiletree.h" line="93"/>
+        <source-position filename="include/gfiletree.h" line="91"/>
         <return-value transfer-ownership="full">
           <doc xml:space="preserve"
                filename="include/gfiletree.h"
-               line="91">a #gchar*</doc>
+               line="89">a #gchar*</doc>
           <type name="utf8" c:type="gchar*"/>
         </return-value>
         <parameters>
-          <instance-parameter name="arg0" transfer-ownership="none">
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/gfiletree.h"
+                 line="87">A #GfiletreeFile</doc>
             <type name="File" c:type="GfiletreeFile*"/>
           </instance-parameter>
         </parameters>
       </method>
       <method name="get_path" c:identifier="gfiletree_file_get_path">
-        <source-position filename="include/gfiletree.h" line="85"/>
+        <source-position filename="include/gfiletree.h" line="83"/>
         <return-value transfer-ownership="none">
           <doc xml:space="preserve"
                filename="include/gfiletree.h"
-               line="83">a #gchar*</doc>
+               line="81">a #gchar*</doc>
           <type name="utf8" c:type="gchar*"/>
         </return-value>
         <parameters>
-          <instance-parameter name="arg0" transfer-ownership="none">
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/gfiletree.h"
+                 line="79">A #GfiletreeFile</doc>
             <type name="File" c:type="GfiletreeFile*"/>
           </instance-parameter>
         </parameters>
       </method>
       <method name="get_tooltip" c:identifier="gfiletree_file_get_tooltip">
-        <source-position filename="include/gfiletree.h" line="109"/>
+        <source-position filename="include/gfiletree.h" line="107"/>
         <return-value transfer-ownership="none">
           <doc xml:space="preserve"
                filename="include/gfiletree.h"
-               line="107">a #gchar*</doc>
+               line="105">a #gchar*</doc>
           <type name="utf8" c:type="gchar*"/>
         </return-value>
         <parameters>
-          <instance-parameter name="arg0" transfer-ownership="none">
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/gfiletree.h"
+                 line="103">A #GfiletreeFile</doc>
             <type name="File" c:type="GfiletreeFile*"/>
           </instance-parameter>
         </parameters>
       </method>
       <method name="set_path" c:identifier="gfiletree_file_set_path">
-        <source-position filename="include/gfiletree.h" line="77"/>
+        <source-position filename="include/gfiletree.h" line="75"/>
         <return-value transfer-ownership="none">
           <type name="none" c:type="void"/>
         </return-value>
         <parameters>
-          <instance-parameter name="arg0" transfer-ownership="none">
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/gfiletree.h"
+                 line="72">A #GfiletreeFile</doc>
             <type name="File" c:type="GfiletreeFile*"/>
           </instance-parameter>
           <parameter name="fn" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="75">A #gchar*</doc>
+                 line="73">A #gchar*</doc>
             <type name="utf8" c:type="gchar*"/>
           </parameter>
         </parameters>
       </method>
       <method name="tree_cell_render_file"
               c:identifier="gfiletree_file_tree_cell_render_file">
-        <source-position filename="include/gfiletree.h" line="129"/>
+        <source-position filename="include/gfiletree.h" line="127"/>
         <return-value transfer-ownership="none">
           <type name="none" c:type="void"/>
         </return-value>
@@ -314,31 +375,31 @@ and/or use gtk-doc annotations.  -->
           <instance-parameter name="self" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="122">A #GtkTreeViewColumn</doc>
+                 line="120">A #GtkTreeViewColumn</doc>
             <type name="File" c:type="GfiletreeFile*"/>
           </instance-parameter>
           <parameter name="tree_column" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="123">A #GtkTreeIter</doc>
+                 line="121">A #GtkTreeIter</doc>
             <type name="Gtk.TreeViewColumn" c:type="GtkTreeViewColumn*"/>
           </parameter>
           <parameter name="cell" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="124">A #GtkCellRenderer</doc>
+                 line="122">A #GtkCellRenderer</doc>
             <type name="Gtk.CellRenderer" c:type="GtkCellRenderer*"/>
           </parameter>
           <parameter name="tree_model" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="125">A #GtkTreeModel</doc>
+                 line="123">A #GtkTreeModel</doc>
             <type name="Gtk.TreeModel" c:type="GtkTreeModel*"/>
           </parameter>
           <parameter name="iter" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="126">A #GtkTreeIter</doc>
+                 line="124">A #GtkTreeIter</doc>
             <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
           </parameter>
           <parameter name="data"
@@ -347,14 +408,14 @@ and/or use gtk-doc annotations.  -->
                      allow-none="1">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="127">A #gpointer</doc>
+                 line="125">A #gpointer</doc>
             <type name="gpointer" c:type="gpointer"/>
           </parameter>
         </parameters>
       </method>
       <method name="tree_cell_render_pix"
               c:identifier="gfiletree_file_tree_cell_render_pix">
-        <source-position filename="include/gfiletree.h" line="148"/>
+        <source-position filename="include/gfiletree.h" line="146"/>
         <return-value transfer-ownership="none">
           <type name="none" c:type="void"/>
         </return-value>
@@ -362,31 +423,31 @@ and/or use gtk-doc annotations.  -->
           <instance-parameter name="self" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="141">A #GtkTreeViewColumn</doc>
+                 line="139">A #GtkTreeViewColumn</doc>
             <type name="File" c:type="GfiletreeFile*"/>
           </instance-parameter>
           <parameter name="tree_column" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="142">A #GtkTreeIter</doc>
+                 line="140">A #GtkTreeIter</doc>
             <type name="Gtk.TreeViewColumn" c:type="GtkTreeViewColumn*"/>
           </parameter>
           <parameter name="cell" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="143">A #GtkCellRenderer</doc>
+                 line="141">A #GtkCellRenderer</doc>
             <type name="Gtk.CellRenderer" c:type="GtkCellRenderer*"/>
           </parameter>
           <parameter name="tree_model" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="144">A #GtkTreeModel</doc>
+                 line="142">A #GtkTreeModel</doc>
             <type name="Gtk.TreeModel" c:type="GtkTreeModel*"/>
           </parameter>
           <parameter name="iter" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="145">A #GtkTreeIter</doc>
+                 line="143">A #GtkTreeIter</doc>
             <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
           </parameter>
           <parameter name="data"
@@ -395,7 +456,7 @@ and/or use gtk-doc annotations.  -->
                      allow-none="1">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="146">A #gpointer</doc>
+                 line="144">A #gpointer</doc>
             <type name="gpointer" c:type="gpointer"/>
           </parameter>
         </parameters>
@@ -425,21 +486,24 @@ and/or use gtk-doc annotations.  -->
     <record name="FileClass"
             c:type="GfiletreeFileClass"
             glib:is-gtype-struct-for="File">
-      <source-position filename="include/gfiletree.h" line="59"/>
+      <source-position filename="include/gfiletree.h" line="58"/>
       <field name="parent">
         <type name="GObject.ObjectClass" c:type="GObjectClass"/>
       </field>
       <field name="get_tooltip">
         <callback name="get_tooltip">
-          <source-position filename="include/gfiletree.h" line="37"/>
+          <source-position filename="include/gfiletree.h" line="36"/>
           <return-value transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="107">a #gchar*</doc>
+                 line="105">a #gchar*</doc>
             <type name="utf8" c:type="gchar*"/>
           </return-value>
           <parameters>
-            <parameter name="file" transfer-ownership="none">
+            <parameter name="self" transfer-ownership="none">
+              <doc xml:space="preserve"
+                   filename="include/gfiletree.h"
+                   line="103">A #GfiletreeFile</doc>
               <type name="File" c:type="GfiletreeFile*"/>
             </parameter>
           </parameters>
@@ -447,23 +511,26 @@ and/or use gtk-doc annotations.  -->
       </field>
       <field name="get_children">
         <callback name="get_children">
-          <source-position filename="include/gfiletree.h" line="38"/>
+          <source-position filename="include/gfiletree.h" line="37"/>
           <return-value transfer-ownership="full">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="116">List of #GfiletreeFile</doc>
+                 line="114">List of #GfiletreeFile</doc>
             <type name="GLib.List" c:type="GList*">
               <type name="File"/>
             </type>
           </return-value>
           <parameters>
-            <parameter name="file" transfer-ownership="none">
+            <parameter name="self" transfer-ownership="none">
+              <doc xml:space="preserve"
+                   filename="include/gfiletree.h"
+                   line="111">A #GfiletreeFile</doc>
               <type name="File" c:type="GfiletreeFile*"/>
             </parameter>
             <parameter name="iter" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/gfiletree.h"
-                   line="114">A #GtkTreeIter</doc>
+                   line="112">A #GtkTreeIter</doc>
               <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
             </parameter>
           </parameters>
@@ -471,7 +538,7 @@ and/or use gtk-doc annotations.  -->
       </field>
       <field name="tree_cell_render_file">
         <callback name="tree_cell_render_file">
-          <source-position filename="include/gfiletree.h" line="40"/>
+          <source-position filename="include/gfiletree.h" line="39"/>
           <return-value transfer-ownership="none">
             <type name="none" c:type="void"/>
           </return-value>
@@ -479,31 +546,31 @@ and/or use gtk-doc annotations.  -->
             <parameter name="self" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/gfiletree.h"
-                   line="122">A #GtkTreeViewColumn</doc>
+                   line="120">A #GtkTreeViewColumn</doc>
               <type name="File" c:type="GfiletreeFile*"/>
             </parameter>
             <parameter name="tree_column" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/gfiletree.h"
-                   line="123">A #GtkTreeIter</doc>
+                   line="121">A #GtkTreeIter</doc>
               <type name="Gtk.TreeViewColumn" c:type="GtkTreeViewColumn*"/>
             </parameter>
             <parameter name="cell" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/gfiletree.h"
-                   line="124">A #GtkCellRenderer</doc>
+                   line="122">A #GtkCellRenderer</doc>
               <type name="Gtk.CellRenderer" c:type="GtkCellRenderer*"/>
             </parameter>
             <parameter name="tree_model" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/gfiletree.h"
-                   line="125">A #GtkTreeModel</doc>
+                   line="123">A #GtkTreeModel</doc>
               <type name="Gtk.TreeModel" c:type="GtkTreeModel*"/>
             </parameter>
             <parameter name="iter" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/gfiletree.h"
-                   line="126">A #GtkTreeIter</doc>
+                   line="124">A #GtkTreeIter</doc>
               <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
             </parameter>
             <parameter name="data"
@@ -512,7 +579,7 @@ and/or use gtk-doc annotations.  -->
                        allow-none="1">
               <doc xml:space="preserve"
                    filename="include/gfiletree.h"
-                   line="127">A #gpointer</doc>
+                   line="125">A #gpointer</doc>
               <type name="gpointer" c:type="gpointer"/>
             </parameter>
           </parameters>
@@ -520,7 +587,7 @@ and/or use gtk-doc annotations.  -->
       </field>
       <field name="tree_cell_render_pix">
         <callback name="tree_cell_render_pix">
-          <source-position filename="include/gfiletree.h" line="49"/>
+          <source-position filename="include/gfiletree.h" line="48"/>
           <return-value transfer-ownership="none">
             <type name="none" c:type="void"/>
           </return-value>
@@ -528,31 +595,31 @@ and/or use gtk-doc annotations.  -->
             <parameter name="self" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/gfiletree.h"
-                   line="141">A #GtkTreeViewColumn</doc>
+                   line="139">A #GtkTreeViewColumn</doc>
               <type name="File" c:type="GfiletreeFile*"/>
             </parameter>
             <parameter name="tree_column" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/gfiletree.h"
-                   line="142">A #GtkTreeIter</doc>
+                   line="140">A #GtkTreeIter</doc>
               <type name="Gtk.TreeViewColumn" c:type="GtkTreeViewColumn*"/>
             </parameter>
             <parameter name="cell" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/gfiletree.h"
-                   line="143">A #GtkCellRenderer</doc>
+                   line="141">A #GtkCellRenderer</doc>
               <type name="Gtk.CellRenderer" c:type="GtkCellRenderer*"/>
             </parameter>
             <parameter name="tree_model" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/gfiletree.h"
-                   line="144">A #GtkTreeModel</doc>
+                   line="142">A #GtkTreeModel</doc>
               <type name="Gtk.TreeModel" c:type="GtkTreeModel*"/>
             </parameter>
             <parameter name="iter" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/gfiletree.h"
-                   line="145">A #GtkTreeIter</doc>
+                   line="143">A #GtkTreeIter</doc>
               <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
             </parameter>
             <parameter name="data"
@@ -561,7 +628,7 @@ and/or use gtk-doc annotations.  -->
                        allow-none="1">
               <doc xml:space="preserve"
                    filename="include/gfiletree.h"
-                   line="146">A #gpointer</doc>
+                   line="144">A #gpointer</doc>
               <type name="gpointer" c:type="gpointer"/>
             </parameter>
           </parameters>
@@ -580,21 +647,21 @@ and/or use gtk-doc annotations.  -->
            glib:type-name="GfiletreeFiletree"
            glib:get-type="gfiletree_filetree_get_type"
            glib:type-struct="FiletreeClass">
-      <source-position filename="include/gfiletree.h" line="188"/>
+      <source-position filename="include/gfiletree.h" line="185"/>
       <implements name="Atk.ImplementorIface"/>
       <implements name="Gtk.Buildable"/>
       <implements name="Gtk.Scrollable"/>
       <constructor name="new" c:identifier="gfiletree_filetree_new">
-        <source-position filename="include/gfiletree.h" line="196"/>
+        <source-position filename="include/gfiletree.h" line="193"/>
         <return-value transfer-ownership="full">
           <doc xml:space="preserve"
                filename="include/gfiletree.h"
-               line="194">a #GfiletreeFiletree</doc>
+               line="191">a #GfiletreeFiletree</doc>
           <type name="Filetree" c:type="GfiletreeFiletree*"/>
         </return-value>
       </constructor>
       <method name="add_root" c:identifier="gfiletree_filetree_add_root">
-        <source-position filename="include/gfiletree.h" line="205"/>
+        <source-position filename="include/gfiletree.h" line="202"/>
         <return-value transfer-ownership="none">
           <type name="none" c:type="void"/>
         </return-value>
@@ -602,100 +669,151 @@ and/or use gtk-doc annotations.  -->
           <instance-parameter name="self" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="203">A #GfiletreeFile</doc>
+                 line="197">A #GfiletreeFiletree</doc>
             <type name="Filetree" c:type="GfiletreeFiletree*"/>
           </instance-parameter>
           <parameter name="file" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="201">A #GfiletreeFile</doc>
+                 line="198">A #GfiletreeFile</doc>
             <type name="File" c:type="GfiletreeFile*"/>
           </parameter>
           <parameter name="show_hidden" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/gfiletree.h"
+                 line="199">A #gboolean</doc>
             <type name="gboolean" c:type="bool"/>
           </parameter>
           <parameter name="filter" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/gfiletree.h"
+                 line="200">A #gchar*</doc>
             <type name="utf8" c:type="const gchar*"/>
           </parameter>
         </parameters>
       </method>
       <method name="bash" c:identifier="gfiletree_filetree_bash">
-        <source-position filename="include/gfiletree.h" line="238"/>
+        <source-position filename="include/gfiletree.h" line="235"/>
         <return-value transfer-ownership="full">
           <doc xml:space="preserve"
                filename="include/gfiletree.h"
-               line="236">a #gchar*</doc>
+               line="233">a #gchar*</doc>
           <type name="utf8" c:type="const gchar*"/>
         </return-value>
         <parameters>
           <instance-parameter name="self" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="233">A #GfiletreeFiletree</doc>
+                 line="230">A #GfiletreeFiletree</doc>
             <type name="Filetree" c:type="GfiletreeFiletree*"/>
           </instance-parameter>
           <parameter name="cmd" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="234">A #gchar*</doc>
+                 line="231">A #gchar*</doc>
             <type name="utf8" c:type="gchar*"/>
           </parameter>
         </parameters>
       </method>
-      <method name="clear" c:identifier="gfiletree_filetree_clear">
-        <source-position filename="include/gfiletree.h" line="211"/>
+      <method name="bash_async" c:identifier="gfiletree_filetree_bash_async">
+        <source-position filename="include/gfiletree.h" line="257"/>
         <return-value transfer-ownership="none">
           <type name="none" c:type="void"/>
         </return-value>
         <parameters>
           <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/gfiletree.h"
+                 line="251">A #GfiletreeFiletree</doc>
+            <type name="Filetree" c:type="GfiletreeFiletree*"/>
+          </instance-parameter>
+          <parameter name="cmd" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/gfiletree.h"
+                 line="252">A #gchar*</doc>
+            <type name="utf8" c:type="gchar*"/>
+          </parameter>
+          <parameter name="callback"
+                     transfer-ownership="none"
+                     nullable="1"
+                     allow-none="1"
+                     scope="async"
+                     closure="2">
+            <doc xml:space="preserve"
+                 filename="include/gfiletree.h"
+                 line="253">A #GfiletreeAsyncBashCallbackFunc*</doc>
+            <type name="AsyncBashCallbackFunc"
+                  c:type="GfiletreeAsyncBashCallbackFunc*"/>
+          </parameter>
+          <parameter name="user_data"
+                     transfer-ownership="none"
+                     nullable="1"
+                     allow-none="1"
+                     closure="1">
+            <doc xml:space="preserve"
+                 filename="include/gfiletree.h"
+                 line="254">a #gpointer</doc>
+            <type name="gpointer" c:type="gpointer"/>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="clear" c:identifier="gfiletree_filetree_clear">
+        <source-position filename="include/gfiletree.h" line="208"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/gfiletree.h"
+                 line="206">A #GfiletreeFiletree</doc>
             <type name="Filetree" c:type="GfiletreeFiletree*"/>
           </instance-parameter>
         </parameters>
       </method>
       <method name="file_at_pos" c:identifier="gfiletree_filetree_file_at_pos">
-        <source-position filename="include/gfiletree.h" line="228"/>
+        <source-position filename="include/gfiletree.h" line="225"/>
         <return-value transfer-ownership="full">
           <doc xml:space="preserve"
                filename="include/gfiletree.h"
-               line="226">a #GfiletreeFile</doc>
+               line="223">a #GfiletreeFile</doc>
           <type name="File" c:type="GfiletreeFile*"/>
         </return-value>
         <parameters>
           <instance-parameter name="self" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="222">A #GfiletreeFiletree</doc>
+                 line="219">A #GfiletreeFiletree</doc>
             <type name="Filetree" c:type="GfiletreeFiletree*"/>
           </instance-parameter>
           <parameter name="x" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="223">A #gint</doc>
+                 line="220">A #gint</doc>
             <type name="gint" c:type="gint"/>
           </parameter>
           <parameter name="y" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="224">A #gint</doc>
+                 line="221">A #gint</doc>
             <type name="gint" c:type="gint"/>
           </parameter>
         </parameters>
       </method>
       <method name="get_selected_file"
               c:identifier="gfiletree_filetree_get_selected_file">
-        <source-position filename="include/gfiletree.h" line="218"/>
+        <source-position filename="include/gfiletree.h" line="215"/>
         <return-value transfer-ownership="full">
           <doc xml:space="preserve"
                filename="include/gfiletree.h"
-               line="216">a #GfiletreeFile</doc>
+               line="213">a #GfiletreeFile</doc>
           <type name="File" c:type="GfiletreeFile*"/>
         </return-value>
         <parameters>
           <instance-parameter name="self" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="215">A #GfiletreeFiletree</doc>
+                 line="212">A #GfiletreeFiletree</doc>
             <type name="Filetree" c:type="GfiletreeFiletree*"/>
           </instance-parameter>
         </parameters>
@@ -728,7 +846,7 @@ and/or use gtk-doc annotations.  -->
     <record name="FiletreeClass"
             c:type="GfiletreeFiletreeClass"
             glib:is-gtype-struct-for="Filetree">
-      <source-position filename="include/gfiletree.h" line="188"/>
+      <source-position filename="include/gfiletree.h" line="185"/>
       <field name="parent">
         <type name="Gtk.TreeViewClass" c:type="GtkTreeViewClass"/>
       </field>
@@ -739,7 +857,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="GET_CLASS"
                     c:identifier="GFILETREE_GET_CLASS"
                     introspectable="0">
-      <source-position filename="include/gfiletree.h" line="309"/>
+      <source-position filename="include/gfiletree.h" line="329"/>
       <parameters>
         <parameter name="o">
         </parameter>
@@ -748,7 +866,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="GITFILE"
                     c:identifier="GFILETREE_GITFILE"
                     introspectable="0">
-      <source-position filename="include/gfiletree.h" line="314"/>
+      <source-position filename="include/gfiletree.h" line="334"/>
       <parameters>
         <parameter name="o">
         </parameter>
@@ -757,7 +875,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="GITFILE_CLASS"
                     c:identifier="GFILETREE_GITFILE_CLASS"
                     introspectable="0">
-      <source-position filename="include/gfiletree.h" line="316"/>
+      <source-position filename="include/gfiletree.h" line="336"/>
       <parameters>
         <parameter name="c">
         </parameter>
@@ -766,7 +884,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="GITFILE_GET_CLASS"
                     c:identifier="GFILETREE_GITFILE_GET_CLASS"
                     introspectable="0">
-      <source-position filename="include/gfiletree.h" line="322"/>
+      <source-position filename="include/gfiletree.h" line="342"/>
       <parameters>
         <parameter name="o">
         </parameter>
@@ -779,29 +897,38 @@ and/or use gtk-doc annotations.  -->
            glib:type-name="GfiletreeGitFile"
            glib:get-type="gfiletree_gitfile_get_type"
            glib:type-struct="GitFileClass">
-      <source-position filename="include/gfiletree.h" line="268"/>
+      <source-position filename="include/gfiletree.h" line="289"/>
       <constructor name="new" c:identifier="gfiletree_gitfile_new">
-        <source-position filename="include/gfiletree.h" line="279"/>
+        <source-position filename="include/gfiletree.h" line="299"/>
         <return-value transfer-ownership="full">
           <doc xml:space="preserve"
                filename="include/gfiletree.h"
-               line="277">a #GfiletreeGitFile</doc>
+               line="297">a #GfiletreeGitFile</doc>
           <type name="GitFile" c:type="GfiletreeGitFile*"/>
         </return-value>
         <parameters>
           <parameter name="fn" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/gfiletree.h"
-                 line="276">A #gchar*</doc>
+                 line="296">A #gchar*</doc>
             <type name="utf8" c:type="const gchar*"/>
           </parameter>
         </parameters>
       </constructor>
+      <field name="parent">
+        <type name="File" c:type="GfiletreeFile"/>
+      </field>
+      <field name="status">
+        <type name="utf8" c:type="gchar*"/>
+      </field>
+      <field name="gitdata" introspectable="0">
+        <type c:type="GitStatus*"/>
+      </field>
     </class>
     <record name="GitFileClass"
             c:type="GfiletreeGitFileClass"
             glib:is-gtype-struct-for="GitFile">
-      <source-position filename="include/gfiletree.h" line="268"/>
+      <source-position filename="include/gfiletree.h" line="289"/>
       <field name="parent">
         <type name="FileClass" c:type="GfiletreeFileClass"/>
       </field>
@@ -809,7 +936,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="IS_FILETREE"
                     c:identifier="GFILETREE_IS_FILETREE"
                     introspectable="0">
-      <source-position filename="include/gfiletree.h" line="305"/>
+      <source-position filename="include/gfiletree.h" line="325"/>
       <parameters>
         <parameter name="o">
         </parameter>
@@ -818,7 +945,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="IS_FILETREE_CLASS"
                     c:identifier="GFILETREE_IS_FILETREE_CLASS"
                     introspectable="0">
-      <source-position filename="include/gfiletree.h" line="307"/>
+      <source-position filename="include/gfiletree.h" line="327"/>
       <parameters>
         <parameter name="c">
         </parameter>
@@ -827,7 +954,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="IS_FILETREE_FILE"
                     c:identifier="GFILETREE_IS_FILETREE_FILE"
                     introspectable="0">
-      <source-position filename="include/gfiletree.h" line="292"/>
+      <source-position filename="include/gfiletree.h" line="312"/>
       <parameters>
         <parameter name="o">
         </parameter>
@@ -836,7 +963,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="IS_FILETREE_FILE_CLASS"
                     c:identifier="GFILETREE_IS_FILETREE_FILE_CLASS"
                     introspectable="0">
-      <source-position filename="include/gfiletree.h" line="294"/>
+      <source-position filename="include/gfiletree.h" line="314"/>
       <parameters>
         <parameter name="c">
         </parameter>
@@ -845,7 +972,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="IS_FILETREE_GITFILE"
                     c:identifier="GFILETREE_IS_FILETREE_GITFILE"
                     introspectable="0">
-      <source-position filename="include/gfiletree.h" line="318"/>
+      <source-position filename="include/gfiletree.h" line="338"/>
       <parameters>
         <parameter name="o">
         </parameter>
@@ -854,7 +981,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="IS_FILETREE_GITFILE_CLASS"
                     c:identifier="GFILETREE_IS_FILETREE_GITFILE_CLASS"
                     introspectable="0">
-      <source-position filename="include/gfiletree.h" line="320"/>
+      <source-position filename="include/gfiletree.h" line="340"/>
       <parameters>
         <parameter name="c">
         </parameter>

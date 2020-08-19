@@ -86,7 +86,7 @@ $(LIB_BUILD)/$(TYPELIB_FILE): $(LIB_BUILD)/$(GIR_FILE)
 
 
 $(LIB_BUILD)/$(GIR_FILE): ../include/gfiletree.h gfiletree.cpp
-	libtool exec g-ir-scanner $^ -L $(LIB_BUILD) --library=filetree  --include=Gtk-3.0 --include=GObject-2.0  --namespace=$(NAMESPACE) --nsversion=$(NSVERSION) --output=$@
+	libtool exec g-ir-scanner $^ -L $(LIB_BUILD) --library=filetree --warn-all  --include=Gtk-3.0 --include=GObject-2.0  --namespace=$(NAMESPACE) --nsversion=$(NSVERSION) --output=$@
 		
 #################################################
 # make clean
