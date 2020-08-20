@@ -15,6 +15,8 @@
 
 #define PROG "[MktFileTree] "
 
+std::map<std::string,std::string> git_porcelain(MtkFile* file);
+std::map<std::string,std::string> git_origin_status(MtkFile* file);
 
 std::string escape_shell( const std::string& cmd )
 {
@@ -765,7 +767,6 @@ void mtk_bash_on_data(GObject *source_object, GAsyncResult *res, gpointer user_d
 
 void mtk_bash_queue_read(AsyncBash *ab)
 {
-
     g_data_input_stream_read_line_async( ab->stream, 0, ab->cancellable, mtk_bash_on_data, ab );
 }
 
@@ -860,7 +861,7 @@ void mtk_bash_async(const gchar* cmd, MtkAsyncBashCallbackFunc cb, gpointer user
 
 ///////////////////////////////////////////////////
 
-
+/*
 class Git 
 {
 public:
@@ -1279,7 +1280,7 @@ private:
     GInputStream* stream = 0;
     GSubprocessFlags flags = (GSubprocessFlags)(G_SUBPROCESS_FLAGS_STDOUT_PIPE|G_SUBPROCESS_FLAGS_STDERR_MERGE);
 };
-
+*/
 gchar* mtk_bash( const gchar* cmd, gint* result)
 {
     if(result) *result = -1;
@@ -1327,20 +1328,6 @@ gchar* mtk_bash( const gchar* cmd, gint* result)
     }
 
     return g_strdup( oss.str().c_str() );
-
-/*    MtkFile* file = mtk_filetree_get_selected_file(self);
-
-    Git git(file);
-
-    g_object_unref(file);
-
-    Git::GitResult gr = git.status();
-
-    g_print("GIT: %s \n", gr.first.c_str() );
-    g_print("GIT: %s \n", gr.second.c_str() );
-
-    return g_strdup(gr.second.c_str());
-*/
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1373,14 +1360,6 @@ static void mtk_gitfile_init(MtkGitFile *file)
 
     file->status = g_strdup("  ");
     file->gitdata = 0;
-    /*
-    file->root = 0;
-    file->file_name = 0;
-    file->is_place_holder = FALSE;
-    file->is_directory = TRUE;
-    file->is_empty = FALSE;
-    file->is_hidden = FALSE;
-*/
 }
 
 
@@ -1480,15 +1459,6 @@ static void mtk_gitfile_finalize(GObject *object)
     g_free( file->status );
 
     delete file->gitdata;
-    // TODO . chain up? 
-/*
-    g_free(file->file_name);
-
-    if(file->root)
-    {
-        gtk_tree_iter_free(file->root);
-    }
-*/
 }
 
 gchar* virtual_mtk_gitfile_get_tooltip(MtkFile* file)
@@ -1496,7 +1466,6 @@ gchar* virtual_mtk_gitfile_get_tooltip(MtkFile* file)
     MtkGitFile* f = (MtkGitFile*)file;
     GitStatus* gs = mtk_gitfile_get_status_data( f);
 
-    //return g_strdup(gs.tooltip.c_str());
     return (gchar*)(gs->tooltip.c_str());
 }
 
@@ -1514,15 +1483,12 @@ GList* virtual_mtk_gitfile_get_children(MtkFile* file, GtkTreeIter* iter)
 
     std::vector<MtkGitFile*> dirs;
     std::vector<MtkGitFile*> files;
+
+    std::map<std::string,std::string> git_paths = git_porcelain(file);
+    std::map<std::string,std::string> origin = git_origin_status(file);
     
-    Git git(file);
-    std::map<std::string,std::string> git_paths = git.porcelain();
-    std::map<std::string,std::string> origin = git.origin_status();
-
-
     for( auto& child : children)
     {
-
         std::string status = "";
         if( git_paths.count(child) > 0)
         {
@@ -1578,6 +1544,8 @@ void virtual_mtk_gitfile_tree_cell_render_file(
     gchar* bn = mtk_file_get_basename(self);
     gchar* c = g_markup_escape_text(bn,-1);
 
+    GitStatus* gs = mtk_gitfile_get_status_data( (MtkGitFile*) self);
+
     std::ostringstream oss;
     if ( self->is_hidden)
     {
@@ -1585,7 +1553,7 @@ void virtual_mtk_gitfile_tree_cell_render_file(
     }
     else
     {
-        oss << c;
+        oss  << c;
     }
     g_free(c);
     
@@ -1593,8 +1561,6 @@ void virtual_mtk_gitfile_tree_cell_render_file(
     g_value_init( &gv, G_TYPE_STRING );
     g_value_set_string( &gv, oss.str().c_str() );
     g_object_set_property( (GObject*)cell, "markup", &gv);
-
-    GitStatus* gs = mtk_gitfile_get_status_data( (MtkGitFile*) self);
 
     GValue gvc = G_VALUE_INIT;
     g_value_init( &gvc, G_TYPE_STRING );
@@ -1880,12 +1846,12 @@ std::map<std::string,std::string> git_origin_status(MtkFile* file)
     return result;
 }
 
-std::map<std::string,std::string> porcelain(MtkFile* file)
+std::map<std::string,std::string> git_porcelain(MtkFile* file)
 {
     gchar* status = 0;
     gchar* content = 0;
 
-    gint exit_code = mtk_git_cmd(file, MTK_GIT_ORIGIN_STATUS, &status, &content);
+    gint exit_code = mtk_git_cmd(file, MTK_GIT_PORCELAIN, &status, &content);
 
     std::string cd = file->file_name;
     if ( !file->is_directory)
@@ -1952,6 +1918,11 @@ std::map<std::string,std::string> porcelain(MtkFile* file)
     }
     g_free(status);
     g_free(content);
+
+    for( auto it = result.begin(); it != result.end(); it++)
+    {
+        g_print("%s -> %s\n", (*it).first.c_str(), (*it).second.c_str() );
+    }
     return result;
 }
 
@@ -2109,7 +2080,7 @@ void mtk_git_cmd_async(MtkFile* file, MtkGitCmd cmd, MtkAsyncGitCallbackFunc cal
         { MTK_GIT_PULL, "GIT_ASKPASS=true git pull" },
         { MTK_GIT_PUSH, "GIT_ASKPASS=true git push" },
         { MTK_GIT_DEFAULT_BRANCH, "git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'" },
-        { MTK_GIT_BRANCHES, "git branch --no-color"}        
+        { MTK_GIT_BRANCHES, "git branch --no-color"}
     };
 
     static std::map<MtkGitCmd,std::string> cmds_with_target = {

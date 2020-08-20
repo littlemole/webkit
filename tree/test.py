@@ -54,10 +54,10 @@ controller = Controller()
 
 # create html widget
 tree = Filetree()
-tree.set_visible(True)
+#tree.set_visible(True)
 
-f = GitFile.new(d)
-tree.add_root(f,True,".*")
+f = GitFile.New(d)
+tree.add_root(f,True, ".*") #False,".*\\.cpp")
 
 
 # make resizable
