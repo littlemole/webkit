@@ -56,7 +56,7 @@ controller = Controller()
 tree = Filetree()
 #tree.set_visible(True)
 
-f = GitFile.New(d)
+f = GitFile.new(d)
 tree.add_root(f,True, ".*") #False,".*\\.cpp")
 
 
