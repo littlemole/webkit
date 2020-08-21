@@ -61,26 +61,11 @@ GType		mtk_file_get_type	() G_GNUC_CONST;
 
 
 /**
- * mtk_file_new: 
+ * mtk_file_new: (constructor)
  * @fn : A #gchar*
  * Returns: (transfer full): a #MtkFile
  */
 MtkFile*	mtk_file_new( const gchar* fn);
-
-/**
- * mtk_file_set_path: 
- * @self: A #MtkFile
- * @fn : A #gchar*
- */
-void mtk_file_set_path(MtkFile* self,  gchar* fn);
-
-/**
- * mtk_file_get_path: 
- * @self: A #MtkFile
- *
- * Returns: (transfer none): a #gchar*
- */
-gchar* mtk_file_get_path(MtkFile* self);
 
 /**
  * mtk_file_get_parent: 

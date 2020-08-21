@@ -28,6 +28,18 @@ struct GPROP_BASE
 
     }
 
+    template<class T>
+    void set_value( T* o, const GValue* v)
+    {
+        if(G_VALUE_HOLDS_OBJECT(v))
+        {
+            if(o)
+                g_object_unref(o);
+            o = (T*)(GObject*)g_value_get_object(v);
+            g_object_ref(o);
+        }
+    }
+
     void set_value( int& i, const GValue* v)
     {
         i = g_value_get_int(v);
@@ -51,6 +63,12 @@ struct GPROP_BASE
     void set_value( float& i, const GValue* v)
     {
         i = g_value_get_float(v);
+    }
+
+    template<class T>
+    void get_value( GValue* v, T* o)
+    {
+        g_value_set_object( v, o);
     }
 
     void get_value( GValue* v, const char* c)

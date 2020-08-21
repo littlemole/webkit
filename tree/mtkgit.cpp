@@ -1,26 +1,39 @@
+#include "common.h"
 #include "mtkfiletree.h"
 #include "mtkgit.h"
-#include <glib-object.h>
-#include <gio/gio.h>
-#include "gprop.h"
-#include <sstream>
-#include <dlfcn.h>
-#include <libgen.h>
-#include <map>
-#include <regex>
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <dirent.h>
-#include "common.h"
 
 #define PROG "[MktGitFile] "
 
+//////////////////////////////////////////////////////////////////////
+
+// forwards
 
 std::map<std::string,std::string> git_porcelain(MtkFile* file);
 std::map<std::string,std::string> git_origin_status(MtkFile* file);
 
+
+static GitStatus* mtk_gitfile_get_status_data(MtkGitFile* file);
+
+gchar* virtual_mtk_gitfile_get_tooltip(MtkFile* file);
+GList* virtual_mtk_gitfile_get_children(MtkFile* file, GtkTreeIter* iter);
+void virtual_mtk_gitfile_tree_cell_render_pix(
+        MtkFile* self,
+        GtkTreeViewColumn *tree_column,
+        GtkCellRenderer *cell,
+        GtkTreeModel *tree_model,
+        GtkTreeIter *iter,
+        gpointer data
+    );
+void virtual_mtk_gitfile_tree_cell_render_file(
+        MtkFile* self,
+        GtkTreeViewColumn *tree_column,
+        GtkCellRenderer *cell,
+        GtkTreeModel *tree_model,
+        GtkTreeIter *iter,
+        gpointer data
+    );
+
+static void mtk_gitfile_finalize(GObject *object);
 
 //////////////////////////////////////////////////////////////////////
 
@@ -40,7 +53,26 @@ struct _GitStatus
     std::string tooltip;
 };
 
-static GitStatus* mtk_gitfile_get_status_data(MtkGitFile* file);
+
+static void mtk_gitfile_class_init(MtkGitFileClass *klass)
+{
+    if ( !klass)
+    {
+        g_print( PROG "mtk_gitfile_class_init: MtkFileClass is null \n" );
+        return;
+    }
+
+    GObjectClass *object_class = G_OBJECT_CLASS (klass);
+    object_class->finalize     = mtk_gitfile_finalize;
+
+    MtkFileClass* parentClass = (MtkFileClass*)klass;
+
+    parentClass->get_tooltip = &virtual_mtk_gitfile_get_tooltip;
+    parentClass->get_children = &virtual_mtk_gitfile_get_children;
+    parentClass->tree_cell_render_file = &virtual_mtk_gitfile_tree_cell_render_file;
+    parentClass->tree_cell_render_pix = &virtual_mtk_gitfile_tree_cell_render_pix;
+}
+
 
 static void mtk_gitfile_init(MtkGitFile *file)
 {
@@ -54,6 +86,178 @@ static void mtk_gitfile_init(MtkGitFile *file)
     file->gitdata = 0;
 }
 
+MtkGitFile*	mtk_gitfile_new( const gchar* fn)
+{
+    MtkGitFile* file;
+
+    file = (MtkGitFile*)g_object_new (MTK_GITFILE_TYPE, NULL);
+
+    MtkFile* f = (MtkFile*)file;
+
+    GValue gv = G_VALUE_INIT;
+    g_value_init( &gv, G_TYPE_STRING );
+    g_value_set_string( &gv, fn );
+
+    g_object_set_property( G_OBJECT(f),"path",&gv);    
+
+    return file;    
+}
+ 
+static void mtk_gitfile_finalize(GObject *object)
+{
+    MtkGitFile* file = (MtkGitFile*)object;
+
+    G_OBJECT_CLASS (mtk_gitfile_parent_class)->finalize (object);
+
+    g_free( file->status );
+
+    delete file->gitdata;
+}
+
+
+//////////////////////////////////////////////////////////////////////
+
+
+
+gchar* virtual_mtk_gitfile_get_tooltip(MtkFile* file)
+{
+    MtkGitFile* f = (MtkGitFile*)file;
+    GitStatus* gs = mtk_gitfile_get_status_data( f);
+
+    return (gchar*)(gs->tooltip.c_str());
+}
+
+
+GList* virtual_mtk_gitfile_get_children(MtkFile* file, GtkTreeIter* iter)
+{
+    GList* glist = 0;
+
+    if (!file->is_directory)
+    {
+        return glist;
+    }
+
+    std::vector<std::string> children = listdir(file->file_name);
+    std::sort(children.begin(), children.end());
+
+    std::vector<MtkGitFile*> dirs;
+    std::vector<MtkGitFile*> files;
+
+    std::map<std::string,std::string> git_paths = git_porcelain(file);
+    std::map<std::string,std::string> origin = git_origin_status(file);
+    
+    for( auto& child : children)
+    {
+        std::string status = "";
+        if( git_paths.count(child) > 0)
+        {
+            status = git_paths[child];
+        }
+        else if ( origin.count(child) > 0 )
+        {
+            status = "OO";
+        }
+
+        std::ostringstream oss;
+        oss << file->file_name << "/" << child;
+
+        std::string target = oss.str();
+
+        MtkGitFile* gf = mtk_gitfile_new( target.c_str() );
+        gf->status = g_strdup(status.c_str());
+
+        MtkFile* f = (MtkFile*)gf;
+        f->root = gtk_tree_iter_copy(iter);
+        if ( f->is_directory )
+        {
+            dirs.push_back(gf);
+        }
+        else
+        {
+            files.push_back(gf);
+        }
+    }
+
+    for( auto d : dirs )
+    {
+        glist = g_list_append(glist,d);
+    }
+
+    for( auto f : files )
+    {
+        glist = g_list_append(glist,f);
+    }
+
+    return glist;
+}
+
+
+
+void virtual_mtk_gitfile_tree_cell_render_file(
+        MtkFile* self,
+        GtkTreeViewColumn *tree_column,
+        GtkCellRenderer *cell,
+        GtkTreeModel *tree_model,
+        GtkTreeIter *iter,
+        gpointer data
+    )
+{
+    gchar* bn = mtk_file_get_basename(self);
+    gchar* c = g_markup_escape_text(bn,-1);
+
+    GitStatus* gs = mtk_gitfile_get_status_data( (MtkGitFile*) self);
+
+    std::ostringstream oss;
+    if ( self->is_hidden)
+    {
+        oss << "<i>" << c << "</i>";
+    }
+    else
+    {
+        oss  << c;
+    }
+    g_free(c);
+    
+    GValue gv = G_VALUE_INIT;
+    g_value_init( &gv, G_TYPE_STRING );
+    g_value_set_string( &gv, oss.str().c_str() );
+    g_object_set_property( (GObject*)cell, "markup", &gv);
+
+    GValue gvc = G_VALUE_INIT;
+    g_value_init( &gvc, G_TYPE_STRING );
+    g_value_set_string( &gvc,gs->color.c_str() );
+    g_object_set_property( (GObject*)cell, "foreground", &gvc);
+
+    g_free(bn);
+}
+
+void virtual_mtk_gitfile_tree_cell_render_pix(
+        MtkFile* self,
+        GtkTreeViewColumn *tree_column,
+        GtkCellRenderer *cell,
+        GtkTreeModel *tree_model,
+        GtkTreeIter *iter,
+        gpointer data
+    )
+{
+    GValue gv = G_VALUE_INIT;
+    g_value_init( &gv, G_TYPE_STRING );
+
+    if ( self->is_empty )
+    {
+        g_value_set_static_string( &gv, NULL );
+        g_object_set_property( (GObject*)cell, "stock_id", &gv);
+    }
+    else
+    {
+        GitStatus* gs = mtk_gitfile_get_status_data( (MtkGitFile*) self);
+
+        g_value_set_static_string( &gv, gs->icon.c_str() );
+        g_object_set_property( (GObject*)cell, "stock_id", &gv);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
 
 
 static GitStatus* mtk_gitfile_get_status_data_new(MtkGitFile* file)
@@ -141,205 +345,9 @@ static GitStatus* mtk_gitfile_get_status_data(MtkGitFile* file)
 
     return file->gitdata;
 }
- 
-static void mtk_gitfile_finalize(GObject *object)
-{
-    MtkGitFile* file = (MtkGitFile*)object;
 
-    G_OBJECT_CLASS (mtk_gitfile_parent_class)->finalize (object);
-
-    g_free( file->status );
-
-    delete file->gitdata;
-}
-
-gchar* virtual_mtk_gitfile_get_tooltip(MtkFile* file)
-{
-    MtkGitFile* f = (MtkGitFile*)file;
-    GitStatus* gs = mtk_gitfile_get_status_data( f);
-
-    return (gchar*)(gs->tooltip.c_str());
-}
-
-GList* virtual_mtk_gitfile_get_children(MtkFile* file, GtkTreeIter* iter)
-{
-    GList* glist = 0;
-
-    if (!file->is_directory)
-    {
-        return glist;
-    }
-
-    std::vector<std::string> children = listdir(file->file_name);
-    std::sort(children.begin(), children.end());
-
-    std::vector<MtkGitFile*> dirs;
-    std::vector<MtkGitFile*> files;
-
-    std::map<std::string,std::string> git_paths = git_porcelain(file);
-    std::map<std::string,std::string> origin = git_origin_status(file);
-    
-    for( auto& child : children)
-    {
-        std::string status = "";
-        if( git_paths.count(child) > 0)
-        {
-            status = git_paths[child];
-        }
-        else if ( origin.count(child) > 0 )
-        {
-            status = "OO";
-        }
-
-        std::ostringstream oss;
-        oss << file->file_name << "/" << child;
-
-        std::string target = oss.str();
-
-        MtkGitFile* gf = mtk_gitfile_new( target.c_str() );
-        gf->status = g_strdup(status.c_str());
-
-        MtkFile* f = (MtkFile*)gf;
-        f->root = gtk_tree_iter_copy(iter);
-        if ( f->is_directory )
-        {
-            dirs.push_back(gf);
-        }
-        else
-        {
-            files.push_back(gf);
-        }
-    }
-
-    for( auto d : dirs )
-    {
-        glist = g_list_append(glist,d);
-    }
-
-    for( auto f : files )
-    {
-        glist = g_list_append(glist,f);
-    }
-
-    return glist;
-}
-
-void virtual_mtk_gitfile_tree_cell_render_file(
-        MtkFile* self,
-        GtkTreeViewColumn *tree_column,
-        GtkCellRenderer *cell,
-        GtkTreeModel *tree_model,
-        GtkTreeIter *iter,
-        gpointer data
-    )
-{
-    gchar* bn = mtk_file_get_basename(self);
-    gchar* c = g_markup_escape_text(bn,-1);
-
-    GitStatus* gs = mtk_gitfile_get_status_data( (MtkGitFile*) self);
-
-    std::ostringstream oss;
-    if ( self->is_hidden)
-    {
-        oss << "<i>" << c << "</i>";
-    }
-    else
-    {
-        oss  << c;
-    }
-    g_free(c);
-    
-    GValue gv = G_VALUE_INIT;
-    g_value_init( &gv, G_TYPE_STRING );
-    g_value_set_string( &gv, oss.str().c_str() );
-    g_object_set_property( (GObject*)cell, "markup", &gv);
-
-    GValue gvc = G_VALUE_INIT;
-    g_value_init( &gvc, G_TYPE_STRING );
-    g_value_set_string( &gvc,gs->color.c_str() );
-    g_object_set_property( (GObject*)cell, "foreground", &gvc);
-
-    g_free(bn);
-}
-
-void virtual_mtk_gitfile_tree_cell_render_pix(
-        MtkFile* self,
-        GtkTreeViewColumn *tree_column,
-        GtkCellRenderer *cell,
-        GtkTreeModel *tree_model,
-        GtkTreeIter *iter,
-        gpointer data
-    )
-{
-    GValue gv = G_VALUE_INIT;
-    g_value_init( &gv, G_TYPE_STRING );
-
-    if ( self->is_empty )
-    {
-        g_value_set_static_string( &gv, NULL );
-        g_object_set_property( (GObject*)cell, "stock_id", &gv);
-    }
-    else
-    {
-        GitStatus* gs = mtk_gitfile_get_status_data( (MtkGitFile*) self);
-
-        g_value_set_static_string( &gv, gs->icon.c_str() );
-        g_object_set_property( (GObject*)cell, "stock_id", &gv);
-    }
-}
-
-
-static void mtk_gitfile_class_init(MtkGitFileClass *klass)
-{
-    if ( !klass)
-    {
-        g_print( PROG "mtk_gitfile_class_init: MtkFileClass is null \n" );
-        return;
-    }
-
-    GObjectClass *object_class = G_OBJECT_CLASS (klass);
-    object_class->finalize     = mtk_gitfile_finalize;
-
-    MtkFileClass* parentClass = (MtkFileClass*)klass;
-
-    parentClass->get_tooltip = &virtual_mtk_gitfile_get_tooltip;
-    parentClass->get_children = &virtual_mtk_gitfile_get_children;
-    parentClass->tree_cell_render_file = &virtual_mtk_gitfile_tree_cell_render_file;
-    parentClass->tree_cell_render_pix = &virtual_mtk_gitfile_tree_cell_render_pix;
-}
-
-MtkGitFile*	mtk_gitfile_new( const gchar* fn)
-{
-    MtkGitFile* file;
-
-    file = (MtkGitFile*)g_object_new (MTK_GITFILE_TYPE, NULL);
-
-    MtkFile* f = (MtkFile*)file;
-
-    f->file_name = g_strdup(fn);
-
-    struct stat st;
-    stat(fn,&st);
-
-    if( S_ISDIR(st.st_mode) )
-    {
-        f->is_directory = TRUE;
-    }
-    else
-    {
-        f->is_directory = FALSE;
-    }
-
-    char* tmp = g_strdup(fn);
-    char* bn = basename(tmp);
-
-    if( bn[0] == '.') {
-        f->is_hidden = TRUE;
-    }
-
-    g_free(tmp);
-    return file;    
-}
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
 
 
 std::string make_cmd(const std::string& cd, const std::string& cmd)
@@ -390,7 +398,6 @@ gint git_get_branches(gint exit_code, const std::string& out, gchar** status, gc
     }
     return exit_code;
 }
-
 
 gint mtk_git_cmd(MtkFile* file, MtkGitCmd cmd, gchar** status, gchar** contents )
 {
@@ -444,11 +451,9 @@ gint mtk_git_cmd(MtkFile* file, MtkGitCmd cmd, gchar** status, gchar** contents 
     std::string content = tmp;
     g_free(tmp);
 
-    switch( cmd )
+    if( cmd == MTK_GIT_BRANCHES)
     {
-        case MTK_GIT_BRANCHES: {
-            return git_get_branches(exit_code,content,status,contents);
-        }
+        return git_get_branches(exit_code,content,status,contents);
     }
 
 
@@ -472,13 +477,16 @@ gint mtk_git_cmd(MtkFile* file, MtkGitCmd cmd, gchar** status, gchar** contents 
     return exit_code;
 }
 
+//////////////////////////////////////////////////////////////////////
+
+
 gboolean mtk_git_has_local_commits(MtkFile* file)
 {
     gchar* status = 0;
     gchar* content = 0;
 
     gint exit_code = mtk_git_cmd(file, MTK_GIT_HAS_LOCAL_COMMITS, &status, &content);
-    if(!content || strlen(content) == 0 )
+    if(exit_code != 0 || !content || strlen(content) == 0 )
     {
         return false;
     }
@@ -492,7 +500,13 @@ std::map<std::string,std::string> git_origin_status(MtkFile* file)
     gchar* status = 0;
     gchar* content = 0;
 
+    std::map<std::string,std::string> result;
+
     gint exit_code = mtk_git_cmd(file, MTK_GIT_ORIGIN_STATUS, &status, &content);
+    if(exit_code != 0)
+    {
+        return result;
+    }
 
     std::string cd = file->file_name;
     if ( !file->is_directory)
@@ -502,11 +516,9 @@ std::map<std::string,std::string> git_origin_status(MtkFile* file)
         g_free(parent);
     }
 
-    std::map<std::string,std::string> result;
-
     std::string gitroot = status;
     std::vector<std::string> lines = split(content,'\n');
-    for( int i = 0; i < lines.size(); i++)
+    for( size_t i = 0; i < lines.size(); i++)
     {
         std::string line = lines[i];
         std::string status = line.substr(0,1);
@@ -530,7 +542,13 @@ std::map<std::string,std::string> git_porcelain(MtkFile* file)
     gchar* status = 0;
     gchar* content = 0;
 
+    std::map<std::string,std::string> result;
+
     gint exit_code = mtk_git_cmd(file, MTK_GIT_PORCELAIN, &status, &content);
+    if(exit_code != 0)
+    {
+        return result;
+    }
 
     std::string cd = file->file_name;
     if ( !file->is_directory)
@@ -540,12 +558,10 @@ std::map<std::string,std::string> git_porcelain(MtkFile* file)
         g_free(parent);
     }
 
-    std::map<std::string,std::string> result;
-
     std::vector<std::string> lines = split(content,'\n');
 
     std::string gitroot = status;
-    for( int i = 0; i < lines.size(); i++)
+    for( size_t i = 0; i < lines.size(); i++)
     {
         std::string line = lines[i];
         std::string status = line.substr(0,2);
@@ -691,6 +707,8 @@ gint mtk_git_commit(MtkFile* file, const gchar* msg, char** status,  char** cont
 
 }
 
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
 
 struct AsyncGitClosure
 {
@@ -731,11 +749,9 @@ void git_on_async_cmd( int exit_code,const gchar* out, gpointer user_data)
 
     std::string content = out;
 
-    switch( agc->cmd )
+    if( agc->cmd == MTK_GIT_BRANCHES)
     {
-        case MTK_GIT_BRANCHES: {
-            return git_get_branches_async(agc,exit_code,content);
-        }
+        return git_get_branches_async(agc,exit_code,content);
     }
 
 
@@ -808,3 +824,4 @@ void mtk_git_cmd_async(MtkFile* file, MtkGitCmd cmd, MtkAsyncGitCallbackFunc cal
 
 
 
+//////////////////////////////////////////////////////////////////////

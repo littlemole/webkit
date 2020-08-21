@@ -1,18 +1,5 @@
-#include "mtkfiletree.h"
-#include <glib-object.h>
-#include <gio/gio.h>
-#include "gprop.h"
-#include <sstream>
-#include <dlfcn.h>
-#include <libgen.h>
-#include <map>
-#include <regex>
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <dirent.h>
 #include "common.h"
+#include "mtkfiletree.h"
 
 #define PROG "[MktFile] "
 
@@ -25,6 +12,57 @@
  */
 
 G_DEFINE_TYPE (MtkFile, mtk_file, G_TYPE_OBJECT   )
+
+//////////////////////////////////////////////////////////////////////////
+// forwards
+
+static void mtk_file_finalize(GObject *object);
+static gchar* virtual_mtk_file_get_tooltip(MtkFile* self);
+static GList* virtual_mtk_file_get_children(MtkFile* self, GtkTreeIter* iter);
+static void virtual_mtk_file_tree_cell_render_file(
+        MtkFile* self,
+        GtkTreeViewColumn *tree_column,
+        GtkCellRenderer *cell,
+        GtkTreeModel *tree_model,
+        GtkTreeIter *iter,
+        gpointer data
+    );
+static void virtual_mtk_file_tree_cell_render_pix(
+        MtkFile* self,
+        GtkTreeViewColumn *tree_column,
+        GtkCellRenderer *cell,
+        GtkTreeModel *tree_model,
+        GtkTreeIter *iter,
+        gpointer data
+    );
+
+static void mtk_file_on_path_changed( GObject *gobject, GParamSpec *pspec, gpointer user_data);
+
+//////////////////////////////////////////////////////////////////////////
+
+
+static void mtk_file_class_init(MtkFileClass *klass)
+{
+    if ( !klass)
+    {
+        g_print( PROG "mtk_file_class_init: MtkFileClass is null \n" );
+        return;
+    }
+
+    GObjectClass *object_class = G_OBJECT_CLASS (klass);
+    object_class->finalize     = mtk_file_finalize;
+
+    klass->get_tooltip = &virtual_mtk_file_get_tooltip;
+    klass->get_children = &virtual_mtk_file_get_children;
+    klass->tree_cell_render_file = &virtual_mtk_file_tree_cell_render_file;
+    klass->tree_cell_render_pix = &virtual_mtk_file_tree_cell_render_pix;
+
+    gprops<MtkFileClass> props{
+        gprop( &MtkFile::file_name, g_param_spec_string( "path", "Path", "filesystem path", "/", G_PARAM_READWRITE))
+    };
+    props.install(klass);
+
+}
 
 
 static void mtk_file_init(MtkFile *file)
@@ -41,8 +79,11 @@ static void mtk_file_init(MtkFile *file)
     file->is_empty = FALSE;
     file->is_hidden = FALSE;
 
+    g_signal_connect( G_OBJECT ((GObject*)file), "notify::path", G_CALLBACK(mtk_file_on_path_changed), file);
+
 }
  
+
 static void mtk_file_finalize(GObject *object)
 {
     MtkFile* file = (MtkFile*)object;
@@ -52,17 +93,65 @@ static void mtk_file_finalize(GObject *object)
     if(file->root)
     {
         gtk_tree_iter_free(file->root);
+        file->root = 0;
     }
 }
 
-gchar* virtual_mtk_file_get_tooltip(MtkFile* self)
+//////////////////////////////////////////////////////////////////////////
+
+MtkFile* mtk_file_new( const gchar* fn)
+{
+    MtkFile* file;
+
+    file = (MtkFile*)g_object_new(MTK_FILE_TYPE, NULL);
+
+    GValue gv = G_VALUE_INIT;
+    g_value_init( &gv, G_TYPE_STRING );
+    g_value_set_string( &gv, fn );
+
+    g_object_set_property( G_OBJECT(file),"path",&gv);
+  
+    return file;
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+static void mtk_file_on_path_changed( GObject *gobject, GParamSpec *pspec, gpointer user_data)
+{
+    MtkFile* file = (MtkFile*)gobject;
+
+    struct stat st;
+    stat(file->file_name,&st);
+
+    if( S_ISDIR(st.st_mode) )
+    {
+        file->is_directory = TRUE;
+    }
+    else
+    {
+        file->is_directory = FALSE;
+    }
+
+    char* tmp = g_strdup(file->file_name);
+    char* bn = basename(tmp);
+
+    if( bn[0] == '.') {
+        file->is_hidden = TRUE;
+    }
+
+    g_free(tmp);    
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+
+static gchar* virtual_mtk_file_get_tooltip(MtkFile* self)
 {
     return self->file_name;
 }
 
 
-
-GList* virtual_mtk_file_get_children(MtkFile* self, GtkTreeIter* iter)
+static GList* virtual_mtk_file_get_children(MtkFile* self, GtkTreeIter* iter)
 {
     GList* glist = 0;
 
@@ -86,7 +175,8 @@ GList* virtual_mtk_file_get_children(MtkFile* self, GtkTreeIter* iter)
     return glist;
 }
 
-void virtual_mtk_file_tree_cell_render_file(
+
+static void virtual_mtk_file_tree_cell_render_file(
         MtkFile* self,
         GtkTreeViewColumn *tree_column,
         GtkCellRenderer *cell,
@@ -119,7 +209,8 @@ void virtual_mtk_file_tree_cell_render_file(
 }
 
 
-void virtual_mtk_file_tree_cell_render_pix(
+
+static void virtual_mtk_file_tree_cell_render_pix(
         MtkFile* self,
         GtkTreeViewColumn *tree_column,
         GtkCellRenderer *cell,
@@ -152,105 +243,10 @@ void virtual_mtk_file_tree_cell_render_pix(
 }
 
 
-static void mtk_file_class_init(MtkFileClass *klass)
-{
-    if ( !klass)
-    {
-        g_print( PROG "mtk_file_class_init: MtkFileClass is null \n" );
-        return;
-    }
+//////////////////////////////////////////////////////////////////////////
 
-    GObjectClass *object_class = G_OBJECT_CLASS (klass);
-    object_class->finalize     = mtk_file_finalize;
 
-    klass->get_tooltip = &virtual_mtk_file_get_tooltip;
-    klass->get_children = &virtual_mtk_file_get_children;
-    klass->tree_cell_render_file = &virtual_mtk_file_tree_cell_render_file;
-    klass->tree_cell_render_pix = &virtual_mtk_file_tree_cell_render_pix;
-}
-
-MtkFile* mtk_file_new( const gchar* fn)
-{
-    MtkFile* file;
-
-    file = (MtkFile*)g_object_new(MTK_FILE_TYPE, NULL);
-
-    file->file_name = g_strdup(fn);
-
-    struct stat st;
-    stat(fn,&st);
-
-    if( S_ISDIR(st.st_mode) )
-    {
-        file->is_directory = TRUE;
-    }
-    else
-    {
-        file->is_directory = FALSE;
-    }
-
-    char* tmp = g_strdup(fn);
-    char* bn = basename(tmp);
-
-    if( bn[0] == '.') {
-        file->is_hidden = TRUE;
-    }
-
-    g_free(tmp);
-    return file;
-}
-
-void mtk_file_set_path(MtkFile* file, gchar* fn)
-{
-    g_free(file->file_name);
-    file->file_name = g_strdup(fn);
-
-    struct stat st;
-    stat(fn,&st);
-
-    if( S_ISDIR(st.st_mode) )
-    {
-        file->is_directory = TRUE;
-    }
-    else
-    {
-        file->is_directory = FALSE;
-    }
-
-    char* tmp = g_strdup(fn);
-    char* bn = basename(tmp);
-
-    if( bn[0] == '.') {
-        file->is_hidden = TRUE;
-    }
-    g_free(tmp);
-}
-
-gchar* mtk_file_get_path(MtkFile* file)
-{
-    return g_strdup(file->file_name);
-}
-
-gchar* mtk_file_get_parent(MtkFile* file)
-{
-    char* tmp = g_strdup(file->file_name);
-    char* p = dirname(tmp);
-    char* r = g_strdup(p);
-    g_free(tmp);
-    return r;
-
-}
- 
-gchar* mtk_file_get_basename(MtkFile* file)
-{
-    char* tmp = g_strdup(file->file_name);
-    char* bn = basename(tmp);
-    char* r = g_strdup(bn);
-    g_free(tmp);
-    return r;
-}
-
-// virtuals
+// virtual launchers
 
 gchar* mtk_file_get_tooltip(MtkFile* self)
 {
@@ -306,6 +302,32 @@ void mtk_file_tree_cell_render_pix(
     return klass->tree_cell_render_pix( self, tree_column, cell, tree_model, iter, data);
 }
 
+//////////////////////////////////////////////////////////////////////////
+
+
+gchar* mtk_file_get_parent(MtkFile* file)
+{
+    char* tmp = g_strdup(file->file_name);
+    char* p = dirname(tmp);
+    char* r = g_strdup(p);
+    g_free(tmp);
+    return r;
+
+}
+ 
+gchar* mtk_file_get_basename(MtkFile* file)
+{
+    char* tmp = g_strdup(file->file_name);
+    char* bn = basename(tmp);
+    char* r = g_strdup(bn);
+    g_free(tmp);
+    return r;
+}
+
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+
+
 class AsyncBash 
 {
 public:
@@ -320,7 +342,7 @@ public:
 };
 
 
-void mtk_bash_on_finish(GObject *source_object, GAsyncResult *res, gpointer user_data)
+static void mtk_bash_on_finish(GObject *source_object, GAsyncResult *res, gpointer user_data)
 {
     g_print("mtk_filetree_bash_on_finish \n");
 
@@ -331,8 +353,15 @@ void mtk_bash_on_finish(GObject *source_object, GAsyncResult *res, gpointer user
 
     AsyncBash* ab = (AsyncBash*) user_data;
 
-    ab->status = g_subprocess_get_exit_status(process);
-
+    if(!success)
+    {
+        ab->status = -1;
+    }
+    else
+    {
+        ab->status = g_subprocess_get_exit_status(process);
+    }
+        
     g_print("mtk_filetree_bash_on_finish : %i\n", ab->status);
 
     ab->done = true;
@@ -347,14 +376,14 @@ void mtk_bash_on_finish(GObject *source_object, GAsyncResult *res, gpointer user
     }
 }
 
-void mtk_bash_on_data(GObject *source_object, GAsyncResult *res, gpointer user_data);
+static void mtk_bash_on_data(GObject *source_object, GAsyncResult *res, gpointer user_data);
 
 void mtk_bash_queue_read(AsyncBash *ab)
 {
     g_data_input_stream_read_line_async( ab->stream, 0, ab->cancellable, mtk_bash_on_data, ab );
 }
 
-void mtk_bash_on_data(GObject *source_object, GAsyncResult *res, gpointer user_data)
+static void mtk_bash_on_data(GObject *source_object, GAsyncResult *res, gpointer user_data)
 {
     GError* error = 0;
     gsize len = 0;
@@ -364,7 +393,6 @@ void mtk_bash_on_data(GObject *source_object, GAsyncResult *res, gpointer user_d
 
     if(line && len>0)
     {
-        gchar* c = 0;
         if(ab->buffer)
         {
             std::ostringstream oss;
@@ -440,6 +468,7 @@ void mtk_bash_async(const gchar* cmd, MtkAsyncBashCallbackFunc cb, gpointer user
     mtk_bash_queue_read(ab);
 }
 
+//////////////////////////////////////////////////////////////////////////
 
 
 gchar* mtk_bash( const gchar* cmd, gint* result)

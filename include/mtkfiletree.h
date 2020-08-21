@@ -45,7 +45,7 @@ struct _MtkFiletreeClass {
 GType		mtk_filetree_get_type	() G_GNUC_CONST;
 
 /**
- * mtk_filetree_new: 
+ * mtk_filetree_new: (constructor)
  * Returns: (transfer full): a #MtkFiletree
  */
 MtkFiletree*	mtk_filetree_new		();

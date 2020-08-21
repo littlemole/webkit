@@ -16,7 +16,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="ASYNC_BASH_CALLBACK"
                     c:identifier="MTK_ASYNC_BASH_CALLBACK"
                     introspectable="0">
-      <source-position filename="include/mtkfile.h" line="175"/>
+      <source-position filename="include/mtkfile.h" line="160"/>
       <parameters>
         <parameter name="f">
         </parameter>
@@ -32,7 +32,7 @@ and/or use gtk-doc annotations.  -->
       </parameters>
     </function-macro>
     <callback name="AsyncBashCallbackFunc" c:type="MtkAsyncBashCallbackFunc">
-      <source-position filename="include/mtkfile.h" line="173"/>
+      <source-position filename="include/mtkfile.h" line="158"/>
       <return-value transfer-ownership="none">
         <type name="none" c:type="void"/>
       </return-value>
@@ -40,13 +40,13 @@ and/or use gtk-doc annotations.  -->
         <parameter name="status" transfer-ownership="none">
           <doc xml:space="preserve"
                filename="include/mtkfile.h"
-               line="167">A #gint</doc>
+               line="152">A #gint</doc>
           <type name="gint" c:type="int"/>
         </parameter>
         <parameter name="out" transfer-ownership="none">
           <doc xml:space="preserve"
                filename="include/mtkfile.h"
-               line="168">A #gchar*</doc>
+               line="153">A #gchar*</doc>
           <type name="utf8" c:type="const gchar*"/>
         </parameter>
         <parameter name="user_data"
@@ -56,7 +56,7 @@ and/or use gtk-doc annotations.  -->
                    closure="2">
           <doc xml:space="preserve"
                filename="include/mtkfile.h"
-               line="169">A #gpointer</doc>
+               line="154">A #gpointer</doc>
           <type name="gpointer" c:type="gpointer"/>
         </parameter>
       </parameters>
@@ -98,7 +98,7 @@ and/or use gtk-doc annotations.  -->
       </parameters>
     </callback>
     <function-macro name="FILE" c:identifier="MTK_FILE" introspectable="0">
-      <source-position filename="include/mtkfile.h" line="191"/>
+      <source-position filename="include/mtkfile.h" line="176"/>
       <parameters>
         <parameter name="o">
         </parameter>
@@ -107,7 +107,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="FILE_CLASS"
                     c:identifier="MTK_FILE_CLASS"
                     introspectable="0">
-      <source-position filename="include/mtkfile.h" line="193"/>
+      <source-position filename="include/mtkfile.h" line="178"/>
       <parameters>
         <parameter name="c">
         </parameter>
@@ -116,7 +116,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="FILE_GET_CLASS"
                     c:identifier="MTK_FILE_GET_CLASS"
                     introspectable="0">
-      <source-position filename="include/mtkfile.h" line="199"/>
+      <source-position filename="include/mtkfile.h" line="184"/>
       <parameters>
         <parameter name="o">
         </parameter>
@@ -152,7 +152,7 @@ and/or use gtk-doc annotations.  -->
         <return-value transfer-ownership="full">
           <doc xml:space="preserve"
                filename="include/mtkfile.h"
-               line="114">List of #MtkFile</doc>
+               line="99">List of #MtkFile</doc>
           <type name="GLib.List" c:type="GList*">
             <type name="File"/>
           </type>
@@ -161,13 +161,13 @@ and/or use gtk-doc annotations.  -->
           <instance-parameter name="self" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="111">A #MtkFile</doc>
+                 line="96">A #MtkFile</doc>
             <type name="File" c:type="MtkFile*"/>
           </instance-parameter>
           <parameter name="iter" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="112">A #GtkTreeIter</doc>
+                 line="97">A #GtkTreeIter</doc>
             <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
           </parameter>
         </parameters>
@@ -177,14 +177,14 @@ and/or use gtk-doc annotations.  -->
         <return-value transfer-ownership="none">
           <doc xml:space="preserve"
                filename="include/mtkfile.h"
-               line="105">a #gchar*</doc>
+               line="90">a #gchar*</doc>
           <type name="utf8" c:type="gchar*"/>
         </return-value>
         <parameters>
           <instance-parameter name="self" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="103">A #MtkFile</doc>
+                 line="88">A #MtkFile</doc>
             <type name="File" c:type="MtkFile*"/>
           </instance-parameter>
         </parameters>
@@ -199,31 +199,31 @@ and/or use gtk-doc annotations.  -->
           <instance-parameter name="self" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="120">A #GtkTreeViewColumn</doc>
+                 line="105">A #GtkTreeViewColumn</doc>
             <type name="File" c:type="MtkFile*"/>
           </instance-parameter>
           <parameter name="tree_column" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="121">A #GtkTreeIter</doc>
+                 line="106">A #GtkTreeIter</doc>
             <type name="Gtk.TreeViewColumn" c:type="GtkTreeViewColumn*"/>
           </parameter>
           <parameter name="cell" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="122">A #GtkCellRenderer</doc>
+                 line="107">A #GtkCellRenderer</doc>
             <type name="Gtk.CellRenderer" c:type="GtkCellRenderer*"/>
           </parameter>
           <parameter name="tree_model" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="123">A #GtkTreeModel</doc>
+                 line="108">A #GtkTreeModel</doc>
             <type name="Gtk.TreeModel" c:type="GtkTreeModel*"/>
           </parameter>
           <parameter name="iter" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="124">A #GtkTreeIter</doc>
+                 line="109">A #GtkTreeIter</doc>
             <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
           </parameter>
           <parameter name="data"
@@ -232,7 +232,7 @@ and/or use gtk-doc annotations.  -->
                      allow-none="1">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="125">A #gpointer</doc>
+                 line="110">A #gpointer</doc>
             <type name="gpointer" c:type="gpointer"/>
           </parameter>
         </parameters>
@@ -247,31 +247,31 @@ and/or use gtk-doc annotations.  -->
           <instance-parameter name="self" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="139">A #GtkTreeViewColumn</doc>
+                 line="124">A #GtkTreeViewColumn</doc>
             <type name="File" c:type="MtkFile*"/>
           </instance-parameter>
           <parameter name="tree_column" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="140">A #GtkTreeIter</doc>
+                 line="125">A #GtkTreeIter</doc>
             <type name="Gtk.TreeViewColumn" c:type="GtkTreeViewColumn*"/>
           </parameter>
           <parameter name="cell" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="141">A #GtkCellRenderer</doc>
+                 line="126">A #GtkCellRenderer</doc>
             <type name="Gtk.CellRenderer" c:type="GtkCellRenderer*"/>
           </parameter>
           <parameter name="tree_model" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="142">A #GtkTreeModel</doc>
+                 line="127">A #GtkTreeModel</doc>
             <type name="Gtk.TreeModel" c:type="GtkTreeModel*"/>
           </parameter>
           <parameter name="iter" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="143">A #GtkTreeIter</doc>
+                 line="128">A #GtkTreeIter</doc>
             <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
           </parameter>
           <parameter name="data"
@@ -280,34 +280,34 @@ and/or use gtk-doc annotations.  -->
                      allow-none="1">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="144">A #gpointer</doc>
+                 line="129">A #gpointer</doc>
             <type name="gpointer" c:type="gpointer"/>
           </parameter>
         </parameters>
       </virtual-method>
       <method name="get_basename" c:identifier="mtk_file_get_basename">
-        <source-position filename="include/mtkfile.h" line="99"/>
+        <source-position filename="include/mtkfile.h" line="84"/>
         <return-value transfer-ownership="full">
           <doc xml:space="preserve"
                filename="include/mtkfile.h"
-               line="97">a #gchar*</doc>
+               line="82">a #gchar*</doc>
           <type name="utf8" c:type="gchar*"/>
         </return-value>
         <parameters>
           <instance-parameter name="self" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="95">A #MtkFile</doc>
+                 line="80">A #MtkFile</doc>
             <type name="File" c:type="MtkFile*"/>
           </instance-parameter>
         </parameters>
       </method>
       <method name="get_children" c:identifier="mtk_file_get_children">
-        <source-position filename="include/mtkfile.h" line="116"/>
+        <source-position filename="include/mtkfile.h" line="101"/>
         <return-value transfer-ownership="full">
           <doc xml:space="preserve"
                filename="include/mtkfile.h"
-               line="114">List of #MtkFile</doc>
+               line="99">List of #MtkFile</doc>
           <type name="GLib.List" c:type="GList*">
             <type name="File"/>
           </type>
@@ -316,72 +316,24 @@ and/or use gtk-doc annotations.  -->
           <instance-parameter name="self" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="111">A #MtkFile</doc>
+                 line="96">A #MtkFile</doc>
             <type name="File" c:type="MtkFile*"/>
           </instance-parameter>
           <parameter name="iter" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="112">A #GtkTreeIter</doc>
+                 line="97">A #GtkTreeIter</doc>
             <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
           </parameter>
         </parameters>
       </method>
       <method name="get_parent" c:identifier="mtk_file_get_parent">
-        <source-position filename="include/mtkfile.h" line="91"/>
+        <source-position filename="include/mtkfile.h" line="76"/>
         <return-value transfer-ownership="full">
           <doc xml:space="preserve"
                filename="include/mtkfile.h"
-               line="89">a #gchar*</doc>
+               line="74">a #gchar*</doc>
           <type name="utf8" c:type="gchar*"/>
-        </return-value>
-        <parameters>
-          <instance-parameter name="self" transfer-ownership="none">
-            <doc xml:space="preserve"
-                 filename="include/mtkfile.h"
-                 line="87">A #MtkFile</doc>
-            <type name="File" c:type="MtkFile*"/>
-          </instance-parameter>
-        </parameters>
-      </method>
-      <method name="get_path" c:identifier="mtk_file_get_path">
-        <source-position filename="include/mtkfile.h" line="83"/>
-        <return-value transfer-ownership="none">
-          <doc xml:space="preserve"
-               filename="include/mtkfile.h"
-               line="81">a #gchar*</doc>
-          <type name="utf8" c:type="gchar*"/>
-        </return-value>
-        <parameters>
-          <instance-parameter name="self" transfer-ownership="none">
-            <doc xml:space="preserve"
-                 filename="include/mtkfile.h"
-                 line="79">A #MtkFile</doc>
-            <type name="File" c:type="MtkFile*"/>
-          </instance-parameter>
-        </parameters>
-      </method>
-      <method name="get_tooltip" c:identifier="mtk_file_get_tooltip">
-        <source-position filename="include/mtkfile.h" line="107"/>
-        <return-value transfer-ownership="none">
-          <doc xml:space="preserve"
-               filename="include/mtkfile.h"
-               line="105">a #gchar*</doc>
-          <type name="utf8" c:type="gchar*"/>
-        </return-value>
-        <parameters>
-          <instance-parameter name="self" transfer-ownership="none">
-            <doc xml:space="preserve"
-                 filename="include/mtkfile.h"
-                 line="103">A #MtkFile</doc>
-            <type name="File" c:type="MtkFile*"/>
-          </instance-parameter>
-        </parameters>
-      </method>
-      <method name="set_path" c:identifier="mtk_file_set_path">
-        <source-position filename="include/mtkfile.h" line="75"/>
-        <return-value transfer-ownership="none">
-          <type name="none" c:type="void"/>
         </return-value>
         <parameters>
           <instance-parameter name="self" transfer-ownership="none">
@@ -390,17 +342,28 @@ and/or use gtk-doc annotations.  -->
                  line="72">A #MtkFile</doc>
             <type name="File" c:type="MtkFile*"/>
           </instance-parameter>
-          <parameter name="fn" transfer-ownership="none">
+        </parameters>
+      </method>
+      <method name="get_tooltip" c:identifier="mtk_file_get_tooltip">
+        <source-position filename="include/mtkfile.h" line="92"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="include/mtkfile.h"
+               line="90">a #gchar*</doc>
+          <type name="utf8" c:type="gchar*"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="73">A #gchar*</doc>
-            <type name="utf8" c:type="gchar*"/>
-          </parameter>
+                 line="88">A #MtkFile</doc>
+            <type name="File" c:type="MtkFile*"/>
+          </instance-parameter>
         </parameters>
       </method>
       <method name="tree_cell_render_file"
               c:identifier="mtk_file_tree_cell_render_file">
-        <source-position filename="include/mtkfile.h" line="127"/>
+        <source-position filename="include/mtkfile.h" line="112"/>
         <return-value transfer-ownership="none">
           <type name="none" c:type="void"/>
         </return-value>
@@ -408,31 +371,31 @@ and/or use gtk-doc annotations.  -->
           <instance-parameter name="self" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="120">A #GtkTreeViewColumn</doc>
+                 line="105">A #GtkTreeViewColumn</doc>
             <type name="File" c:type="MtkFile*"/>
           </instance-parameter>
           <parameter name="tree_column" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="121">A #GtkTreeIter</doc>
+                 line="106">A #GtkTreeIter</doc>
             <type name="Gtk.TreeViewColumn" c:type="GtkTreeViewColumn*"/>
           </parameter>
           <parameter name="cell" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="122">A #GtkCellRenderer</doc>
+                 line="107">A #GtkCellRenderer</doc>
             <type name="Gtk.CellRenderer" c:type="GtkCellRenderer*"/>
           </parameter>
           <parameter name="tree_model" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="123">A #GtkTreeModel</doc>
+                 line="108">A #GtkTreeModel</doc>
             <type name="Gtk.TreeModel" c:type="GtkTreeModel*"/>
           </parameter>
           <parameter name="iter" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="124">A #GtkTreeIter</doc>
+                 line="109">A #GtkTreeIter</doc>
             <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
           </parameter>
           <parameter name="data"
@@ -441,14 +404,14 @@ and/or use gtk-doc annotations.  -->
                      allow-none="1">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="125">A #gpointer</doc>
+                 line="110">A #gpointer</doc>
             <type name="gpointer" c:type="gpointer"/>
           </parameter>
         </parameters>
       </method>
       <method name="tree_cell_render_pix"
               c:identifier="mtk_file_tree_cell_render_pix">
-        <source-position filename="include/mtkfile.h" line="146"/>
+        <source-position filename="include/mtkfile.h" line="131"/>
         <return-value transfer-ownership="none">
           <type name="none" c:type="void"/>
         </return-value>
@@ -456,31 +419,31 @@ and/or use gtk-doc annotations.  -->
           <instance-parameter name="self" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="139">A #GtkTreeViewColumn</doc>
+                 line="124">A #GtkTreeViewColumn</doc>
             <type name="File" c:type="MtkFile*"/>
           </instance-parameter>
           <parameter name="tree_column" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="140">A #GtkTreeIter</doc>
+                 line="125">A #GtkTreeIter</doc>
             <type name="Gtk.TreeViewColumn" c:type="GtkTreeViewColumn*"/>
           </parameter>
           <parameter name="cell" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="141">A #GtkCellRenderer</doc>
+                 line="126">A #GtkCellRenderer</doc>
             <type name="Gtk.CellRenderer" c:type="GtkCellRenderer*"/>
           </parameter>
           <parameter name="tree_model" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="142">A #GtkTreeModel</doc>
+                 line="127">A #GtkTreeModel</doc>
             <type name="Gtk.TreeModel" c:type="GtkTreeModel*"/>
           </parameter>
           <parameter name="iter" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="143">A #GtkTreeIter</doc>
+                 line="128">A #GtkTreeIter</doc>
             <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
           </parameter>
           <parameter name="data"
@@ -489,11 +452,14 @@ and/or use gtk-doc annotations.  -->
                      allow-none="1">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="144">A #gpointer</doc>
+                 line="129">A #gpointer</doc>
             <type name="gpointer" c:type="gpointer"/>
           </parameter>
         </parameters>
       </method>
+      <property name="path" writable="1" transfer-ownership="none">
+        <type name="utf8" c:type="gchar*"/>
+      </property>
       <field name="parent">
         <type name="GObject.Object" c:type="GObject"/>
       </field>
@@ -529,14 +495,14 @@ and/or use gtk-doc annotations.  -->
           <return-value transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="105">a #gchar*</doc>
+                 line="90">a #gchar*</doc>
             <type name="utf8" c:type="gchar*"/>
           </return-value>
           <parameters>
             <parameter name="self" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/mtkfile.h"
-                   line="103">A #MtkFile</doc>
+                   line="88">A #MtkFile</doc>
               <type name="File" c:type="MtkFile*"/>
             </parameter>
           </parameters>
@@ -548,7 +514,7 @@ and/or use gtk-doc annotations.  -->
           <return-value transfer-ownership="full">
             <doc xml:space="preserve"
                  filename="include/mtkfile.h"
-                 line="114">List of #MtkFile</doc>
+                 line="99">List of #MtkFile</doc>
             <type name="GLib.List" c:type="GList*">
               <type name="File"/>
             </type>
@@ -557,13 +523,13 @@ and/or use gtk-doc annotations.  -->
             <parameter name="self" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/mtkfile.h"
-                   line="111">A #MtkFile</doc>
+                   line="96">A #MtkFile</doc>
               <type name="File" c:type="MtkFile*"/>
             </parameter>
             <parameter name="iter" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/mtkfile.h"
-                   line="112">A #GtkTreeIter</doc>
+                   line="97">A #GtkTreeIter</doc>
               <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
             </parameter>
           </parameters>
@@ -579,31 +545,31 @@ and/or use gtk-doc annotations.  -->
             <parameter name="self" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/mtkfile.h"
-                   line="120">A #GtkTreeViewColumn</doc>
+                   line="105">A #GtkTreeViewColumn</doc>
               <type name="File" c:type="MtkFile*"/>
             </parameter>
             <parameter name="tree_column" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/mtkfile.h"
-                   line="121">A #GtkTreeIter</doc>
+                   line="106">A #GtkTreeIter</doc>
               <type name="Gtk.TreeViewColumn" c:type="GtkTreeViewColumn*"/>
             </parameter>
             <parameter name="cell" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/mtkfile.h"
-                   line="122">A #GtkCellRenderer</doc>
+                   line="107">A #GtkCellRenderer</doc>
               <type name="Gtk.CellRenderer" c:type="GtkCellRenderer*"/>
             </parameter>
             <parameter name="tree_model" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/mtkfile.h"
-                   line="123">A #GtkTreeModel</doc>
+                   line="108">A #GtkTreeModel</doc>
               <type name="Gtk.TreeModel" c:type="GtkTreeModel*"/>
             </parameter>
             <parameter name="iter" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/mtkfile.h"
-                   line="124">A #GtkTreeIter</doc>
+                   line="109">A #GtkTreeIter</doc>
               <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
             </parameter>
             <parameter name="data"
@@ -612,7 +578,7 @@ and/or use gtk-doc annotations.  -->
                        allow-none="1">
               <doc xml:space="preserve"
                    filename="include/mtkfile.h"
-                   line="125">A #gpointer</doc>
+                   line="110">A #gpointer</doc>
               <type name="gpointer" c:type="gpointer"/>
             </parameter>
           </parameters>
@@ -628,31 +594,31 @@ and/or use gtk-doc annotations.  -->
             <parameter name="self" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/mtkfile.h"
-                   line="139">A #GtkTreeViewColumn</doc>
+                   line="124">A #GtkTreeViewColumn</doc>
               <type name="File" c:type="MtkFile*"/>
             </parameter>
             <parameter name="tree_column" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/mtkfile.h"
-                   line="140">A #GtkTreeIter</doc>
+                   line="125">A #GtkTreeIter</doc>
               <type name="Gtk.TreeViewColumn" c:type="GtkTreeViewColumn*"/>
             </parameter>
             <parameter name="cell" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/mtkfile.h"
-                   line="141">A #GtkCellRenderer</doc>
+                   line="126">A #GtkCellRenderer</doc>
               <type name="Gtk.CellRenderer" c:type="GtkCellRenderer*"/>
             </parameter>
             <parameter name="tree_model" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/mtkfile.h"
-                   line="142">A #GtkTreeModel</doc>
+                   line="127">A #GtkTreeModel</doc>
               <type name="Gtk.TreeModel" c:type="GtkTreeModel*"/>
             </parameter>
             <parameter name="iter" transfer-ownership="none">
               <doc xml:space="preserve"
                    filename="include/mtkfile.h"
-                   line="143">A #GtkTreeIter</doc>
+                   line="128">A #GtkTreeIter</doc>
               <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
             </parameter>
             <parameter name="data"
@@ -661,7 +627,7 @@ and/or use gtk-doc annotations.  -->
                        allow-none="1">
               <doc xml:space="preserve"
                    filename="include/mtkfile.h"
-                   line="144">A #gpointer</doc>
+                   line="129">A #gpointer</doc>
               <type name="gpointer" c:type="gpointer"/>
             </parameter>
           </parameters>
@@ -786,6 +752,9 @@ and/or use gtk-doc annotations.  -->
           </instance-parameter>
         </parameters>
       </method>
+      <property name="directory" writable="1" transfer-ownership="none">
+        <type name="GObject.Object"/>
+      </property>
       <field name="parent">
         <type name="Gtk.TreeView" c:type="GtkTreeView"/>
       </field>
@@ -956,7 +925,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="IS_FILETREE_FILE"
                     c:identifier="MTK_IS_FILETREE_FILE"
                     introspectable="0">
-      <source-position filename="include/mtkfile.h" line="195"/>
+      <source-position filename="include/mtkfile.h" line="180"/>
       <parameters>
         <parameter name="o">
         </parameter>
@@ -965,7 +934,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="IS_FILETREE_FILE_CLASS"
                     c:identifier="MTK_IS_FILETREE_FILE_CLASS"
                     introspectable="0">
-      <source-position filename="include/mtkfile.h" line="197"/>
+      <source-position filename="include/mtkfile.h" line="182"/>
       <parameters>
         <parameter name="c">
         </parameter>
@@ -1033,18 +1002,18 @@ and/or use gtk-doc annotations.  -->
       </parameters>
     </function-macro>
     <function name="bash" c:identifier="mtk_bash">
-      <source-position filename="include/mtkfile.h" line="163"/>
+      <source-position filename="include/mtkfile.h" line="148"/>
       <return-value transfer-ownership="full">
         <doc xml:space="preserve"
              filename="include/mtkfile.h"
-             line="161">a #gchar*</doc>
+             line="146">a #gchar*</doc>
         <type name="utf8" c:type="gchar*"/>
       </return-value>
       <parameters>
         <parameter name="cmd" transfer-ownership="none">
           <doc xml:space="preserve"
                filename="include/mtkfile.h"
-               line="159">A #gchar*</doc>
+               line="144">A #gchar*</doc>
           <type name="utf8" c:type="const gchar*"/>
         </parameter>
         <parameter name="status"
@@ -1055,13 +1024,13 @@ and/or use gtk-doc annotations.  -->
                    allow-none="1">
           <doc xml:space="preserve"
                filename="include/mtkfile.h"
-               line="160">A #gint</doc>
+               line="145">A #gint</doc>
           <type name="gint" c:type="gint*"/>
         </parameter>
       </parameters>
     </function>
     <function name="bash_async" c:identifier="mtk_bash_async">
-      <source-position filename="include/mtkfile.h" line="184"/>
+      <source-position filename="include/mtkfile.h" line="169"/>
       <return-value transfer-ownership="none">
         <type name="none" c:type="void"/>
       </return-value>
@@ -1069,7 +1038,7 @@ and/or use gtk-doc annotations.  -->
         <parameter name="cmd" transfer-ownership="none">
           <doc xml:space="preserve"
                filename="include/mtkfile.h"
-               line="179">A #gchar*</doc>
+               line="164">A #gchar*</doc>
           <type name="utf8" c:type="const gchar*"/>
         </parameter>
         <parameter name="callback"
@@ -1078,7 +1047,7 @@ and/or use gtk-doc annotations.  -->
                    closure="2">
           <doc xml:space="preserve"
                filename="include/mtkfile.h"
-               line="180">A #MtkAsyncBashCallbackFunc</doc>
+               line="165">A #MtkAsyncBashCallbackFunc</doc>
           <type name="AsyncBashCallbackFunc"
                 c:type="MtkAsyncBashCallbackFunc"/>
         </parameter>
@@ -1088,7 +1057,7 @@ and/or use gtk-doc annotations.  -->
                    allow-none="1">
           <doc xml:space="preserve"
                filename="include/mtkfile.h"
-               line="181">a #gpointer</doc>
+               line="166">a #gpointer</doc>
           <type name="gpointer" c:type="gpointer"/>
         </parameter>
       </parameters>

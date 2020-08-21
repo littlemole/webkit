@@ -1,30 +1,18 @@
-#include "mtkfiletree.h"
-#include "mtkgit.h"
-#include <glib-object.h>
-#include <gio/gio.h>
-#include "gprop.h"
-#include <sstream>
-#include <dlfcn.h>
-#include <libgen.h>
-#include <map>
-#include <regex>
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <dirent.h>
 #include "common.h"
+#include "mtkfiletree.h"
 
 #define PROG "[MktFileTree] "
 
+/////////////////////////////////////////////////////////////////
+
 G_DEFINE_TYPE (MtkFiletree, mtk_filetree, GTK_TYPE_TREE_VIEW   )
 
+/////////////////////////////////////////////////////////////////
+
+// forwards
 static void mtk_filetree_expand_row(MtkFiletree *self, GtkTreeIter* iter, GtkTreePath *path, gpointer* user_data );
 static void mtk_filetree_on_select(MtkFiletree *self,  GtkTreePath* path, GtkTreeViewColumn *column, gpointer user_data);
 static void mtk_filetree_add_entry(MtkFiletree *self, MtkFile* file);
-
-//std::map<std::string,std::string> git_porcelain(MtkFile* file);
-//std::map<std::string,std::string> git_origin_status(MtkFile* file);
 
 void mtk_filetree_tree_cell_render_file(
         GtkTreeViewColumn *tree_column,
@@ -32,14 +20,7 @@ void mtk_filetree_tree_cell_render_file(
         GtkTreeModel *tree_model,
         GtkTreeIter *iter,
         gpointer data    
-)
-{
-    MtkFile* file = 0;
-
-    gtk_tree_model_get( tree_model, iter, 0, &file, -1);
-
-    return mtk_file_tree_cell_render_file(file,tree_column, cell, tree_model, iter, data);
-}
+);
 
 void mtk_filetree_tree_cell_render_pix(
         GtkTreeViewColumn *tree_column,
@@ -47,16 +28,61 @@ void mtk_filetree_tree_cell_render_pix(
         GtkTreeModel *tree_model,
         GtkTreeIter *iter,
         gpointer data    
-)
+);
+
+static void mtk_filetree_finalize(GObject *object);
+
+/////////////////////////////////////////////////////////////////
+
+
+static void mtk_filetree_class_init(MtkFiletreeClass *klass)
 {
-    MtkFile* file = 0;
+    GObjectClass *object_class = G_OBJECT_CLASS (klass);
+    object_class->finalize     = mtk_filetree_finalize;
 
-    gtk_tree_model_get( tree_model, iter, 0, &file, -1);
+    if ( !klass)
+    {
+        g_print( PROG "mtk_filetree_class_init: MtkFiletree is null \n" );
+        return;
+    }
 
-    return mtk_file_tree_cell_render_pix(file,tree_column, cell, tree_model, iter, data);
+    gprops<MtkFiletreeClass> props{
+        gprop( &MtkFiletree::root, g_param_spec_object ( "directory", "Directory", "widget root directory",  G_TYPE_OBJECT, G_PARAM_READWRITE) )
+    };
+    props.install(klass);
+
+//    GObjectClass *object_class = G_OBJECT_CLASS (klass);
+ //   object_class->init();
+
+   // klass->parent.init(klass);
+    /*
+    GObjectClass *object_class = G_OBJECT_CLASS (klass);
+    object_class->finalize     = pywebkit_webview_finalize;
+
+    // GObject properties
+    gprops<PywebkitWebviewClass> pywebkitWebviewProperties{
+        gprop( &PywebkitWebview::localpath, g_param_spec_string( "local", "Local", "Local file", "index.html", G_PARAM_READWRITE) )
+    };
+
+    pywebkitWebviewProperties.install(klass);
+
+    // GObject signals
+    Signals signals(klass);
+    signals.install("changed", G_TYPE_STRING );
+
+
+    */
+ 
 }
 
 
+static void mtk_filetree_on_root_changed( GObject *gobject, GParamSpec *pspec, gpointer user_data)
+{
+    g_print("mtk_filetree_on_root_changed\n");
+    MtkFiletree* self = (MtkFiletree*)gobject;
+    //mtk_filetree_clear(self);
+    mtk_filetree_add_root(self, self->root, self->show_hidden, self->filter);
+}
 
 
 static void mtk_filetree_init(MtkFiletree *self)
@@ -113,7 +139,67 @@ static void mtk_filetree_init(MtkFiletree *self)
 
     g_signal_connect( G_OBJECT (self), "row-expanded", G_CALLBACK(mtk_filetree_expand_row), self);
     g_signal_connect( G_OBJECT (self), "row-activated", G_CALLBACK(mtk_filetree_on_select), self);
+
+    g_signal_connect( G_OBJECT (self), "notify::dir", G_CALLBACK(mtk_filetree_on_root_changed), self);
+
 }
+
+MtkFiletree* mtk_filetree_new()
+{
+    MtkFiletree *tree;
+
+    tree = (MtkFiletree*)g_object_new (MTK_TREE_TYPE, NULL);
+    return tree;
+}
+
+
+ 
+static void mtk_filetree_finalize(GObject *object)
+{
+    MtkFiletree* self = (MtkFiletree*)object;
+
+    g_object_unref(self->root);
+    g_object_unref(self->treeModel);
+    g_free(self->filter);
+    g_free(self->cursel);
+
+    g_object_unref(self->place_holder);
+    g_object_unref(self->empty_dir);
+
+}
+
+/////////////////////////////////////////////////////////////////
+
+void mtk_filetree_tree_cell_render_file(
+        GtkTreeViewColumn *tree_column,
+        GtkCellRenderer *cell,
+        GtkTreeModel *tree_model,
+        GtkTreeIter *iter,
+        gpointer data    
+)
+{
+    MtkFile* file = 0;
+
+    gtk_tree_model_get( tree_model, iter, 0, &file, -1);
+
+    return mtk_file_tree_cell_render_file(file,tree_column, cell, tree_model, iter, data);
+}
+
+void mtk_filetree_tree_cell_render_pix(
+        GtkTreeViewColumn *tree_column,
+        GtkCellRenderer *cell,
+        GtkTreeModel *tree_model,
+        GtkTreeIter *iter,
+        gpointer data    
+)
+{
+    MtkFile* file = 0;
+
+    gtk_tree_model_get( tree_model, iter, 0, &file, -1);
+
+    return mtk_file_tree_cell_render_pix(file,tree_column, cell, tree_model, iter, data);
+}
+
 
 
 void mtk_filetree_add_root(MtkFiletree *self, MtkFile* file, bool show_hidden, const gchar* filter)
@@ -313,71 +399,13 @@ MtkFile* mtk_filetree_get_selected_file(MtkFiletree *self)
     return NULL;
 }
 
- 
-static void mtk_filetree_finalize(GObject *object)
-{
-    MtkFiletree* self = (MtkFiletree*)object;
-
-    g_object_unref(self->root);
-    g_object_unref(self->treeModel);
-    g_free(self->filter);
-    g_free(self->cursel);
-
-    g_object_unref(self->place_holder);
-    g_object_unref(self->empty_dir);
-
-}
 
 
-static void mtk_filetree_class_init(MtkFiletreeClass *klass)
-{
-    GObjectClass *object_class = G_OBJECT_CLASS (klass);
-    object_class->finalize     = mtk_filetree_finalize;
-
-    if ( !klass)
-    {
-        g_print( PROG "mtk_filetree_class_init: MtkFiletree is null \n" );
-        return;
-    }
-
-
-//    GObjectClass *object_class = G_OBJECT_CLASS (klass);
- //   object_class->init();
-
-   // klass->parent.init(klass);
-    /*
-    GObjectClass *object_class = G_OBJECT_CLASS (klass);
-    object_class->finalize     = pywebkit_webview_finalize;
-
-    // GObject properties
-    gprops<PywebkitWebviewClass> pywebkitWebviewProperties{
-        gprop( &PywebkitWebview::localpath, g_param_spec_string( "local", "Local", "Local file", "index.html", G_PARAM_READWRITE) )
-    };
-
-    pywebkitWebviewProperties.install(klass);
-
-    // GObject signals
-    Signals signals(klass);
-    signals.install("changed", G_TYPE_STRING );
-
-
-    */
- 
-}
-
-
-MtkFiletree* mtk_filetree_new()
-{
-    MtkFiletree *tree;
-
-    tree = (MtkFiletree*)g_object_new (MTK_TREE_TYPE, NULL);
-    return tree;
-}
-
-
+/*
 static std::string cwd() 
 {
     char result[ PATH_MAX ];
     return getcwd(result, PATH_MAX);
 }
+*/
 

@@ -4,6 +4,70 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <map>
+#include <regex>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dirent.h>
+#include <dlfcn.h>
+#include <libgen.h>
+
+#include <glib-object.h>
+#include <gio/gio.h>
+#include <json/json.h>
+#include "gprop.h"
+
+class JsonParseEx : public std::exception
+{
+public:
+
+    JsonParseEx() {};
+
+    JsonParseEx(const std::string& msg) : msg_(msg) {};
+
+    virtual const char* what() const noexcept 
+    {
+        return msg_.c_str();
+    }
+
+    std::string msg_;
+};
+
+namespace JSON {
+
+inline Json::Value parse(const std::string& txt)
+{
+        Json::Value json;
+        
+        Json::CharReaderBuilder rbuilder;
+        std::string errs;
+        std::istringstream iss(txt);
+        bool ok = Json::parseFromStream(rbuilder, iss, &json, &errs);
+        if(!ok)
+        {
+                throw JsonParseEx(errs);
+        }
+    return json;
+}
+
+inline const std::string stringify(Json::Value value)
+{
+        Json::StreamWriterBuilder wbuilder;
+        return Json::writeString(wbuilder, value);
+
+}
+
+inline const std::string flatten(Json::Value value)
+{
+        Json::StreamWriterBuilder wbuilder;
+        wbuilder["commentStyle"] = "None";
+        wbuilder["indentation"] = ""; 
+        return Json::writeString(wbuilder, value);
+}
+
+} // end namespace
 
 inline std::vector<std::string> split(const std::string& txt, const char seperator)
 {

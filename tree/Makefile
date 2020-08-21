@@ -9,8 +9,8 @@ ifneq ($(CXX),g++)
 DEFAULT_OPTS = $(TS) -std=c++17 -stdlib=libc++ -fcoroutines-ts -D_RESUMABLE_FUNCTIONS_SUPPORTED 
 endif
 
-PKG_INC=$(shell pkg-config gobject-2.0 gtk+-3.0 gobject-introspection-1.0 --cflags)
-PKG_LIB=$(shell pkg-config gobject-2.0 gtk+-3.0 gobject-introspection-1.0 --libs)
+PKG_INC=$(shell pkg-config gobject-2.0 gtk+-3.0 gobject-introspection-1.0 webkit2gtk-4.0 jsoncpp --cflags)
+PKG_LIB=$(shell pkg-config gobject-2.0 gtk+-3.0 gobject-introspection-1.0 webkit2gtk-4.0 jsoncpp --libs)
 
 OPTIONS = -fpic -Wno-write-strings -pthread -D_REENTRANT $(DEFAULT_OPTS)
 

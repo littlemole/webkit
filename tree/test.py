@@ -46,24 +46,27 @@ class Controller(object):
         print("status : " + str(status))
         print(out)
 
-d = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+d = os.path.dirname(os.path.realpath(__file__))
 print(d)
 
 # create controller
 controller = Controller()        
 
+f = GitFile.new(d)
+print(f)
 # create html widget
 tree = Filetree()
+tree.set_property("directory", f)
 #tree.set_visible(True)
 
-f = GitFile.new(d)
-tree.add_root(f,True, ".*") #False,".*\\.cpp")
+#print("is dir: " + str(f.is_directory))
+#tree.add_root(f,True, ".*") #False,".*\\.cpp")
 
 
 # make resizable
 scrolledwindow = Gtk.ScrolledWindow()
-scrolledwindow.set_vexpand(True)
-scrolledwindow.set_hexpand(True)
+#scrolledwindow.set_vexpand(True)
+#scrolledwindow.set_hexpand(True)
 scrolledwindow.add(tree)
 
 # main window
