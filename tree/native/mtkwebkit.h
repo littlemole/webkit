@@ -231,7 +231,7 @@ public:
 
     std::function<void(T)> cb;
 
-    ResultFutureImpl(std::function<void(T)> callback)
+    ResultFutureImpl(const std::function<void(T)>& callback)
         :cb(callback)
     {}
 
@@ -250,7 +250,7 @@ public:
 
     std::function<void()> cb;
 
-    ResultFutureImpl(std::function<void()> callback)
+    ResultFutureImpl(const std::function<void()>& callback)
         :cb(callback)
     {}
 
@@ -261,12 +261,12 @@ public:
 };
 
 template<class T>
-auto result_future( std::function<void(T)> fun)
+auto result_future( const std::function<void(T)>& fun)
 {
     return new ResultFutureImpl<void(T)>(fun);
 }
 
-inline auto result_future( std::function<void(void)> fun)
+inline auto result_future( const std::function<void(void)>& fun)
 {
     return new ResultFutureImpl<void()>(fun);
 }
@@ -380,7 +380,7 @@ void send_response( Channel* channel, const std::string& uid, const char* ex  )
 }
 
 template<class CB, class ... Args>
-static void send_request( WebKitWebView* web, CB cb, std::string m, Args ... args)
+static void send_request( PywebkitWebview* web, const CB& cb, std::string m, Args ... args)
 {
     gchar* uid = g_dbus_generate_guid();
 
@@ -402,7 +402,7 @@ static void send_request( WebKitWebView* web, CB cb, std::string m, Args ... arg
     GVariant* msg = g_variant_new_string(json.c_str());
     WebKitUserMessage* message = webkit_user_message_new( "request", msg);
 
-    webkit_web_view_send_message_to_page( web, message, NULL, NULL, NULL);
+    webkit_web_view_send_message_to_page( (WebKitWebView*) web, message, NULL, NULL, NULL);
     
     responses().add( uid, result_future(cb) );
 
@@ -411,7 +411,7 @@ static void send_request( WebKitWebView* web, CB cb, std::string m, Args ... arg
 }
 
 template<class ... Args>
-static void send_request( WebKitWebView* web, std::string m, Args ... args)
+static void send_request( PywebkitWebview* web, std::string m, Args ... args)
 {
     gchar* uid = g_dbus_generate_guid();
 
@@ -433,7 +433,7 @@ static void send_request( WebKitWebView* web, std::string m, Args ... args)
     GVariant* msg = g_variant_new_string(json.c_str());
     WebKitUserMessage* message = webkit_user_message_new( "request", msg);
 
-    webkit_web_view_send_message_to_page( web, message, NULL, NULL, NULL);
+    webkit_web_view_send_message_to_page( (WebKitWebView*) web, message, NULL, NULL, NULL);
     
     std::function<void(void)> fun([](){});
     responses().add( uid, result_future(fun));
@@ -487,13 +487,100 @@ static gboolean user_msg_received(
 }
 
 template<class C>
-void webkit_bind( WebKitWebView* web, C* controller)
+void webkit_bind( PywebkitWebview* webview, C* controller)
 {
+    WebKitWebView* web = (WebKitWebView*)webview;
+
     Channel* channel = new ChannelImpl( web, controller );
 
-    channels().insert( std::make_pair( web, channel ));
+    channels().insert( std::make_pair( web, channel) );
 
     g_signal_connect(G_OBJECT(web), "user-message-received", G_CALLBACK (user_msg_received),  NULL);
+}
+
+
+class Gui 
+{
+public:
+    Gui(){}
+
+    ~Gui()
+    {
+        if(builder)
+        {
+            //g_object_unref(builder);
+        }
+    }
+
+    Gui& load(const std::string& file)
+    {
+        builder = gtk_builder_new();
+
+        GError* error = 0;
+        if ( gtk_builder_add_from_file(builder,file.c_str(), &error) == 0)
+        {
+            g_printerr ("Error loading file: %s\n", error->message);
+            g_clear_error (&error);
+            exit(1);
+        }
+
+        return *this;
+    }
+
+    GObject* get_object(const std::string& name)
+    {
+        return gtk_builder_get_object(builder,name.c_str());
+    }
+
+    template<class T>
+    T* get(const std::string& name)
+    {
+        return (T*)get_object(name);
+    }
+
+    Gui& show(const std::string& mainWindow)
+    {
+        
+        auto window = gtk_builder_get_object (builder, mainWindow.c_str() );
+        gtk_widget_show_all((GtkWidget*)window);
+        return *this;
+    }
+
+    template<class T>
+    Gui& bind(T* t)
+    {   
+        GtkBuilderConnectFunc fun = &connector<T>; 
+        gtk_builder_connect_signals_full(builder, fun, t);        
+        return *this;
+    }
+
+    Gui& show()
+    {
+        return show("mainWindow");
+    }
+
+    template<class Arg, class ...Args>
+    Gui& register_widgets(Arg arg, Args ... args)
+    {
+        auto t = arg();
+        return register_widgets(args...);
+    }
+
+private:
+
+    Gui& register_widgets()
+    {
+        return *this;
+    }
+
+
+    GtkBuilder* builder = 0;
+};
+
+inline Gui& gui()
+{
+    static Gui ui;
+    return ui;
 }
 
 #endif

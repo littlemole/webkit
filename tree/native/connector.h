@@ -60,16 +60,15 @@ void connector(GtkBuilder *builder,
                           const gchar *handler_name,
                           GObject *connect_object,
                           GConnectFlags flags,
-                          gpointer user_data)
+                          void* controller)
 {
-    C* controller = (C*) user_data;
 
     g_print("connect: %s -> %s \n", signal_name, handler_name);
 
-    meta::find<C>(handler_name, [object,signal_name,user_data](auto m)
+    meta::find<C>(handler_name, [object,signal_name,controller](auto m)
     {
         g_print("  found: %s  \n", m.name);
-        connect(object,signal_name, m.member, user_data);
+        connect(object,signal_name, m.member, (C*)controller);
     });
     //connect(object,signal_name, &Controller::activate, &controller);
 }
