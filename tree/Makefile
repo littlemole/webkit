@@ -84,9 +84,11 @@ $(LIB): $(LIB_OBJFILES)
 $(LIB_BUILD)/$(TYPELIB_FILE): $(LIB_BUILD)/$(GIR_FILE)
 	g-ir-compiler $(LIB_BUILD)/$(GIR_FILE) --output=$(LIB_BUILD)/$(TYPELIB_FILE)
 
+# ../include/mtkwebview.h
+# mtkwebview.cpp
 
-$(LIB_BUILD)/$(GIR_FILE):  ../include/mtkfile.h ../include/mtkfiletree.h ../include/mtkgit.h mtkfile.cpp mtkfiletree.cpp mtkgit.cpp
-	libtool exec g-ir-scanner $^ -L $(LIB_BUILD) --library=mtk --warn-all  --include=Gtk-3.0 --include=GObject-2.0  --namespace=$(NAMESPACE) --nsversion=$(NSVERSION) --output=$@
+$(LIB_BUILD)/$(GIR_FILE):  ../include/mtkfile.h ../include/mtkfiletree.h ../include/mtkgit.h ../include/mtkwebview.h mtkfile.cpp mtkfiletree.cpp mtkgit.cpp mtkwebview.cpp
+	libtool exec g-ir-scanner $^ -L $(LIB_BUILD) --library=mtk --warn-all  --include=WebKit2-4.0 --include=Gtk-3.0 --include=GObject-2.0  --namespace=$(NAMESPACE) --nsversion=$(NSVERSION) --output=$@
 		
 #################################################
 # make clean

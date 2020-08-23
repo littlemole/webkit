@@ -7,25 +7,26 @@
 #include <metacpp/meta.h>
 #include <type_traits>
 #include "gvglue.h"
-#include "pywebkit.h"
 #include <map>
 #include <memory>
 #include <functional>
 #include <typeindex>
+#include "connector.h"
+#include "mtkwebview.h"
 /////////////////////////////////////////////
 // forwards
 
 class Channel;
-/*
-static PyObject* pywebkit_run_async(
-    PyObject* self, 
-    PyObject* args
-);
-*/
 
 template<class T>
 void send_response( Channel* channel, const std::string& uid,  T& t, const char* ex = NULL );
 void send_response( Channel* channel, const std::string& uid, const char* ex = NULL );
+
+gboolean user_msg_received(
+    WebKitWebView      *web,
+    WebKitUserMessage *message,
+    gpointer           user_data
+);
 
 /////////////////////////////////////////////
 // Channel
@@ -34,22 +35,17 @@ void send_response( Channel* channel, const std::string& uid, const char* ex = N
 class Channel
 {
 public:
-    Channel(WebKitWebView* w)
-        : web(w)
-    {
-        g_object_ref(w);
-    }
 
-    virtual ~Channel()
-    {
-        g_object_unref(web);
-    }
+    Channel(WebKitWebView* w);
+
+    virtual ~Channel();
 
     WebKitWebView* web;
 
     virtual void invoke(const std::string& uid,const std::string& method, Json::Value& params) = 0;
 };
 
+/////////////////////////////////////////////////////////////
 
 template<class T>
 struct nargs
@@ -88,6 +84,9 @@ struct arg_type<0,Arg,Args...>
     using type = Arg;
 };
 
+/////////////////////////////////////////////////////////////
+
+
 template<class T>
 class ChannelImpl : public Channel
 {
@@ -101,6 +100,8 @@ public:
     virtual ~ChannelImpl()
     {
     }
+
+private:
 
     WebKitWebView* web;
     T* bound;
@@ -168,6 +169,8 @@ public:
         }
     };
 
+public:
+
     virtual void invoke(const std::string& uid,const std::string& method, Json::Value& params)
     {
         meta::find(*bound,method.c_str(), [this,uid,&params,&method](auto m)
@@ -179,160 +182,142 @@ public:
 };
  
 
-std::map<WebKitWebView*,Channel*>& channels()
-{
-    static std::map<WebKitWebView*,Channel*> map;
-    return map;
-};
+std::map<WebKitWebView*,Channel*>& channels();
 
-// 
+/////////////////////////////////////////////////////////////
 
-class ResultFuture 
+class ResultPromise 
 {
 public:
-    virtual ~ResultFuture() {}
+    virtual ~ResultPromise() {}
 
-    virtual void invoke(Json::Value&) = 0;
+    virtual void invoke(Json::Value&, const char* ex ) = 0;
 };
 
 template<class CB>
-class ResultFutureImpl;
+class ResultPromiseImpl;
 
-inline void get_json_val(Json::Value& val, std::string& t)
-{
-    t = val.asString();
-}
-
-inline void get_json_val(Json::Value& val, int& t)
-{
-    t = val.asInt();
-}
-
-inline void get_json_val(Json::Value& val, bool& t)
-{
-    t = val.asBool();
-}
-
-inline void get_json_val(Json::Value& val, double& t)
-{
-    t = val.asDouble();
-}
-
-inline void get_json_val(Json::Value& val, Json::Value& t)
-{
-    t = val;
-}
+void get_json_val(Json::Value& val, std::string& t);
+void get_json_val(Json::Value& val, int& t);
+void get_json_val(Json::Value& val, bool& t);
+void get_json_val(Json::Value& val, double& t);
+void get_json_val(Json::Value& val, Json::Value& t);
 
 
-template<class T>
-class ResultFutureImpl<void(T)> : public ResultFuture
+class ResultFutureEx : public std::exception
 {
 public:
 
-    std::function<void(T)> cb;
+    ResultFutureEx() {};
 
-    ResultFutureImpl(const std::function<void(T)>& callback)
-        :cb(callback)
-    {}
+    ResultFutureEx(const std::string& msg) : msg_(msg) {};
 
-    virtual void invoke(Json::Value& val)
+    virtual const char* what() const noexcept 
     {
-        T t;
-        get_json_val(val,t);
-        cb( t );
+        return msg_.c_str();
+    }
+
+    std::string msg_;
+};
+
+template<class T>
+struct ResultFuture
+{
+    T value;
+    const char* ex;
+
+    T& get()
+    {
+        if(ex)
+        {
+            throw ResultFutureEx(ex);
+        }
+        return value;
     }
 };
 
 template<>
-class ResultFutureImpl<void()> : public ResultFuture
+struct ResultFuture<void>
 {
-public:
+    const char* ex;
 
-    std::function<void()> cb;
-
-    ResultFutureImpl(const std::function<void()>& callback)
-        :cb(callback)
-    {}
-
-    virtual void invoke(Json::Value& val)
+    void get()
     {
-        cb();
+        if(ex)
+        {
+            throw ResultFutureEx(ex);
+        }
     }
 };
 
 template<class T>
-auto result_future( const std::function<void(T)>& fun)
+class ResultPromiseImpl<void(T)> : public ResultPromise
 {
-    return new ResultFutureImpl<void(T)>(fun);
+public:
+
+    std::function<void(ResultFuture<T>)> cb;
+
+    ResultPromiseImpl(const std::function<void(ResultFuture<T>)>& callback)
+        :cb(callback)
+    {}
+
+    virtual void invoke(Json::Value& val, const char* ex)
+    {
+        T t;
+        get_json_val(val,t);
+        cb( ResultFuture<T>{t,ex} );
+    }
+};
+
+template<>
+class ResultPromiseImpl<void()> : public ResultPromise
+{
+public:
+
+    std::function<void( ResultFuture<void> )> cb;
+
+    ResultPromiseImpl(const std::function<void(ResultFuture<void>)>& callback)
+        :cb(callback)
+    {}
+
+    virtual void invoke(Json::Value& val, const char* ex)
+    {
+        cb( ResultFuture<void>{ex} );
+    }
+};
+
+template<class T>
+auto result_promise( const std::function<void(ResultFuture<T>)>& fun)
+{
+    return new ResultPromiseImpl<void(T)>(fun);
 }
 
-inline auto result_future( const std::function<void(void)>& fun)
+inline auto result_promise( const std::function<void(ResultFuture<void>)>& fun)
 {
-    return new ResultFutureImpl<void()>(fun);
+    return new ResultPromiseImpl<void()>(fun);
 }
+
+/////////////////////////////////////////////////////////////
 
 class Responses
 {
 public:
 
-    void add(const char* uid, ResultFuture* rf)
-    {
-        pending_.insert( std::make_pair(std::string(uid),rf) );
-        //g_print (PROG "responses add %s\n", uid );
-    }
+    void add(const char* uid, ResultPromise* rf);
 
-    ResultFuture* get(const char* uid)
-    {
-        //g_print (PROG "responses get %s\n", uid );
-        if ( pending_.count(std::string(uid)) == 0)
-        {
-            return 0;
-        }
-        ResultFuture* res = pending_[std::string(uid)];
-        pending_.erase(uid);
-        return res;
-    }
+    ResultPromise* get(const char* uid);
 
 private:
 
-    std::map<std::string,ResultFuture*> pending_;
+    std::map<std::string,ResultPromise*> pending_;
 };
 
-Responses& responses()
-{
-    static Responses r;
-    return r;
-}
+
+Responses& responses();
 
 
-static void response_handler(GVariant* params);
-static void signal_handler(WebKitWebView *web, GVariant* params);
+/////////////////////////////////////////////////////////////
 
-//static void send_response( Channel* channel, const gchar* uid,  PyObject* val, const char* ex = NULL );
-//static void send_request( Channel* channel, const gchar* uid,  std::string m, PyObject* params);
-
-#define PROG "[mtkWebKit] "
-
-///////////////////////////////////
-
-static void signal_handler(WebKitWebView *web, GVariant* message)
-{
-    gvar msg(message);
-
-    // parse JSON
-
-    std::string json = msg.str();
-    Json::Value dict = JSON::parse(json);
-
-    std::string uid = dict["request"].asString();
-    std::string method = dict["method"].asString();
-    Json::Value parameters = dict["parameters"];
-
-    Channel* channel = channels()[web];
-
-    channel->invoke(uid,method,parameters);
-
-}
 
 template<class T>
 void send_response( Channel* channel, const std::string& uid,  T& t, const char* ex  )
@@ -357,30 +342,24 @@ void send_response( Channel* channel, const std::string& uid,  T& t, const char*
     webkit_web_view_send_message_to_page( channel->web, message, NULL, NULL, NULL);    
 }
 
-void send_response( Channel* channel, const std::string& uid, const char* ex  )
+void send_response( Channel* channel, const std::string& uid, const char* ex  );
+
+
+/////////////////////////////////////////////////////////////
+
+struct RequestFuture
 {
-    Json::Value dict(Json::objectValue);
-    dict["response"] = uid;
-    dict["result"] = Json::Value(Json::nullValue);
-    if(ex)
+    std::string uid;
+
+    template<class T>
+    void then( const std::function<void(ResultFuture<T>)>& f)
     {
-        dict["exception"] = ex;
+        responses().add( uid.c_str(), result_promise(f) );
     }
-    else
-    {
-        dict["exception"] = Json::Value(Json::nullValue);
-    }
-
-    std::string json = JSON::flatten(dict);
-
-    GVariant* msg = g_variant_new_string(json.c_str());
-    WebKitUserMessage* message = webkit_user_message_new( "response", msg);
-
-    webkit_web_view_send_message_to_page( channel->web, message, NULL, NULL, NULL);    
-}
+};
 
 template<class CB, class ... Args>
-static void send_request( PywebkitWebview* web, const CB& cb, std::string m, Args ... args)
+void send_request( MtkWebView* web, const CB& cb, std::string m, Args ... args)
 {
     gchar* uid = g_dbus_generate_guid();
 
@@ -404,14 +383,14 @@ static void send_request( PywebkitWebview* web, const CB& cb, std::string m, Arg
 
     webkit_web_view_send_message_to_page( (WebKitWebView*) web, message, NULL, NULL, NULL);
     
-    responses().add( uid, result_future(cb) );
+    responses().add( uid, result_promise(cb) );
 
     g_free(uid);
 
 }
 
 template<class ... Args>
-static void send_request( PywebkitWebview* web, std::string m, Args ... args)
+RequestFuture send_request( MtkWebView* web, std::string m, Args ... args)
 {
     gchar* uid = g_dbus_generate_guid();
 
@@ -435,59 +414,20 @@ static void send_request( PywebkitWebview* web, std::string m, Args ... args)
 
     webkit_web_view_send_message_to_page( (WebKitWebView*) web, message, NULL, NULL, NULL);
     
-    std::function<void(void)> fun([](){});
-    responses().add( uid, result_future(fun));
+    std::function<void(ResultFuture<void>)> fun([](ResultFuture<void>){});
+    //responses().add( uid, result_promise(fun));
 
+    RequestFuture f{ uid };
     g_free(uid);
-
+    return f;
 }
 
 
-///////////////////////////////////
+/////////////////////////////////////////////////////////////
 
-static void response_handler(GVariant* message)
-{
-    gvar msg(message);
-
-    std::string json = msg.str();
-
-    Json::Value dict = JSON::parse(json);
-
-    std::string uid = dict["response"].asString();
-    Json::Value result = dict["result"];
-    std::string exception = dict["exception"].asString();
-
-    ResultFuture* rf = responses().get( uid.c_str() );
-
-    rf->invoke(result);
-
-    delete rf;
-}
-
-static gboolean user_msg_received(
-    WebKitWebView      *web,
-    WebKitUserMessage *message,
-    gpointer           user_data
-    )
-{
-    GVariant* params = webkit_user_message_get_parameters(message);
-
-    std::string name = webkit_user_message_get_name(message);
-
-    if( name == "request")
-    {
-        signal_handler(web,params);
-    }
-    if( name== "response")
-    {
-        response_handler(params);
-    }
-
-    return TRUE;
-}
 
 template<class C>
-void webkit_bind( PywebkitWebview* webview, C* controller)
+void webkit_bind( MtkWebView* webview, C* controller)
 {
     WebKitWebView* web = (WebKitWebView*)webview;
 
@@ -498,52 +438,26 @@ void webkit_bind( PywebkitWebview* webview, C* controller)
     g_signal_connect(G_OBJECT(web), "user-message-received", G_CALLBACK (user_msg_received),  NULL);
 }
 
+/////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////
 
 class Gui 
 {
 public:
-    Gui(){}
 
-    ~Gui()
-    {
-        if(builder)
-        {
-            //g_object_unref(builder);
-        }
-    }
+    Gui();
+    ~Gui();
 
-    Gui& load(const std::string& file)
-    {
-        builder = gtk_builder_new();
+    Gui& load(const char* file);
+    Gui& show(const char* mainWindow);
+    Gui& show();
 
-        GError* error = 0;
-        if ( gtk_builder_add_from_file(builder,file.c_str(), &error) == 0)
-        {
-            g_printerr ("Error loading file: %s\n", error->message);
-            g_clear_error (&error);
-            exit(1);
-        }
-
-        return *this;
-    }
-
-    GObject* get_object(const std::string& name)
-    {
-        return gtk_builder_get_object(builder,name.c_str());
-    }
+    GObject* get_object(const char* name);
 
     template<class T>
-    T* get(const std::string& name)
+    T* get(const char* name)
     {
         return (T*)get_object(name);
-    }
-
-    Gui& show(const std::string& mainWindow)
-    {
-        
-        auto window = gtk_builder_get_object (builder, mainWindow.c_str() );
-        gtk_widget_show_all((GtkWidget*)window);
-        return *this;
     }
 
     template<class T>
@@ -554,11 +468,6 @@ public:
         return *this;
     }
 
-    Gui& show()
-    {
-        return show("mainWindow");
-    }
-
     template<class Arg, class ...Args>
     Gui& register_widgets(Arg arg, Args ... args)
     {
@@ -566,22 +475,88 @@ public:
         return register_widgets(args...);
     }
 
+    int alert(const std::string& s, int buttons = GTK_BUTTONS_OK, int type = GTK_MESSAGE_INFO, int default_button = GTK_BUTTONS_OK, int flags = GTK_DIALOG_MODAL, const char* parent = "mainWindow" )
+    {
+        GtkDialog* dlg = (GtkDialog*)gtk_message_dialog_new( 
+            (GtkWindow*)(get_object(parent)),
+            (GtkDialogFlags)flags,
+            (GtkMessageType)type,
+            (GtkButtonsType)buttons,
+            s.c_str()
+        );
+        gtk_dialog_set_default_response(dlg,default_button);
+        int r = gtk_dialog_run(dlg);
+        gtk_widget_hide( (GtkWidget*)dlg );
+        return r;
+    }
+
+    struct accel_data {
+       virtual ~accel_data() {}
+
+       virtual void invoke() = 0; 
+    };
+
+    template<class F, class T>
+    struct accel_data_impl : public accel_data {
+
+        F callback;
+        T* that;
+
+        accel_data_impl(F fun, T* t)
+            : callback(fun), that(t)
+        {}
+
+        virtual void invoke()
+        {
+            g_print("accel_data_impl invoke \n");
+            (that->*callback)(NULL);
+        }
+    };
+
+    template<class F, class T>
+    Gui& add_accelerator(const char* ac, F fun, T* that)
+    {
+        guint key = 0;
+        GdkModifierType mod = (GdkModifierType)0;
+        gtk_accelerator_parse( ac, &key, &mod);
+
+        auto cb = [](GtkAccelGroup *accel_group,
+                          GObject *acceleratable,
+                          guint keyval,
+                          GdkModifierType modifier,
+                          gpointer user_data)
+        {
+            g_print("add_accelerator cb %i \n", (void*)user_data);
+            accel_data* ad = (accel_data*)user_data;
+            ad->invoke();
+            delete ad;
+        };
+
+        accel_data* ad = new accel_data_impl( fun, that );
+
+        void(*tmp)(GtkAccelGroup*,GObject*,guint,GdkModifierType,gpointer) = cb;
+
+        GClosure* closure = g_cclosure_new( G_CALLBACK(tmp), ad, 0);
+        gtk_accel_group_connect(ag,key,mod,GTK_ACCEL_VISIBLE,closure);
+    }
+
 private:
+
+    GtkAccelGroup* ag;
 
     Gui& register_widgets()
     {
         return *this;
     }
 
-
     GtkBuilder* builder = 0;
 };
 
-inline Gui& gui()
-{
-    static Gui ui;
-    return ui;
-}
+
+Gui& gui();
+
+/////////////////////////////////////////////////////////////
+
 
 #endif
 

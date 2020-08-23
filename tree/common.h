@@ -18,6 +18,7 @@
 #include <gio/gio.h>
 #include <json/json.h>
 #include "gprop.h"
+#include "gvglue.h"
 
 class JsonParseEx : public std::exception
 {

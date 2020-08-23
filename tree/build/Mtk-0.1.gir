@@ -8,6 +8,7 @@ and/or use gtk-doc annotations.  -->
             xmlns:glib="http://www.gtk.org/introspection/glib/1.0">
   <include name="GObject" version="2.0"/>
   <include name="Gtk" version="3.0"/>
+  <include name="WebKit2" version="4.0"/>
   <namespace name="Mtk"
              version="0.1"
              shared-library="libmtk.so"
@@ -958,6 +959,24 @@ and/or use gtk-doc annotations.  -->
         </parameter>
       </parameters>
     </function-macro>
+    <function-macro name="IS_WEBVIEW"
+                    c:identifier="MTK_IS_WEBVIEW"
+                    introspectable="0">
+      <source-position filename="include/mtkwebview.h" line="71"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="IS_WEBVIEW_CLASS"
+                    c:identifier="MTK_IS_WEBVIEW_CLASS"
+                    introspectable="0">
+      <source-position filename="include/mtkwebview.h" line="74"/>
+      <parameters>
+        <parameter name="c">
+        </parameter>
+      </parameters>
+    </function-macro>
     <function-macro name="TREE" c:identifier="MTK_TREE" introspectable="0">
       <source-position filename="include/mtkfiletree.h" line="94"/>
       <parameters>
@@ -1001,6 +1020,126 @@ and/or use gtk-doc annotations.  -->
         </parameter>
       </parameters>
     </function-macro>
+    <function-macro name="WEBVIEW"
+                    c:identifier="MTK_WEBVIEW"
+                    introspectable="0">
+      <source-position filename="include/mtkwebview.h" line="65"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="WEBVIEW_CLASS"
+                    c:identifier="MTK_WEBVIEW_CLASS"
+                    introspectable="0">
+      <source-position filename="include/mtkwebview.h" line="68"/>
+      <parameters>
+        <parameter name="c">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="WEBVIEW_GET_CLASS"
+                    c:identifier="MTK_WEBVIEW_GET_CLASS"
+                    introspectable="0">
+      <source-position filename="include/mtkwebview.h" line="77"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <class name="WebView"
+           c:symbol-prefix="webview"
+           c:type="MtkWebView"
+           parent="WebKit2.WebView"
+           glib:type-name="MtkWebView"
+           glib:get-type="mtk_webview_get_type"
+           glib:type-struct="WebViewClass">
+      <source-position filename="include/mtkwebview.h" line="29"/>
+      <implements name="Atk.ImplementorIface"/>
+      <implements name="Gtk.Buildable"/>
+      <constructor name="new" c:identifier="mtk_webview_new">
+        <doc xml:space="preserve"
+             filename="include/mtkwebview.h"
+             line="33">Allocates a new #MtkWebView.</doc>
+        <source-position filename="include/mtkwebview.h" line="41"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="include/mtkwebview.h"
+               line="38">a new #MtkWebView.</doc>
+          <type name="WebView" c:type="MtkWebView*"/>
+        </return-value>
+      </constructor>
+      <function name="class_set_dir" c:identifier="mtk_webview_class_set_dir">
+        <source-position filename="include/mtkwebview.h" line="55"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <parameter name="clazz" transfer-ownership="none">
+            <type name="WebViewClass" c:type="MtkWebViewClass*"/>
+          </parameter>
+          <parameter name="dir" transfer-ownership="none">
+            <type name="utf8" c:type="const gchar*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <method name="load_local_uri" c:identifier="mtk_webview_load_local_uri">
+        <doc xml:space="preserve"
+             filename="include/mtkwebview.h"
+             line="44">loads a new HTML document into #PyWebKit.</doc>
+        <source-position filename="include/mtkwebview.h" line="53"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="web" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtkwebview.h"
+                 line="46">#MtkWebView*</doc>
+            <type name="WebView" c:type="MtkWebView*"/>
+          </instance-parameter>
+          <parameter name="localpath" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtkwebview.h"
+                 line="47">#gchar*</doc>
+            <type name="utf8" c:type="const gchar*"/>
+          </parameter>
+        </parameters>
+      </method>
+      <property name="local" writable="1" transfer-ownership="none">
+        <type name="utf8" c:type="gchar*"/>
+      </property>
+      <field name="parent">
+        <type name="WebKit2.WebView" c:type="WebKitWebView"/>
+      </field>
+      <field name="uid">
+        <type name="utf8" c:type="gchar*"/>
+      </field>
+      <field name="localpath">
+        <type name="utf8" c:type="gchar*"/>
+      </field>
+      <glib:signal name="changed" when="last" no-recurse="1" no-hooks="1">
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <parameter name="object" transfer-ownership="none">
+            <type name="utf8" c:type="gchar*"/>
+          </parameter>
+        </parameters>
+      </glib:signal>
+    </class>
+    <record name="WebViewClass"
+            c:type="MtkWebViewClass"
+            glib:is-gtype-struct-for="WebView">
+      <source-position filename="include/mtkwebview.h" line="29"/>
+      <field name="parent">
+        <type name="WebKit2.WebViewClass" c:type="WebKitWebViewClass"/>
+      </field>
+      <field name="dir">
+        <type name="utf8" c:type="gchar*"/>
+      </field>
+    </record>
     <function name="bash" c:identifier="mtk_bash">
       <source-position filename="include/mtkfile.h" line="148"/>
       <return-value transfer-ownership="full">

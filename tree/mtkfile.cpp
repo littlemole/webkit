@@ -105,10 +105,11 @@ MtkFile* mtk_file_new( const gchar* fn)
 
     file = (MtkFile*)g_object_new(MTK_FILE_TYPE, NULL);
 
-    GValue gv = G_VALUE_INIT;
-    g_value_init( &gv, G_TYPE_STRING );
-    g_value_set_string( &gv, fn );
+//    GValue gv = G_VALUE_INIT;
+//    g_value_init( &gv, G_TYPE_STRING );
+//    g_value_set_string( &gv, fn );
 
+    gval gv(fn);
     g_object_set_property( G_OBJECT(file),"path",&gv);
   
     return file;
@@ -198,11 +199,12 @@ static void virtual_mtk_file_tree_cell_render_file(
         oss << c;
     }
     g_free(c);
-    
+  /*  
     GValue gv = G_VALUE_INIT;
     g_value_init( &gv, G_TYPE_STRING );
     g_value_set_string( &gv, oss.str().c_str() );
-
+*/
+    gval gv(oss.str() );
     g_object_set_property( (GObject*)cell, "markup", &gv);
 
     g_free(bn);
@@ -219,24 +221,27 @@ static void virtual_mtk_file_tree_cell_render_pix(
         gpointer data
     )
 {
-    GValue gv = G_VALUE_INIT;
-    g_value_init( &gv, G_TYPE_STRING );
+//    GValue gv = G_VALUE_INIT;
+//    g_value_init( &gv, G_TYPE_STRING );
 
     if ( self->is_empty)
     {
-        g_value_set_static_string( &gv, NULL );
+//        g_value_set_static_string( &gv, NULL );
 
+        gval gv( (const char*)NULL, TRUE);
         g_object_set_property( (GObject*)cell, "stock_id", &gv);
     }
     else if( self->is_directory )
     {
-        g_value_set_static_string( &gv, "gtk-open" );
+//        g_value_set_static_string( &gv, "gtk-open" );
 
+        gval gv( "gtk-open", TRUE);
         g_object_set_property( (GObject*)cell, "stock_id", &gv);
     }
     else
     {
-        g_value_set_static_string( &gv, "gtk-file" );
+        gval gv( "gtk-file", TRUE);
+//        g_value_set_static_string( &gv, "gtk-file" );
 
         g_object_set_property( (GObject*)cell, "stock_id", &gv);
     }

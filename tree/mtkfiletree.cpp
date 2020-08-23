@@ -78,9 +78,7 @@ static void mtk_filetree_class_init(MtkFiletreeClass *klass)
 
 static void mtk_filetree_on_root_changed( GObject *gobject, GParamSpec *pspec, gpointer user_data)
 {
-    g_print("mtk_filetree_on_root_changed\n");
     MtkFiletree* self = (MtkFiletree*)gobject;
-    //mtk_filetree_clear(self);
     mtk_filetree_add_root(self, self->root, self->show_hidden, self->filter);
 }
 
@@ -140,7 +138,7 @@ static void mtk_filetree_init(MtkFiletree *self)
     g_signal_connect( G_OBJECT (self), "row-expanded", G_CALLBACK(mtk_filetree_expand_row), self);
     g_signal_connect( G_OBJECT (self), "row-activated", G_CALLBACK(mtk_filetree_on_select), self);
 
-    g_signal_connect( G_OBJECT (self), "notify::dir", G_CALLBACK(mtk_filetree_on_root_changed), self);
+    g_signal_connect( G_OBJECT (self), "notify::directory", G_CALLBACK(mtk_filetree_on_root_changed), self);
 
 }
 
@@ -204,6 +202,9 @@ void mtk_filetree_tree_cell_render_pix(
 
 void mtk_filetree_add_root(MtkFiletree *self, MtkFile* file, bool show_hidden, const gchar* filter)
 {
+    if(!file)
+        return;
+
     bool is_refresh = file == self->root;
 
     g_object_ref(file);

@@ -16,7 +16,7 @@ OPTIONS = -fpic -Wno-write-strings -pthread -D_REENTRANT $(DEFAULT_OPTS)
 # compile flags
 CPPFLAGS = -Wall -I../../include $(DEBUG) $(INCLUDE) $(OPTIONS) $(PKG_INC)
 
-LIBS = -L../../lib -lwebview -L../build -lmtk
+LIBS = -L../build -lmtk
 #################################################
 # source and build path information
 #################################################

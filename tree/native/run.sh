@@ -9,8 +9,8 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 # setup environment variables
 
-export LD_LIBRARY_PATH=$DIR/../../lib:$DIR/../build:$LD_LIBRARY_PATH
-export GI_TYPELIB_PATH=$DIR/../../lib:$DIR/../build:$GI_TYPELIB_PATH
+export LD_LIBRARY_PATH=$DIR/../build:$LD_LIBRARY_PATH
+export GI_TYPELIB_PATH=$DIR/../build:$GI_TYPELIB_PATH
 
 # allows the python package under ./pygtk to be found
 export PYTHONPATH=$DIR/../..:$PYTHONPATH

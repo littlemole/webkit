@@ -10,6 +10,380 @@
 #include <functional>
 
 
+class gobj
+{
+public:
+    gobj()
+        :obj_(0)
+    {}
+
+    gobj(GObject* o)
+        : obj_(o)
+    {}
+
+    gobj(const gobj& rhs)
+    {
+        if( this == &rhs)
+            return;
+
+        obj_ = rhs.obj_;
+        g_object_ref(obj_);
+    }
+
+    gobj& operator=(const gobj& rhs)
+    {
+        if( this == &rhs)
+            return * this;
+        
+        if(obj_)
+        {
+            g_object_unref(obj_);
+        }
+
+        obj_ = rhs.obj_;
+        g_object_ref(obj_);
+    }
+
+    gobj& operator=(GObject* rhs)
+    {
+        if( this->obj_ == rhs)
+            return * this;
+        
+        if(obj_)
+        {
+            g_object_unref(obj_);
+        }
+
+        obj_ = rhs;
+    }    
+
+    ~gobj()
+    {
+        if(obj_)
+        {
+            g_object_unref(obj_);
+            obj_ = 0;
+        }
+    }
+
+    GObject* operator->()
+    {
+        return obj_;
+    }
+
+    GObject* operator*()
+    {
+        return obj_;
+    }
+
+    GObject* ref()
+    {
+        g_object_ref(obj_);
+        return obj_;
+    }
+
+    GObject* unref()
+    {
+        g_object_unref(obj_);
+        return obj_;
+    }
+
+private:
+    GObject* obj_;    
+};
+
+
+class gval : public GValue 
+{
+public:
+
+    gval()
+    {
+        g_type = 0;
+        data[0].v_int = 0;
+        data[1].v_int = 0;
+    }
+
+    gval(const gval& rhs)
+    {
+        g_type = 0;
+        data[0].v_int = 0;
+        data[1].v_int = 0;
+
+        if(&rhs == this)
+            return;
+
+        g_value_copy(&rhs,this);        
+    }
+
+    gval(const GValue* gv)
+    {
+        g_type = 0;
+        data[0].v_int = 0;
+        data[1].v_int = 0;
+
+        g_value_copy(gv,this);        
+    }
+
+    gval& operator=(const gval& rhs)
+    {
+        if(&rhs == this)
+            return *this;
+
+        g_value_unset(this);
+        g_value_copy( &rhs,this);        
+
+        return *this;
+    }
+
+    gval& operator=(const GValue* gv)
+    {
+        if(gv == this)
+            return *this;
+
+        g_value_unset(this);
+        g_value_copy( gv,this);        
+
+        return *this;
+    }
+
+    gval(bool i)
+    {
+        g_type = 0;
+        data[0].v_int = 0;
+        data[1].v_int = 0;
+
+        g_value_init(this,G_TYPE_BOOLEAN);
+        g_value_set_int(this,i);
+    }
+
+    bool get_bool()
+    {
+        return g_value_get_boolean(this);
+    }
+
+    gval(int i)
+    {
+        g_type = 0;
+        data[0].v_int = 0;
+        data[1].v_int = 0;
+
+        g_value_init(this,G_TYPE_INT);
+        g_value_set_int(this,i);
+    }
+
+    int get_int()
+    {
+        return g_value_get_int(this);
+    }
+
+    gval(unsigned int i)
+    {
+        g_type = 0;
+        data[0].v_int = 0;
+        data[1].v_int = 0;
+
+        g_value_init(this,G_TYPE_UINT);
+        g_value_set_uint(this,i);
+    }
+
+    unsigned int get_uint()
+    {
+        return g_value_get_uint(this);
+    }
+
+    gval(long i)
+    {
+        g_type = 0;
+        data[0].v_int = 0;
+        data[1].v_int = 0;
+
+        g_value_init(this,G_TYPE_LONG);
+        g_value_set_long(this,i);
+    }
+
+    long get_long()
+    {
+        return g_value_get_long(this);
+    }
+
+    gval(unsigned long i)
+    {
+        g_type = 0;
+        data[0].v_int = 0;
+        data[1].v_int = 0;
+
+        g_value_init(this,G_TYPE_ULONG);
+        g_value_set_ulong(this,i);
+    }
+
+    unsigned long get_ulong()
+    {
+        return g_value_get_ulong(this);
+    }
+
+    gval(long long i)
+    {
+        g_type = 0;
+        data[0].v_int = 0;
+        data[1].v_int = 0;
+
+        g_value_init(this,G_TYPE_INT64);
+        g_value_set_int64(this,i);
+    }
+
+    long long get_int64()
+    {
+        return g_value_get_int64(this);
+    }
+
+    gval(unsigned long long i)
+    {
+        g_type = 0;
+        data[0].v_int = 0;
+        data[1].v_int = 0;
+
+        g_value_init(this,G_TYPE_UINT64);
+        g_value_set_uint64(this,i);
+    }
+
+    unsigned long long get_uint64()
+    {
+        return g_value_get_uint64(this);
+    }
+
+
+    gval(float i)
+    {
+        g_type = 0;
+        data[0].v_int = 0;
+        data[1].v_int = 0;
+
+        g_value_init(this,G_TYPE_FLOAT);
+        g_value_set_float(this,i);
+    }
+
+    float get_float()
+    {
+        return g_value_get_float(this);
+    }
+
+    gval(double i)
+    {
+        g_type = 0;
+        data[0].v_int = 0;
+        data[1].v_int = 0;
+
+        g_value_init(this,G_TYPE_DOUBLE);
+        g_value_set_double(this,i);
+    }
+
+    double get_double()
+    {
+        return g_value_get_double(this);
+    }
+
+    gval(char * i)
+    {
+        g_type = 0;
+        data[0].v_int = 0;
+        data[1].v_int = 0;
+
+        g_value_init(this,G_TYPE_STRING);
+        g_value_set_string(this,i);
+    }
+
+    gval(const char * i, bool static_string = false)
+    {
+        g_type = 0;
+        data[0].v_int = 0;
+        data[1].v_int = 0;
+
+        g_value_init(this,G_TYPE_STRING);
+        if(!static_string)
+        {
+            g_value_set_string(this,i);
+        }
+        else 
+        {
+            g_value_set_static_string(this,i);
+        }
+    }
+
+    const char* get_cstring()
+    {
+        return g_value_get_string(this);
+    }
+
+    const char* dup_cstring()
+    {
+        return g_value_dup_string(this);
+    }
+
+
+    gval(const std::string& i)
+    {
+        g_type = 0;
+        data[0].v_int = 0;
+        data[1].v_int = 0;
+
+        g_value_init(this,G_TYPE_STRING);
+        g_value_set_string(this,i.c_str());
+    }
+
+    std::string get_string()
+    {
+        return g_value_get_string(this);
+    }
+
+
+    gval(gpointer i)
+    {
+        g_type = 0;
+        data[0].v_int = 0;
+        data[1].v_int = 0;
+
+        g_value_init(this,G_TYPE_POINTER);
+        g_value_set_pointer(this,i);
+    }
+
+    gpointer get_pointer()
+    {
+        return g_value_get_pointer (this);
+    }
+
+    gval(GObject* i)
+    {
+        g_type = 0;
+        data[0].v_int = 0;
+        data[1].v_int = 0;
+
+        g_value_init(this,G_TYPE_OBJECT);
+        g_value_set_object (this,i);
+    }
+
+    GObject* get_object()
+    {
+        return (GObject*)g_value_get_object(this);
+    }
+
+    GObject* dup_object()
+    {
+        return (GObject*)g_value_dup_object(this);
+    }
+
+    ~gval()
+    {
+        g_value_unset(this);
+    }
+
+    void unset()
+    {
+        g_value_unset(this);
+    }
+};
+
+
 class gvar_builder;
 
 class gvar

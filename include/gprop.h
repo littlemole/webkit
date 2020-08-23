@@ -24,12 +24,10 @@ struct GPROP_BASE
     {
         g_free(c);
         c = g_value_dup_string(v);
-        g_print(PROG "set_property %s\n", c);
-
     }
 
     template<class T>
-    void set_value( T* o, const GValue* v)
+    void set_value( T*& o, const GValue* v)
     {
         if(G_VALUE_HOLDS_OBJECT(v))
         {
@@ -178,8 +176,6 @@ private:
         }
 
         GPROP_BASE* p = props_[property_id-1].get();
-
-        g_print(PROG "set_property %s\n", p->pspec->name);
 
         p->set(object,value);
     }

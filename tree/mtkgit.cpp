@@ -94,10 +94,11 @@ MtkGitFile*	mtk_gitfile_new( const gchar* fn)
 
     MtkFile* f = (MtkFile*)file;
 
-    GValue gv = G_VALUE_INIT;
+    gval gv(fn);
+/*    GValue gv = G_VALUE_INIT;
     g_value_init( &gv, G_TYPE_STRING );
     g_value_set_string( &gv, fn );
-
+*/
     g_object_set_property( G_OBJECT(f),"path",&gv);    
 
     return file;    
@@ -217,15 +218,20 @@ void virtual_mtk_gitfile_tree_cell_render_file(
         oss  << c;
     }
     g_free(c);
+
+    gval gv(oss.str());
     
-    GValue gv = G_VALUE_INIT;
+/*    GValue gv = G_VALUE_INIT;
     g_value_init( &gv, G_TYPE_STRING );
     g_value_set_string( &gv, oss.str().c_str() );
+    */
     g_object_set_property( (GObject*)cell, "markup", &gv);
 
-    GValue gvc = G_VALUE_INIT;
+    gval gvc(gs->color);
+/*    GValue gvc = G_VALUE_INIT;
     g_value_init( &gvc, G_TYPE_STRING );
     g_value_set_string( &gvc,gs->color.c_str() );
+    */
     g_object_set_property( (GObject*)cell, "foreground", &gvc);
 
     g_free(bn);
@@ -240,19 +246,21 @@ void virtual_mtk_gitfile_tree_cell_render_pix(
         gpointer data
     )
 {
-    GValue gv = G_VALUE_INIT;
-    g_value_init( &gv, G_TYPE_STRING );
+//    GValue gv = G_VALUE_INIT;
+//    g_value_init( &gv, G_TYPE_STRING );
 
     if ( self->is_empty )
     {
-        g_value_set_static_string( &gv, NULL );
+        //g_value_set_static_string( &gv, NULL );
+        gval gv( (const char*)NULL, TRUE);
         g_object_set_property( (GObject*)cell, "stock_id", &gv);
     }
     else
     {
         GitStatus* gs = mtk_gitfile_get_status_data( (MtkGitFile*) self);
 
-        g_value_set_static_string( &gv, gs->icon.c_str() );
+        //g_value_set_static_string( &gv, gs->icon.c_str() );
+        gval gv(gs->icon);
         g_object_set_property( (GObject*)cell, "stock_id", &gv);
     }
 }

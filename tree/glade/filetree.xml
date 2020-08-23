@@ -2,12 +2,15 @@
 <glade-catalog name="gfiletree" library="mtk" depends="webkit2gtk">
 
   <glade-widget-classes>
-    <glade-widget-class nick="FileTree" name="MtkFiletree" generic-name="filetree" title="File Tree" >
+    <glade-widget-class nick="FileTree"  get-type-function="mtk_filetree_get_type" name="MtkFiletree" generic-name="filetree" title="File Tree" >
     </glade-widget-class>
+    <glade-widget-class  name="MtkWebView" get-type-function="mtk_webview_get_type" generic-name="webview" title="Web View" >
+    </glade-widget-class>    
   </glade-widget-classes>
   
-  <glade-widget-group name="mtk" title="FileTree">
+  <glade-widget-group name="mtk" title="MTK">
     <glade-widget-class-ref name="MtkFiletree"/>
+    <glade-widget-class-ref name="MtkWebView"/>
   </glade-widget-group>  
 
 </glade-catalog>
