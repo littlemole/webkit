@@ -257,7 +257,7 @@ public:
 
     std::function<void(ResultFuture<T>)> cb;
 
-    ResultPromiseImpl(const std::function<void(ResultFuture<T>)>& callback)
+    ResultPromiseImpl(std::function<void(ResultFuture<T>)> callback)
         :cb(callback)
     {}
 
@@ -276,7 +276,7 @@ public:
 
     std::function<void( ResultFuture<void> )> cb;
 
-    ResultPromiseImpl(const std::function<void(ResultFuture<void>)>& callback)
+    ResultPromiseImpl(std::function<void(ResultFuture<void>)> callback)
         :cb(callback)
     {}
 
@@ -287,12 +287,12 @@ public:
 };
 
 template<class T>
-auto result_promise( const std::function<void(ResultFuture<T>)>& fun)
+auto result_promise( std::function<void(ResultFuture<T>)> fun)
 {
     return new ResultPromiseImpl<void(T)>(fun);
 }
 
-inline auto result_promise( const std::function<void(ResultFuture<void>)>& fun)
+inline auto result_promise( std::function<void(ResultFuture<void>)> fun)
 {
     return new ResultPromiseImpl<void()>(fun);
 }
@@ -352,9 +352,26 @@ struct RequestFuture
     std::string uid;
 
     template<class T>
-    void then( const std::function<void(ResultFuture<T>)>& f)
+    struct deducer;
+    
+    template<class R,class C,class ...Args>
+    struct deducer<R(C::*)(Args...) const>
     {
-        responses().add( uid.c_str(), result_promise(f) );
+        using func_t = std::function<R(Args...)>;
+
+        template<class F>
+        deducer( F f )
+            : fun(f)
+        {}   
+
+        func_t fun;
+    };
+
+    template<class T>
+    void then( T f)
+    {
+        deducer<decltype(& T::operator())> d( f );
+        responses().add( uid.c_str(), result_promise(d.fun) );
     }
 };
 
@@ -414,7 +431,7 @@ RequestFuture send_request( MtkWebView* web, std::string m, Args ... args)
 
     webkit_web_view_send_message_to_page( (WebKitWebView*) web, message, NULL, NULL, NULL);
     
-    std::function<void(ResultFuture<void>)> fun([](ResultFuture<void>){});
+    //std::function<void(ResultFuture<void>)> fun([](ResultFuture<void>){});
     //responses().add( uid, result_promise(fun));
 
     RequestFuture f{ uid };

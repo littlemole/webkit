@@ -138,7 +138,9 @@ public:
     {
         g_print("CONTROLLER CLICK\n");
 
-        std::function<void(ResultFuture<std::string>)> cb = [](auto f)
+        //std::function<void(ResultFuture<std::string>)> 
+        auto 
+        cb = [](ResultFuture<std::string> f)
         {
             std::string s = f.get();
             g_print("CONTROLLER CLICKED %s\n", s.c_str());
@@ -154,7 +156,7 @@ public:
             "recvResponse", 
             json
         )
-;//        .then(cb);
+        .then(cb);
 
         return FALSE;
     }    
