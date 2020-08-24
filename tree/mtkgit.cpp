@@ -383,8 +383,9 @@ gint git_get_branches(gint exit_code, const std::string& out, gchar** status, gc
 {
     std::vector<std::string> lines = split(out,'\n');
     std::ostringstream oss;
-    for( auto& line : lines)
+    for( size_t i = 1; i < lines.size(); i++)
     {
+        std::string line = lines[i];
         if(!line.empty())
         {
             if(line[0] == '*')
@@ -671,6 +672,29 @@ gboolean mtk_git_delete_branch(MtkFile* file, const gchar* branch)
 
     gint exit_code = 0;
     std::string cmd = std::string("git branch -d  ");
+    cmd += branch;
+    std::string c = make_cmd(cd,cmd.c_str());
+
+    gchar* tmp = mtk_bash(c.c_str(),&exit_code);
+    std::string content = tmp;
+    g_free(tmp);
+
+    return exit_code == 0;
+}
+
+
+gboolean mtk_git_create_branch(MtkFile* file, const gchar* branch)
+{
+    std::string cd = file->file_name;
+    if ( !file->is_directory)
+    {
+        gchar* parent = mtk_file_get_parent(file);
+        cd = parent;
+        g_free(parent);
+    }
+
+    gint exit_code = 0;
+    std::string cmd = std::string("git checkout -b ");
     cmd += branch;
     std::string c = make_cmd(cd,cmd.c_str());
 

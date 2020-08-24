@@ -87,7 +87,7 @@ static void window_object_cleared(
     WebKit.set(bindSignalsFunctionName.ref(), bindSignalsFunction.ref());
 
     jsobj controller = js.object(Controller_class_def);
-    WebKit.set("Python",controller.ref());
+    WebKit.set("Host",controller.ref());
      
     global.set("WebKit", WebKit.ref());
 

@@ -1,30 +1,17 @@
 #include <gtk/gtk.h>
 #include <metacpp/meta.h>
+
 #include "mtkwebview.h"
-#include "connector.h"
-#include "mtkwebkit.h"
 #include "mtkgit.h"
 
-static std::string cwd() 
-{
-    char result[ PATH_MAX ];
-    return getcwd(result, PATH_MAX);
-}
+#include "mtkwebkit.h"
+#include "mtkconnector.h"
 
-void onActive(GObject* x, GParamSpec* s, gpointer userdata)
-{
-     g_print("active\n");
-}
+// main UI controller
 
 class Controller
 {
 public:
-    MtkFiletree* tree;
-    MtkWebView* web;
-
-    Gui ui;
-
-    int radio = 0;
 
     Controller()
     {
@@ -34,46 +21,240 @@ public:
         .bind(this)
         .show();
 
-        //window = (GtkWidget*) ui.get_object("mainWindow");
-
         web = ui.get<MtkWebView>("web");
         webkit_bind(web,this);
-        //pywebkit_webview_load_local_uri( (PywebkitWebview*)web,"index.html");
 
         tree = ui.get<MtkFiletree>("tree");
 
         MtkGitFile* file = mtk_gitfile_new( cwd().c_str() );
         mtk_filetree_add_root( tree, (MtkFile*)file, FALSE, ".*");
+        g_object_unref(file);
 
         ui.add_accelerator("<control>h",&Controller::onHelp,this);
 
-        //g_signal_connect (window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
-//        ui.bind(this);
-/*
-        GBinding* b1 = g_object_bind_property(
-            ui.get_object("ViewStatusMenuItem"), "active",
-            ui.get_object("tb_status"), "active",
-            G_BINDING_BIDIRECTIONAL)
-        ;
-*/
-       // connect(ui.get_object("ViewStatusMenuItem"), "notify::active", &Controller::onActive, this);
-  //      g_signal_connect( G_OBJECT (ui.get_object("ViewStatusMenuItem")), "notify::active", G_CALLBACK(::onActive), this);
-
-//        g_print("binding: %i\n", (void*)b1);
-/*
-        g_object_bind_property(
-            ui.get_object("ViewDiffMenuItem"), "active",
-            ui.get_object("tb_diff"), "active",
-            G_BINDING_DEFAULT)
-        ;
-        g_object_bind_property(
-            ui.get_object("ViewFileMenuItem"), "active",
-            ui.get_object("tb_file"), "active",
-            G_BINDING_DEFAULT)
-        ;
-*/        
+        ui.status_bar( cwd().c_str() );      
     }
 
+    // JavaScript handlers
+    void onDocumentLoad()
+    {
+        onViewStatus(0);
+    }
+
+    void onSubmitCommit(std::string msg)
+    {
+        MtkFile* file = mtk_filetree_get_selected_file(tree);
+
+        gchar* status = 0;
+        gchar* content = 0;
+        gboolean b = mtk_git_commit(file,msg.c_str(),&status,&content);
+
+        send_request( web, "setPlainText", status, content );      
+
+        g_object_unref(file);
+        g_free(status);
+        g_free(content);
+    }    
+
+
+    void onCreateBranch(std::string branch)
+    {
+        MtkFile* file = mtk_filetree_get_selected_file(tree);
+        gboolean b = mtk_git_create_branch(file,branch.c_str());
+
+        g_object_unref(file);       
+
+        onGitShowBranches(0);
+    }
+
+
+    void onSelectBranch(std::string branch)
+    {
+        MtkFile* file = mtk_filetree_get_selected_file(tree);
+        gboolean b = mtk_git_switch_branch(file,branch.c_str());
+
+        g_object_unref(file);       
+
+        onGitShowBranches(0);
+    }
+
+
+    void onDeleteBranch(std::string branch)
+    {
+        MtkFile* file = mtk_filetree_get_selected_file(tree);
+
+        gchar* status = 0;
+        gchar* content = 0;
+        int exit_code = mtk_git_cmd(file,MTK_GIT_DEFAULT_BRANCH,&status,&content);
+
+        if( strncmp(branch.c_str(),content,branch.size()) == 0 )
+        {
+            return;
+        }
+
+        gboolean b = mtk_git_delete_branch(file,branch.c_str());
+
+        g_object_unref(file);       
+        g_free(status);
+        g_free(content);
+
+        onGitShowBranches(0);
+    }
+
+    // Menu Handlers
+    void onFileOpen(GtkWidget*)
+    {
+        std::string d = ui.showFileDialog( GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,"Please choose a folder");
+        if(d.empty())
+        {
+            return;
+        }
+
+        ui.status_bar( d.c_str() );
+    
+        mtk_filetree_clear(tree);
+
+        MtkGitFile* f = mtk_gitfile_new(d.c_str());
+        mtk_filetree_add_root(tree, (MtkFile*)f, TRUE, ".*");
+        
+        g_object_unref(f);
+
+        onViewStatus(0);
+    }
+
+    void onExit(GtkWidget* )
+    {
+        gtk_main_quit();
+    }
+
+    void onGitAdd(GtkWidget*)
+    {
+        do_git(MTK_GIT_ADD,true);
+    }
+
+    void onGitCommit(GtkWidget*)
+    {
+        do_git(MTK_GIT_DIFF_CACHED,false,"setCommit");
+    }
+
+    void onGitRestore(GtkWidget*)
+    {
+        do_git(MTK_GIT_RESTORE,true);        
+    }
+
+    void onGitRestoreStaged(GtkWidget*)
+    {
+        do_git(MTK_GIT_RESTORE_STAGED,true);                
+    }
+
+    void onGitRestoreOrigin(GtkWidget*)
+    {
+        do_git(MTK_GIT_RESTORE_ORIGIN,true);                
+    }
+
+    void onGitPull(GtkWidget*)
+    {
+        do_git(MTK_GIT_PULL,true);                
+    }
+
+    void onGitPush(GtkWidget*)
+    {
+        do_git(MTK_GIT_PUSH,true);                
+    }
+
+    void onGitShowBranches(GtkWidget*)
+    {
+        MtkFile* file = mtk_filetree_get_selected_file(tree);
+
+        gchar* status = 0;
+        gchar* content = 0;
+        int exit_code = mtk_git_cmd(file,MTK_GIT_BRANCHES,&status,&content);
+
+        send_request( web, "setBranches", status, content );      
+
+        g_object_unref(file);
+        g_free(status);
+        g_free(content);
+    }
+
+    void onViewStatus(GtkWidget* w)
+    {
+        if( !sync_radio(w,0,"ViewStatusMenuItem","tb_status") )
+            return;
+
+        do_git(MTK_GIT_STATUS);
+    }
+
+    void onViewDiff(GtkWidget* w)
+    {
+        if( !sync_radio(w,1,"ViewDiffMenuItem","tb_diff") )
+            return;
+
+        do_git(MTK_GIT_DIFF,false,"setDiff");    
+    }
+
+    void onGitDiffCached(GtkWidget* w)
+    {
+        do_git(MTK_GIT_DIFF_CACHED,false,"setDiff");
+    }    
+
+    void onGitDiffOrigin(GtkWidget* w)
+    {
+        do_git(MTK_GIT_DIFF_ORIGIN,false,"setDiff");
+    }    
+
+    void onViewFile(GtkWidget* w)
+    {
+        if( !sync_radio(w,2,"ViewFileMenuItem","tb_file") )
+            return;
+
+        do_git(MTK_GIT_VIEW_FILE);
+    }
+
+    void onViewRefresh(GtkWidget*)
+    {
+        MtkFile* file = tree->root;
+        g_object_ref(file);
+
+        mtk_filetree_clear(tree);
+        mtk_filetree_add_root( tree, file, FALSE, ".*");
+
+        g_object_unref(file);
+    }
+
+    void onHelp(GtkWidget*)
+    {
+        ui.alert("HELLO WRLD!");
+    }
+
+    // context Menues
+
+    gboolean onContext(GtkWidget *widget, GdkEvent* event)
+    {
+        if( event->button.button == 3) // right click
+        {
+            GtkMenu* m = ui.get<GtkMenu>("GitSubMenu");
+            gtk_menu_popup_at_pointer( m, event);
+        }
+
+        // allow further processing
+        return FALSE;
+    }    
+
+    gboolean onWebContext(
+        WebKitWebView* web_view,
+        WebKitContextMenu* context_menu,
+        GdkEvent* event,
+        WebKitHitTestResult* hit_test_result )
+    {
+        GtkMenu* m = ui.get<GtkMenu>("ViewSubMenu");
+        gtk_menu_popup_at_pointer( m, event);
+
+        // prevent default menu
+        return TRUE;
+    }  
+
+    // selection in file tree widget changed
     void onSelect( GtkTreeView* tree_view, GtkTreePath* path, GtkTreeViewColumn* column)
     {
         switch(radio)
@@ -96,7 +277,43 @@ public:
         }
     }
 
+private:
 
+    // the glade UI
+    Gui ui;
+
+    // main widgets
+    MtkFiletree* tree = nullptr;
+    MtkWebView* web = nullptr;
+
+    // current view mode radio toggle
+    int radio = 0;
+
+    // execute a git command
+    void do_git(MtkGitCmd cmd, bool refresh = false, const gchar* mode = "setPlainText", MtkFile* file  = NULL )
+    {
+        if(!file)
+        {
+            file = mtk_filetree_get_selected_file(tree);
+        }
+
+        gchar* status = 0;
+        gchar* content = 0;
+        int exit_code = mtk_git_cmd(file,cmd,&status,&content);
+
+        send_request( web, mode, status, content );      
+
+        if(refresh)
+        {
+            onViewRefresh(0);  
+        }
+
+        g_object_unref(file);
+        g_free(status);
+        g_free(content);
+    }
+
+    // sync a menu radio-group with a toolbar radio-group
     bool sync_radio(GtkWidget* w, int r, const char* menuItem, const char* tbbutton)
     {
         if(!w)
@@ -124,145 +341,53 @@ public:
         return true;
     }
 
-    void onViewStatus(GtkWidget* w)
+    // the current directory
+    std::string cwd() 
     {
-        if( !sync_radio(w,0,"ViewStatusMenuItem","tb_status") )
-            return;
-
-        g_print("onViewStatus\n");
-
-        MtkFile* file = mtk_filetree_get_selected_file(tree);
-
-        gchar* status = 0;
-        gchar* content = 0;
-        int exit_code = mtk_git_cmd(file,MTK_GIT_STATUS,&status,&content);
-
-        send_request( web, "setPlainText", status, content );
-
-        g_object_unref(file);
+        char result[ PATH_MAX ];
+        return getcwd(result, PATH_MAX);
     }
-
-    void onViewDiff(GtkWidget* w)
-    {
-        if( !sync_radio(w,1,"ViewDiffMenuItem","tb_diff") )
-            return;
-
-        g_print("onViewDiff\n");
-
-        MtkFile* file = mtk_filetree_get_selected_file(tree);
-
-        gchar* status = 0;
-        gchar* content = 0;
-        int exit_code = mtk_git_cmd(file,MTK_GIT_DIFF,&status,&content);
-
-        send_request( web, "setDiff", status, content );
-
-        g_object_unref(file);
-    }
-
-    void onViewFile(GtkWidget* w)
-    {
-        if( !sync_radio(w,2,"ViewFileMenuItem","tb_file") )
-            return;
-
-        g_print("onViewDiff\n");
-
-        MtkFile* file = mtk_filetree_get_selected_file(tree);
-
-        gchar* status = 0;
-        gchar* content = 0;
-        int exit_code = mtk_git_cmd(file,MTK_GIT_VIEW_FILE,&status,&content);
-
-        send_request( web, "setPlainText", status, content );
-
-        g_object_unref(file);        
-    }
-
-    void onActive(GtkWidget* )
-    {
-        g_print("Active\n");
-    }
-
-    void onExit(GtkWidget* )
-    {
-        g_print("Exit\n");
-        gtk_main_quit();
-    }
-
-    void onDocumentLoad()
-    {
-        g_print("DocumentLoad\n");
-
-        MtkFile* file = mtk_filetree_get_selected_file(tree);
-
-        gchar* status = 0;
-        gchar* content = 0;
-        int exit_code = mtk_git_cmd(file,MTK_GIT_STATUS,&status,&content);
-
-        send_request( web, "setPlainText", status, content );
-
-        g_object_unref(file);
-    }
-
-    void onFileOpen(GtkWidget* button)
-    {
-        g_print("CONTROLLER CLICK\n");
-
-        std::string r = ui.showFileDialog(GTK_FILE_CHOOSER_ACTION_OPEN,"Select file");
-
-        if(r.empty())
-            return;
-
-        //std::function<void(ResultFuture<std::string>)> 
-        auto 
-        cb = [](ResultFuture<std::string> f)
-        {
-            std::string s = f.get();
-            g_print("CONTROLLER CLICKED %s\n", s.c_str());
-        };
-
-        Json::Value json(Json::arrayValue);
-        json.append(Json::Value(r));
-        json.append(Json::Value("CONTROLLER CLICK2"));
-
-        send_request( 
-            web, 
-           // cb, 
-            "recvResponse", 
-            json
-        )
-        .then(cb);
-
-        return;
-    }    
-
-    int on_web(std::string msg)
-    {
-        g_print("web: %s\n", msg.c_str());
-        return 42;
-    }
-
-    void onHelp(GtkWidget*)
-    {
-        ui.alert("HELLO WRLD!");
-    }
-
-    constexpr static auto meta() 
-	{
-		return meta::data(
-			meta::mem_fun("onFileOpen", &Controller::onFileOpen),
-			meta::mem_fun("onViewStatus", &Controller::onViewStatus),
-			meta::mem_fun("onViewDiff", &Controller::onViewDiff),
-			meta::mem_fun("onViewFile", &Controller::onViewFile),
-			meta::mem_fun("on_web", &Controller::on_web),
-			meta::mem_fun("onSelect", &Controller::onSelect),
-			meta::mem_fun("onDocumentLoad", &Controller::onDocumentLoad),
-			meta::mem_fun("onHelp", &Controller::onHelp),
-			meta::mem_fun("onExit", &Controller::onExit)
-		);
-	}
 };
 
+// metadata used for mapping both glade and JavaScript event handlers
+
+template<>
+struct meta::Data<Controller>
+{
+    static constexpr auto meta()
+    {
+		return meta::data(
+			meta::mem_fun("onFileOpen",         &Controller::onFileOpen),
+			meta::mem_fun("onGitAdd",           &Controller::onGitAdd),
+			meta::mem_fun("onGitCommit",        &Controller::onGitCommit),
+			meta::mem_fun("onSubmitCommit",     &Controller::onSubmitCommit),
+			meta::mem_fun("onGitRestore",       &Controller::onGitAdd),
+			meta::mem_fun("onGitRestoreStaged", &Controller::onGitRestoreStaged),
+			meta::mem_fun("onGitRestoreOrigin", &Controller::onGitRestoreOrigin),
+			meta::mem_fun("onGitPull",          &Controller::onGitPull),
+			meta::mem_fun("onGitPush",          &Controller::onGitPush),
+			meta::mem_fun("onGitShowBranches",  &Controller::onGitShowBranches),
+			meta::mem_fun("onSelectBranch",     &Controller::onSelectBranch),
+			meta::mem_fun("onCreateBranch",     &Controller::onCreateBranch),
+			meta::mem_fun("onDeleteBranch",     &Controller::onDeleteBranch),
+			meta::mem_fun("onViewStatus",       &Controller::onViewStatus),
+			meta::mem_fun("onViewDiff",         &Controller::onViewDiff),
+			meta::mem_fun("onGitDiffCached",    &Controller::onGitDiffCached),
+			meta::mem_fun("onGitDiffOrigin",    &Controller::onGitDiffOrigin),
+			meta::mem_fun("onViewFile",         &Controller::onViewFile),
+			meta::mem_fun("onViewRefresh",      &Controller::onViewRefresh),
+			meta::mem_fun("onContext",          &Controller::onContext),
+			meta::mem_fun("onWebContext",       &Controller::onWebContext),
+			meta::mem_fun("onSelect",           &Controller::onSelect),
+			meta::mem_fun("onDocumentLoad",     &Controller::onDocumentLoad),
+			meta::mem_fun("onHelp",             &Controller::onHelp),
+			meta::mem_fun("onExit",             &Controller::onExit)
+		);        
+    }
+};
+
+
+// main application entry point
 
 int main (int argc, char **argv)
 {

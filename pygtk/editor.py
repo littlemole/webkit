@@ -18,6 +18,7 @@ class Editor(GtkSource.View):
 
     language = GObject.Property(nick="language",type=str, default="")    
 
+
     def __init__(self,*args,**kargs):
 
         GtkSource.View.__init__(self)

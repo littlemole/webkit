@@ -795,7 +795,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="GITFILE"
                     c:identifier="MTK_GITFILE"
                     introspectable="0">
-      <source-position filename="include/mtkgit.h" line="145"/>
+      <source-position filename="include/mtkgit.h" line="146"/>
       <parameters>
         <parameter name="o">
         </parameter>
@@ -804,7 +804,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="GITFILE_CLASS"
                     c:identifier="MTK_GITFILE_CLASS"
                     introspectable="0">
-      <source-position filename="include/mtkgit.h" line="147"/>
+      <source-position filename="include/mtkgit.h" line="148"/>
       <parameters>
         <parameter name="c">
         </parameter>
@@ -813,7 +813,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="GITFILE_GET_CLASS"
                     c:identifier="MTK_GITFILE_GET_CLASS"
                     introspectable="0">
-      <source-position filename="include/mtkgit.h" line="153"/>
+      <source-position filename="include/mtkgit.h" line="154"/>
       <parameters>
         <parameter name="o">
         </parameter>
@@ -887,20 +887,20 @@ and/or use gtk-doc annotations.  -->
            glib:type-name="MtkGitFile"
            glib:get-type="mtk_gitfile_get_type"
            glib:type-struct="GitFileClass">
-      <source-position filename="include/mtkgit.h" line="125"/>
+      <source-position filename="include/mtkgit.h" line="126"/>
       <constructor name="new" c:identifier="mtk_gitfile_new">
-        <source-position filename="include/mtkgit.h" line="135"/>
+        <source-position filename="include/mtkgit.h" line="136"/>
         <return-value transfer-ownership="full">
           <doc xml:space="preserve"
                filename="include/mtkgit.h"
-               line="133">a #MtkGitFile</doc>
+               line="134">a #MtkGitFile</doc>
           <type name="GitFile" c:type="MtkGitFile*"/>
         </return-value>
         <parameters>
           <parameter name="fn" transfer-ownership="none">
             <doc xml:space="preserve"
                  filename="include/mtkgit.h"
-                 line="132">A #gchar*</doc>
+                 line="133">A #gchar*</doc>
             <type name="utf8" c:type="const gchar*"/>
           </parameter>
         </parameters>
@@ -918,7 +918,7 @@ and/or use gtk-doc annotations.  -->
     <record name="GitFileClass"
             c:type="MtkGitFileClass"
             glib:is-gtype-struct-for="GitFile">
-      <source-position filename="include/mtkgit.h" line="125"/>
+      <source-position filename="include/mtkgit.h" line="126"/>
       <field name="parent">
         <type name="FileClass" c:type="MtkFileClass"/>
       </field>
@@ -944,7 +944,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="IS_FILETREE_GITFILE"
                     c:identifier="MTK_IS_FILETREE_GITFILE"
                     introspectable="0">
-      <source-position filename="include/mtkgit.h" line="149"/>
+      <source-position filename="include/mtkgit.h" line="150"/>
       <parameters>
         <parameter name="o">
         </parameter>
@@ -953,7 +953,7 @@ and/or use gtk-doc annotations.  -->
     <function-macro name="IS_FILETREE_GITFILE_CLASS"
                     c:identifier="MTK_IS_FILETREE_GITFILE_CLASS"
                     introspectable="0">
-      <source-position filename="include/mtkgit.h" line="151"/>
+      <source-position filename="include/mtkgit.h" line="152"/>
       <parameters>
         <parameter name="c">
         </parameter>
@@ -1281,7 +1281,7 @@ and/or use gtk-doc annotations.  -->
       </parameters>
     </function>
     <function name="git_commit" c:identifier="mtk_git_commit">
-      <source-position filename="include/mtkgit.h" line="96"/>
+      <source-position filename="include/mtkgit.h" line="97"/>
       <return-value transfer-ownership="none">
         <type name="gint" c:type="gint"/>
       </return-value>
@@ -1300,8 +1300,22 @@ and/or use gtk-doc annotations.  -->
         </parameter>
       </parameters>
     </function>
+    <function name="git_create_branch" c:identifier="mtk_git_create_branch">
+      <source-position filename="include/mtkgit.h" line="92"/>
+      <return-value transfer-ownership="none">
+        <type name="gboolean" c:type="gboolean"/>
+      </return-value>
+      <parameters>
+        <parameter name="file" transfer-ownership="none">
+          <type name="File" c:type="MtkFile*"/>
+        </parameter>
+        <parameter name="branch" transfer-ownership="none">
+          <type name="utf8" c:type="const gchar*"/>
+        </parameter>
+      </parameters>
+    </function>
     <function name="git_delete_branch" c:identifier="mtk_git_delete_branch">
-      <source-position filename="include/mtkgit.h" line="93"/>
+      <source-position filename="include/mtkgit.h" line="94"/>
       <return-value transfer-ownership="none">
         <type name="gboolean" c:type="gboolean"/>
       </return-value>
@@ -1327,7 +1341,7 @@ and/or use gtk-doc annotations.  -->
       </parameters>
     </function>
     <function name="git_switch_branch" c:identifier="mtk_git_switch_branch">
-      <source-position filename="include/mtkgit.h" line="92"/>
+      <source-position filename="include/mtkgit.h" line="93"/>
       <return-value transfer-ownership="none">
         <type name="gboolean" c:type="gboolean"/>
       </return-value>

@@ -89,6 +89,7 @@ void mtk_git_cmd_async(MtkFile* file, MtkGitCmd cmd, MtkAsyncGitCallbackFunc cal
 
 gboolean mtk_git_has_local_commits(MtkFile* file);
 
+gboolean mtk_git_create_branch(MtkFile* file, const gchar* branch);
 gboolean mtk_git_switch_branch(MtkFile* file, const gchar* branch);
 gboolean mtk_git_delete_branch(MtkFile* file, const gchar* branch);
 

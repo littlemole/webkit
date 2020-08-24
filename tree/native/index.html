@@ -86,8 +86,13 @@ document.addEventListener("DOMContentLoaded", function(e)
         setBranches : function( gitdir, output) {
 
           let html = "<table border=0>";
+          output = output.split("\n");
           output.forEach(function(branch)
           {
+              branch = branch.trim();
+              if(branch=="")
+                return;
+
               html += "<tr><td><a class='branch' href='#' data-branch='"+branch+"'>";
               html += escapeHtml(branch);
               html += "</a></td><td><a href='#' class='del_branch' data-branch='" + branch +"'>[x]</a></td></tr>";
@@ -105,20 +110,20 @@ document.addEventListener("DOMContentLoaded", function(e)
               branch.onclick = function(e) {
                 e.preventDefault();
                 //alert(e.target.getAttribute("data-branch"));
-                WebKit.Python.onSelectBranch( e.target.getAttribute("data-branch") );
+                WebKit.Host.onSelectBranch( e.target.getAttribute("data-branch") );
               };
           });
           document.querySelectorAll("a.del_branch").forEach( function(branch) {
               branch.onclick = function(e) {
                 e.preventDefault();
                 //alert(e.target.getAttribute("data-branch"));
-                WebKit.Python.onDeleteBranch( e.target.getAttribute("data-branch") );
+                WebKit.Host.onDeleteBranch( e.target.getAttribute("data-branch") );
               };
           });
           document.getElementById("create_branch").onclick = function(e) {
 
             var branch = document.getElementById("branch").value;
-            WebKit.Python.onCreateBranch(branch);
+            WebKit.Host.onCreateBranch(branch);
           };
         },
 
@@ -129,7 +134,7 @@ document.addEventListener("DOMContentLoaded", function(e)
           document.getElementById("html").innerHTML = "commit in progress ...";
           document.getElementById("commit").style.display = "none";
 
-          WebKit.Python.onSubmitCommit(msg);
+          WebKit.Host.onSubmitCommit(msg);
         }
 
     };
@@ -137,7 +142,7 @@ document.addEventListener("DOMContentLoaded", function(e)
 
     WebKit.bind(View);
 
-    WebKit.Python.onDocumentLoad();
+    WebKit.Host.onDocumentLoad();
     document.getElementById("commitButton").onclick=View.onCommit;
 });
 

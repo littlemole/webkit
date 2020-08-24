@@ -1,18 +1,22 @@
 #ifndef _MOL_DEF_GUARD_DEFINE_MTK_WEBKIT_H_DEF_GUARD_
 #define _MOL_DEF_GUARD_DEFINE_MTK_WEBKIT_H_DEF_GUARD_
 
-#include "../common.h"
-#include <gtk/gtk.h>
-#include <webkit2/webkit2.h>
-#include <metacpp/meta.h>
 #include <type_traits>
-#include "gvglue.h"
 #include <map>
 #include <memory>
 #include <functional>
 #include <typeindex>
-#include "connector.h"
+
+#include <gtk/gtk.h>
+#include <webkit2/webkit2.h>
+#include <metacpp/meta.h>
+
+#include "gvglue.h"
+#include "mtkconnector.h"
 #include "mtkwebview.h"
+
+#include "../common.h"
+
 /////////////////////////////////////////////
 // forwards
 
