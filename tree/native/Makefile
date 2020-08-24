@@ -78,6 +78,6 @@ $(BIN): $(BIN_OBJFILES)
 
 clean:
 	-find -name "*~" -exec rm {} \;
-	-rm -f $(BIN_BUILD)/$(BIN)
+	-rm -f $(BIN)
 	-rm -f $(BIN_BUILD)/*.o
 	

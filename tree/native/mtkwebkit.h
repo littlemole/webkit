@@ -375,36 +375,6 @@ struct RequestFuture
     }
 };
 
-template<class CB, class ... Args>
-void send_request( MtkWebView* web, const CB& cb, std::string m, Args ... args)
-{
-    gchar* uid = g_dbus_generate_guid();
-
-    std::vector<Json::Value> params{ Json::Value(args)... };
-
-    Json::Value array(Json::arrayValue);
-    for( auto& p : params)
-    {
-        array.append(p);
-    }
-
-    Json::Value request(Json::objectValue);
-    request["request"] = uid;
-    request["method"] = m;
-    request["parameters"] = array;
-
-    std::string json = JSON::flatten(request);
-
-    GVariant* msg = g_variant_new_string(json.c_str());
-    WebKitUserMessage* message = webkit_user_message_new( "request", msg);
-
-    webkit_web_view_send_message_to_page( (WebKitWebView*) web, message, NULL, NULL, NULL);
-    
-    responses().add( uid, result_promise(cb) );
-
-    g_free(uid);
-
-}
 
 template<class ... Args>
 RequestFuture send_request( MtkWebView* web, std::string m, Args ... args)
@@ -488,7 +458,7 @@ public:
     template<class Arg, class ...Args>
     Gui& register_widgets(Arg arg, Args ... args)
     {
-        auto t = arg();
+        arg();
         return register_widgets(args...);
     }
 
@@ -499,6 +469,7 @@ public:
             (GtkDialogFlags)flags,
             (GtkMessageType)type,
             (GtkButtonsType)buttons,
+            "%s",
             s.c_str()
         );
         gtk_dialog_set_default_response(dlg,default_button);
@@ -543,7 +514,6 @@ public:
                           GdkModifierType modifier,
                           gpointer user_data)
         {
-            g_print("add_accelerator cb %i \n", (void*)user_data);
             accel_data* ad = (accel_data*)user_data;
             ad->invoke();
             delete ad;
@@ -555,11 +525,84 @@ public:
 
         GClosure* closure = g_cclosure_new( G_CALLBACK(tmp), ad, 0);
         gtk_accel_group_connect(ag,key,mod,GTK_ACCEL_VISIBLE,closure);
+
+        return *this;
     }
+
+    Gui& status_bar(const char* txt, const char* id = "statusBar")
+    {
+        GtkStatusbar* bar = get<GtkStatusbar>(id);
+
+        if(!status_ctx)
+        {
+            status_ctx = gtk_statusbar_get_context_id(bar,"main ui statusbar context");
+        }
+
+        gtk_statusbar_pop(bar,status_ctx);
+        gtk_statusbar_push(bar,status_ctx,txt);
+        return *this;
+    }
+
+    std::string showFileDialog(
+        GtkFileChooserAction action, 
+        const char* title, 
+        const char* filter = 0,
+        const char* dir = 0,
+        const char* parent = "mainWindow" )
+    {
+        const gchar* button = ( action == GTK_FILE_CHOOSER_ACTION_OPEN || 
+                         action == GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER ) 
+                       ? "gtk-open" : "gtk-save";
+
+
+        GtkDialog* dlg = (GtkDialog*) gtk_file_chooser_dialog_new(
+            title,
+            get<GtkWindow>(parent),
+            action,
+            "gtk-cancel",
+            GTK_RESPONSE_CANCEL,
+            button,
+            GTK_RESPONSE_OK,
+            NULL
+        );
+
+        if(dir)
+        {
+            gtk_file_chooser_set_current_folder_uri( (GtkFileChooser*) dlg, dir );
+        }
+
+        if(filter)
+        {
+            GtkFileFilter* f = get<GtkFileFilter>(filter);
+
+            if(f)
+            {
+                gtk_file_chooser_set_filter( (GtkFileChooser*) dlg, f);
+            }
+        }
+
+        gtk_dialog_set_default_response( dlg, GTK_RESPONSE_OK );
+
+        gint response = gtk_dialog_run(dlg);
+
+        std::string result = "";
+
+        if(response == GTK_RESPONSE_OK)
+        {
+            gchar* c = gtk_file_chooser_get_filename( (GtkFileChooser*) dlg );
+            result = c;
+            g_free(c);
+        }
+
+        gtk_widget_destroy( (GtkWidget*) dlg );
+        return result;
+    }
+
 
 private:
 
     GtkAccelGroup* ag;
+    guint status_ctx = 0;
 
     Gui& register_widgets()
     {

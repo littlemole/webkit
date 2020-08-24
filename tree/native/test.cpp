@@ -74,9 +74,34 @@ public:
 */        
     }
 
+    void onSelect( GtkTreeView* tree_view, GtkTreePath* path, GtkTreeViewColumn* column)
+    {
+        switch(radio)
+        {
+            case 0 :
+            {
+                onViewStatus(0);
+                break;
+            }
+            case 1 :
+            {
+                onViewDiff(0);                
+                break;
+            }
+            case 2 :
+            {
+                onViewFile(0);                                
+                break;
+            }
+        }
+    }
+
 
     bool sync_radio(GtkWidget* w, int r, const char* menuItem, const char* tbbutton)
     {
+        if(!w)
+            return true;
+
         gval active;
         g_object_get_property( (GObject*) w, "active", &active);
         bool b = active.get_bool();
@@ -105,6 +130,16 @@ public:
             return;
 
         g_print("onViewStatus\n");
+
+        MtkFile* file = mtk_filetree_get_selected_file(tree);
+
+        gchar* status = 0;
+        gchar* content = 0;
+        int exit_code = mtk_git_cmd(file,MTK_GIT_STATUS,&status,&content);
+
+        send_request( web, "setPlainText", status, content );
+
+        g_object_unref(file);
     }
 
     void onViewDiff(GtkWidget* w)
@@ -113,6 +148,16 @@ public:
             return;
 
         g_print("onViewDiff\n");
+
+        MtkFile* file = mtk_filetree_get_selected_file(tree);
+
+        gchar* status = 0;
+        gchar* content = 0;
+        int exit_code = mtk_git_cmd(file,MTK_GIT_DIFF,&status,&content);
+
+        send_request( web, "setDiff", status, content );
+
+        g_object_unref(file);
     }
 
     void onViewFile(GtkWidget* w)
@@ -121,6 +166,16 @@ public:
             return;
 
         g_print("onViewDiff\n");
+
+        MtkFile* file = mtk_filetree_get_selected_file(tree);
+
+        gchar* status = 0;
+        gchar* content = 0;
+        int exit_code = mtk_git_cmd(file,MTK_GIT_VIEW_FILE,&status,&content);
+
+        send_request( web, "setPlainText", status, content );
+
+        g_object_unref(file);        
     }
 
     void onActive(GtkWidget* )
@@ -134,9 +189,29 @@ public:
         gtk_main_quit();
     }
 
-    gboolean onFileOpen(GtkWidget* button)
+    void onDocumentLoad()
+    {
+        g_print("DocumentLoad\n");
+
+        MtkFile* file = mtk_filetree_get_selected_file(tree);
+
+        gchar* status = 0;
+        gchar* content = 0;
+        int exit_code = mtk_git_cmd(file,MTK_GIT_STATUS,&status,&content);
+
+        send_request( web, "setPlainText", status, content );
+
+        g_object_unref(file);
+    }
+
+    void onFileOpen(GtkWidget* button)
     {
         g_print("CONTROLLER CLICK\n");
+
+        std::string r = ui.showFileDialog(GTK_FILE_CHOOSER_ACTION_OPEN,"Select file");
+
+        if(r.empty())
+            return;
 
         //std::function<void(ResultFuture<std::string>)> 
         auto 
@@ -147,7 +222,7 @@ public:
         };
 
         Json::Value json(Json::arrayValue);
-        json.append(Json::Value("CONTROLLER CLICK"));
+        json.append(Json::Value(r));
         json.append(Json::Value("CONTROLLER CLICK2"));
 
         send_request( 
@@ -158,7 +233,7 @@ public:
         )
         .then(cb);
 
-        return FALSE;
+        return;
     }    
 
     int on_web(std::string msg)
@@ -180,6 +255,8 @@ public:
 			meta::mem_fun("onViewDiff", &Controller::onViewDiff),
 			meta::mem_fun("onViewFile", &Controller::onViewFile),
 			meta::mem_fun("on_web", &Controller::on_web),
+			meta::mem_fun("onSelect", &Controller::onSelect),
+			meta::mem_fun("onDocumentLoad", &Controller::onDocumentLoad),
 			meta::mem_fun("onHelp", &Controller::onHelp),
 			meta::mem_fun("onExit", &Controller::onExit)
 		);

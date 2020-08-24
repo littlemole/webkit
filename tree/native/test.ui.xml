@@ -494,4 +494,12 @@
       </object>
     </child>
   </object>
+  <object class="GtkFileFilter" id="dotFilter">
+    <mime-types>
+      <mime-type>inode/directory</mime-type>
+    </mime-types>
+    <patterns>
+      <pattern>*.dot</pattern>
+    </patterns>
+  </object>  
 </interface>

@@ -455,6 +455,11 @@ gint mtk_git_cmd(MtkFile* file, MtkGitCmd cmd, gchar** status, gchar** contents 
         return -1;
     }
 
+    if( cmd == MTK_GIT_VIEW_FILE && file->is_directory)
+    {
+        c = make_cmd_target(cd, "ls -lah", target);
+    }
+
     gchar* tmp = mtk_bash(c.c_str(),&exit_code);
     std::string content = tmp;
     g_free(tmp);
@@ -622,10 +627,12 @@ std::map<std::string,std::string> git_porcelain(MtkFile* file)
     g_free(status);
     g_free(content);
 
+/*
     for( auto it = result.begin(); it != result.end(); it++)
     {
         g_print("%s -> %s\n", (*it).first.c_str(), (*it).second.c_str() );
     }
+*/    
     return result;
 }
 
@@ -824,6 +831,12 @@ void mtk_git_cmd_async(MtkFile* file, MtkGitCmd cmd, MtkAsyncGitCallbackFunc cal
         (callback)(-1,"asynchronous git command not found","",user_data);
         return;
     }
+
+    if( cmd == MTK_GIT_VIEW_FILE && file->is_directory)
+    {
+        c = make_cmd_target(cd, "ls -lah", target);
+    }
+ 
 
     AsyncGitClosure* agc = new AsyncGitClosure{ callback, user_data, cmd };
 

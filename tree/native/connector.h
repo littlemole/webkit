@@ -40,10 +40,8 @@ void connect(S* source, const char* signal, R(T::*fun)(Args ...), void* t)
     {
         auto bm = (bound_method<T,R,Args...>*)user_data;
         T* t = (T*) bm->that;
-        g_print("handler : t is %i\n", (void*)t );
         R(T::*fun)(Args ...) = bm->fun;
         return (t->*fun)(args...);
-        //delete bm;
     };
 
     R(*ptr)(Args...,gpointer) = handler;
@@ -62,9 +60,6 @@ void connector(GtkBuilder *builder,
                           GConnectFlags flags,
                           void* controller)
 {
-
-    g_print("connect: %s -> %s \n", signal_name, handler_name);
-
     meta::find<C>(handler_name, [object,signal_name,controller](auto m)
     {
         g_print("  found: %s  \n", m.name);
