@@ -1,11 +1,8 @@
-#include <gtk/gtk.h>
-#include <metacpp/meta.h>
 
-#include "mtkwebview.h"
 #include "mtkgit.h"
+#include "mtkui.h"
 
-#include "mtkwebkit.h"
-#include "mtkconnector.h"
+//#include "mtkconnector.h"
 
 // main UI controller
 

@@ -8,6 +8,7 @@ and/or use gtk-doc annotations.  -->
             xmlns:glib="http://www.gtk.org/introspection/glib/1.0">
   <include name="GObject" version="2.0"/>
   <include name="Gtk" version="3.0"/>
+  <include name="GtkSource" version="4"/>
   <include name="WebKit2" version="4.0"/>
   <namespace name="Mtk"
              version="0.1"
@@ -98,6 +99,210 @@ and/or use gtk-doc annotations.  -->
         </parameter>
       </parameters>
     </callback>
+    <function-macro name="EDITOR" c:identifier="MTK_EDITOR" introspectable="0">
+      <source-position filename="include/mtkeditor.h" line="102"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="EDITOR_CLASS"
+                    c:identifier="MTK_EDITOR_CLASS"
+                    introspectable="0">
+      <source-position filename="include/mtkeditor.h" line="104"/>
+      <parameters>
+        <parameter name="c">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="EDITOR_GET_CLASS"
+                    c:identifier="MTK_EDITOR_GET_CLASS"
+                    introspectable="0">
+      <source-position filename="include/mtkeditor.h" line="110"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="EDITOR_IS_EDITOR"
+                    c:identifier="MTK_EDITOR_IS_EDITOR"
+                    introspectable="0">
+      <source-position filename="include/mtkeditor.h" line="106"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="EDITOR_IS_EDITOR_CLASS"
+                    c:identifier="MTK_EDITOR_IS_EDITOR_CLASS"
+                    introspectable="0">
+      <source-position filename="include/mtkeditor.h" line="108"/>
+      <parameters>
+        <parameter name="c">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <class name="Editor"
+           c:symbol-prefix="editor"
+           c:type="MtkEditor"
+           parent="GtkSource.View"
+           glib:type-name="MtkEditor"
+           glib:get-type="mtk_editor_get_type"
+           glib:type-struct="EditorClass">
+      <source-position filename="include/mtkeditor.h" line="38"/>
+      <implements name="Atk.ImplementorIface"/>
+      <implements name="Gtk.Buildable"/>
+      <implements name="Gtk.Scrollable"/>
+      <constructor name="new" c:identifier="mtk_editor_new">
+        <source-position filename="include/mtkeditor.h" line="46"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="include/mtkeditor.h"
+               line="44">a #MtkEditor</doc>
+          <type name="Editor" c:type="MtkEditor*"/>
+        </return-value>
+      </constructor>
+      <method name="get_text" c:identifier="mtk_editor_get_text">
+        <source-position filename="include/mtkeditor.h" line="82"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="include/mtkeditor.h"
+               line="80">a #gchar*</doc>
+          <type name="utf8" c:type="gchar*"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtkeditor.h"
+                 line="78">A #MtkEditor</doc>
+            <type name="Editor" c:type="MtkEditor*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="is_modified" c:identifier="mtk_editor_is_modified">
+        <source-position filename="include/mtkeditor.h" line="54"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="include/mtkeditor.h"
+               line="52">a #gboolean</doc>
+          <type name="gboolean" c:type="gboolean"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtkeditor.h"
+                 line="50">A #MtkEditor</doc>
+            <type name="Editor" c:type="MtkEditor*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="load" c:identifier="mtk_editor_load">
+        <source-position filename="include/mtkeditor.h" line="61"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtkeditor.h"
+                 line="58">A #MtkEditor</doc>
+            <type name="Editor" c:type="MtkEditor*"/>
+          </instance-parameter>
+          <parameter name="file" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtkeditor.h"
+                 line="59">a #gchar*</doc>
+            <type name="utf8" c:type="const gchar*"/>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="save" c:identifier="mtk_editor_save">
+        <source-position filename="include/mtkeditor.h" line="67"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtkeditor.h"
+                 line="65">A #MtkEditor</doc>
+            <type name="Editor" c:type="MtkEditor*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="save_as" c:identifier="mtk_editor_save_as">
+        <source-position filename="include/mtkeditor.h" line="74"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtkeditor.h"
+                 line="71">A #MtkEditor</doc>
+            <type name="Editor" c:type="MtkEditor*"/>
+          </instance-parameter>
+          <parameter name="file" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtkeditor.h"
+                 line="72">a #gchar*</doc>
+            <type name="utf8" c:type="const gchar*"/>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="set_text" c:identifier="mtk_editor_set_text">
+        <source-position filename="include/mtkeditor.h" line="90"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtkeditor.h"
+                 line="86">A #MtkEditor</doc>
+            <type name="Editor" c:type="MtkEditor*"/>
+          </instance-parameter>
+          <parameter name="txt" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtkeditor.h"
+                 line="87">a #gchar*</doc>
+            <type name="utf8" c:type="const gchar*"/>
+          </parameter>
+        </parameters>
+      </method>
+      <property name="language" writable="1" transfer-ownership="none">
+        <type name="utf8" c:type="gchar*"/>
+      </property>
+      <field name="parent">
+        <type name="GtkSource.View" c:type="GtkSourceView"/>
+      </field>
+      <field name="source">
+        <type name="GtkSource.File" c:type="GtkSourceFile*"/>
+      </field>
+      <field name="lang_manager">
+        <type name="GtkSource.LanguageManager"
+              c:type="GtkSourceLanguageManager*"/>
+      </field>
+      <field name="path">
+        <type name="utf8" c:type="gchar*"/>
+      </field>
+      <field name="lang">
+        <type name="utf8" c:type="gchar*"/>
+      </field>
+      <glib:signal name="changed" when="last" no-recurse="1" no-hooks="1">
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+      </glib:signal>
+    </class>
+    <record name="EditorClass"
+            c:type="MtkEditorClass"
+            glib:is-gtype-struct-for="Editor">
+      <source-position filename="include/mtkeditor.h" line="38"/>
+      <field name="parent">
+        <type name="GtkSource.ViewClass" c:type="GtkSourceViewClass"/>
+      </field>
+    </record>
     <function-macro name="FILE" c:identifier="MTK_FILE" introspectable="0">
       <source-position filename="include/mtkfile.h" line="176"/>
       <parameters>

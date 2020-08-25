@@ -41,3 +41,30 @@ sudo apt install python3-dev python-gobject-2 python-gobject-2-dev libwebkit2gtk
 sudo dnf install @development-tools
 sudo dnf install python3-devel gtk3-devel webkit2gtk3-devel gobject-introspection-devel gtksourceview4 gtksourceview4-devel
 ```
+
+# components
+
+- mtkglue - header only cpp library to implement gobject/gtk objects
+- mtk gtk shared library - extensions to WebView, SourceView and TreeView Gtk widgets plus some Git support
+- mtkext shared library - a webkit extension library to inject into the webkit viewer processes
+- pywebkit shared library - a native Python Module for python webkit host <-> view communication using mtkext
+- pymtk - a python library with Gtk helpers
+- mtkcpp static library - cpp glue to build native gtk apps using mtk
+
+# directory layout
+
+- examples
+- mtkext - the webkit extension library
+- mtk - custom gtk widgets
+- mtkcpp - static cpp library
+- pymtk - python directory
+- pywebkit - python native object
+- lib
+    - webkitext
+        - webkit2_web_extension.so
+    - libmtk.so
+    - libmtk-0.1.gir
+    
+
+
+- examples for the stuff

@@ -2,7 +2,7 @@
 #define __MO_MTK_EDITOR_H__
 
 #include <gtk/gtk.h>
-#include <gtksourcevie/gtksourceview.h>
+#include <gtksourceview/gtksource.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -24,8 +24,8 @@ struct _MtkEditor {
     GtkSourceView parent;
     GtkSourceFile* source;
     GtkSourceLanguageManager* lang_manager;
-    GtkSourceBuffer* buffer;
     gchar* path;
+    gchar* lang;
 };
 
 /**
@@ -99,7 +99,7 @@ void mtk_editor_set_text(MtkEditor *self, const gchar* txt);
 
 
 #define MTK_EDITOR_TYPE		\
-    (mtk_filetree_get_type())
+    (mtk_editor_get_type())
 #define MTK_EDITOR(o)			\
     (G_TYPE_CHECK_INSTANCE_CAST ((o), MTK_EDITOR_TYPE, MtkEditor))
 #define MTK_EDITOR_CLASS(c)		\

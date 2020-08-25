@@ -1,4 +1,4 @@
-#include "mtkwebkit.h"
+#include "mtkui.h"
 #include "gvglue.h"
 
 #define PROG "[mtkWebKit] "

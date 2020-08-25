@@ -11,7 +11,6 @@ struct bound_method{
 template<class S, class T, class ... Args>
 void connect(S* source, const char* signal, void(T::*fun)(Args ...), void* t)
 {
-    
     auto bm = new bound_method<T,void,Args...>{ (T*)t, fun };
 
     auto handler = []( Args ... args, gpointer user_data) -> void
@@ -20,7 +19,7 @@ void connect(S* source, const char* signal, void(T::*fun)(Args ...), void* t)
         T* t = (T*) bm->that;
         void(T::*fun)(Args ...) = bm->fun;
         (t->*fun)(args...);
-        //delete bm;
+        //delete bm; # dont do this
     };
 
     void(*ptr)(Args...,gpointer) = handler;
@@ -33,7 +32,6 @@ void connect(S* source, const char* signal, void(T::*fun)(Args ...), void* t)
 template<class S, class R, class T, class ... Args>
 void connect(S* source, const char* signal, R(T::*fun)(Args ...), void* t)
 {
-    
     auto bm = new bound_method<T,R,Args...>{ (T*)t, fun };
 
     auto handler = []( Args ... args, gpointer user_data) -> R
@@ -47,25 +45,24 @@ void connect(S* source, const char* signal, R(T::*fun)(Args ...), void* t)
     R(*ptr)(Args...,gpointer) = handler;
 
     auto h = reinterpret_cast<void(*)()>(ptr);
-    g_signal_connect (source, signal, h, bm);
-    
+    g_signal_connect (source, signal, h, bm);    
 }
 
 template<class C>
-void connector(GtkBuilder *builder,
-                          GObject *object,
-                          const gchar *signal_name,
-                          const gchar *handler_name,
-                          GObject *connect_object,
-                          GConnectFlags flags,
-                          void* controller)
+void connector(
+    GtkBuilder* builder,
+    GObject* object,
+    const gchar* signal_name,
+    const gchar* handler_name,
+    GObject* connect_object,
+    GConnectFlags flags,
+    void* controller )
 {
     meta::find<C>(handler_name, [object,signal_name,controller](auto m)
     {
         g_print("  found: %s  \n", m.name);
         connect(object,signal_name, m.member, (C*)controller);
     });
-    //connect(object,signal_name, &Controller::activate, &controller);
 }
 
 

@@ -14,26 +14,25 @@ PKG_LIB=$(shell pkg-config gobject-2.0 gdk-3.0 webkit2gtk-4.0 jsoncpp --libs)
 OPTIONS = -fpic -Wno-write-strings -pthread -D_REENTRANT $(DEFAULT_OPTS)
 
 # compile flags
-CPPFLAGS = -Wall -I../../include -I../mtkcpp/ $(DEBUG) $(INCLUDE) $(OPTIONS) $(PKG_INC)
+CPPFLAGS = -Wall -I../../include $(DEBUG) $(INCLUDE) $(OPTIONS) $(PKG_INC)
 
-LIBS = -L../build -L../mtkcpp/build -lmtkcpp -lmtk
-
+LIBS = -L../build -lmtk
 #################################################
 # source and build path information
 #################################################
 
 # the shared lib
-BIN = ./build/webkitapp
-release : override LIB = ./build/webkitapp
+LIB = ./build/libmtkcpp.a
+release : override LIB = ./build/libmtkcpp.a
 
-BIN_SRC = .
-BIN_BUILD = ./build
+LIB_SRC = .
+LIB_BUILD = ./build
 
 
 # Objects for the shared library
-BIN_SRCFILESABS = $(shell ls $(BIN_SRC)/*.cpp)
-BIN_SRCFILES =  $(notdir $(BIN_SRCFILESABS))
-BIN_OBJFILES = $(BIN_SRCFILES:%.cpp=$(BIN_BUILD)/%.o)
+LIB_SRCFILESABS = $(shell ls $(LIB_SRC)/*.cpp)
+LIB_SRCFILES =  $(notdir $(LIB_SRCFILESABS))
+LIB_OBJFILES = $(LIB_SRCFILES:%.cpp=$(LIB_BUILD)/%.o)
 
 #################################################
 # usually no need to change anything below
@@ -45,7 +44,7 @@ BIN_OBJFILES = $(BIN_SRCFILES:%.cpp=$(BIN_BUILD)/%.o)
 # rule to compile all (default rule)
 #################################################
 
-all: $(BIN) 
+all: $(LIB) 
 
 #################################################
 # release rule 
@@ -61,16 +60,17 @@ release: all
 # rules to compile .o files from .cpp source
 #################################################
 
-$(BIN_BUILD)/%.o: $(BIN_SRC)/%.cpp 
-	-mkdir -p $(BIN_BUILD)
+$(LIB_BUILD)/%.o: $(LIB_SRC)/%.cpp 
+	-mkdir -p $(LIB_BUILD)
 	$(CXX) -c $^ -o $@ $(CPPFLAGS)
 
 #################################################
 # rule to compile the lib file from .o files
 #################################################
 
-$(BIN): $(BIN_OBJFILES)
-	$(CXX)  -o $(BIN) $(BIN_OBJFILES) $(LIBS) $(CPPFLAGS) $(PKG_LIB)
+$(LIB): $(LIB_OBJFILES)
+	ar rcs $(LIB) $(LIB_OBJFILES)
+	ranlib $(LIB)
 
 		
 #################################################
@@ -79,6 +79,6 @@ $(BIN): $(BIN_OBJFILES)
 
 clean:
 	-find -name "*~" -exec rm {} \;
-	-rm -f $(BIN)
-	-rm -f $(BIN_BUILD)/*.o
+	-rm -f $(LIB)
+	-rm -f $(LIB_BUILD)/*.o
 	

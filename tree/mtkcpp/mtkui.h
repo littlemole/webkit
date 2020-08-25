@@ -405,9 +405,6 @@ RequestFuture send_request( MtkWebView* web, std::string m, Args ... args)
 
     webkit_web_view_send_message_to_page( (WebKitWebView*) web, message, NULL, NULL, NULL);
     
-    //std::function<void(ResultFuture<void>)> fun([](ResultFuture<void>){});
-    //responses().add( uid, result_promise(fun));
-
     RequestFuture f{ uid };
     g_free(uid);
     return f;
@@ -489,7 +486,8 @@ public:
     };
 
     template<class F, class T>
-    struct accel_data_impl : public accel_data {
+    struct accel_data_impl : public accel_data 
+    {
 
         F callback;
         T* that;

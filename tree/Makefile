@@ -9,8 +9,8 @@ ifneq ($(CXX),g++)
 DEFAULT_OPTS = $(TS) -std=c++17 -stdlib=libc++ -fcoroutines-ts -D_RESUMABLE_FUNCTIONS_SUPPORTED 
 endif
 
-PKG_INC=$(shell pkg-config gobject-2.0 gtk+-3.0 gobject-introspection-1.0 webkit2gtk-4.0 jsoncpp --cflags)
-PKG_LIB=$(shell pkg-config gobject-2.0 gtk+-3.0 gobject-introspection-1.0 webkit2gtk-4.0 jsoncpp --libs)
+PKG_INC=$(shell pkg-config gobject-2.0 gtk+-3.0 gobject-introspection-1.0 webkit2gtk-4.0 gtksourceview-4 jsoncpp --cflags)
+PKG_LIB=$(shell pkg-config gobject-2.0 gtk+-3.0 gobject-introspection-1.0 webkit2gtk-4.0 gtksourceview-4 jsoncpp --libs)
 
 OPTIONS = -fpic -Wno-write-strings -pthread -D_REENTRANT $(DEFAULT_OPTS)
 
@@ -40,6 +40,12 @@ NAMESPACE=Mtk
 NSVERSION=0.1
 GIR_FILE=$(NAMESPACE)-$(NSVERSION).gir
 TYPELIB_FILE=$(NAMESPACE)-$(NSVERSION).typelib
+
+
+# headers to scan with g-ir
+GIR_HEADERS= ../include/mtkfile.h ../include/mtkfiletree.h ../include/mtkgit.h ../include/mtkwebview.h ../include/mtkeditor.h
+GIR_SOURCES= mtkfile.cpp mtkfiletree.cpp mtkgit.cpp mtkwebview.cpp mtkeditor.cpp
+
 
 #################################################
 # usually no need to change anything below
@@ -87,8 +93,8 @@ $(LIB_BUILD)/$(TYPELIB_FILE): $(LIB_BUILD)/$(GIR_FILE)
 # ../include/mtkwebview.h
 # mtkwebview.cpp
 
-$(LIB_BUILD)/$(GIR_FILE):  ../include/mtkfile.h ../include/mtkfiletree.h ../include/mtkgit.h ../include/mtkwebview.h mtkfile.cpp mtkfiletree.cpp mtkgit.cpp mtkwebview.cpp
-	libtool exec g-ir-scanner $^ -L $(LIB_BUILD) --library=mtk --warn-all  --include=WebKit2-4.0 --include=Gtk-3.0 --include=GObject-2.0  --namespace=$(NAMESPACE) --nsversion=$(NSVERSION) --output=$@
+$(LIB_BUILD)/$(GIR_FILE): $(GIR_HEADERS) $(GIR_SOURCES)
+	libtool exec g-ir-scanner $^ -L $(LIB_BUILD) --library=mtk --warn-all --include=GtkSource-4 --include=WebKit2-4.0 --include=Gtk-3.0 --include=GObject-2.0  --namespace=$(NAMESPACE) --nsversion=$(NSVERSION) --output=$@
 		
 #################################################
 # make clean

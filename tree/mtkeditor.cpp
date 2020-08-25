@@ -27,34 +27,23 @@ static void mtk_editor_class_init(MtkEditorClass *klass)
         return;
     }
 
-    gprops<MtkFiletreeClass> props{
-        gprop( &MtkFiletree::root, g_param_spec_object ( "directory", "Directory", "widget root directory",  G_TYPE_OBJECT, G_PARAM_READWRITE) )
+    gprops<MtkEditorClass> props{
+        gprop( &MtkEditor::lang, g_param_spec_string ( "language", "Language", "syntax highlight language", "", G_PARAM_READWRITE) )
     };
     props.install(klass);
 
-//    GObjectClass *object_class = G_OBJECT_CLASS (klass);
- //   object_class->init();
-
-   // klass->parent.init(klass);
-    /*
-    GObjectClass *object_class = G_OBJECT_CLASS (klass);
-    object_class->finalize     = pywebkit_webview_finalize;
-
-    // GObject properties
-    gprops<PywebkitWebviewClass> pywebkitWebviewProperties{
-        gprop( &PywebkitWebview::localpath, g_param_spec_string( "local", "Local", "Local file", "index.html", G_PARAM_READWRITE) )
-    };
-
-    pywebkitWebviewProperties.install(klass);
-
     // GObject signals
     Signals signals(klass);
-    signals.install("changed", G_TYPE_STRING );
-
-
-    */
- 
+    signals.install("changed" ); 
 }
+
+static void on_changed(GtkTextBuffer* buff, gpointer user_data)
+{
+    MtkEditor* self = (MtkEditor*)user_data;
+
+    g_signal_emit_by_name(self,"changed");
+}
+
 
 static void mtk_editor_init(MtkEditor* self)
 {
@@ -64,74 +53,126 @@ static void mtk_editor_init(MtkEditor* self)
         return;
     }
 
-    self->root = 0;
-    self->treeModel = 0;
-    self->filter = g_strdup(".*");
-    self->cursel = 0;
-    self->show_hidden = TRUE;
+    self->path = 0;
+    self->lang = g_strdup(".*");
 
-    self->place_holder = mtk_file_new("<should never be visible>");
-    self->place_holder->is_place_holder = TRUE;
+    self->source = gtk_source_file_new();
+    self->lang_manager = gtk_source_language_manager_new();
 
-    self->empty_dir = mtk_file_new("<empty>");
-    self->empty_dir->is_empty = TRUE;
+    GtkSourceBuffer* buffer = (GtkSourceBuffer*) gtk_text_view_get_buffer( (GtkTextView*)self );
 
-
-    self->treeModel = gtk_tree_store_new(2, MTK_FILE_TYPE, G_TYPE_STRING);
-
-    GtkTreeViewColumn* column = gtk_tree_view_column_new();
-
-    auto file_name_renderer = gtk_cell_renderer_text_new();
-    auto file_type_renderer = gtk_cell_renderer_pixbuf_new();
-
-    gtk_tree_view_column_pack_start(column,file_type_renderer, FALSE);
-    gtk_tree_view_column_pack_start(column,file_name_renderer, FALSE);
-
-    gtk_tree_view_column_set_cell_data_func(
-        column, 
-        file_name_renderer, 
-        mtk_filetree_tree_cell_render_file, 
-        NULL, 
-        [](gpointer data){}
-    );
-
-    gtk_tree_view_column_set_cell_data_func(
-        column, 
-        file_type_renderer, 
-        mtk_filetree_tree_cell_render_pix, 
-        NULL, 
-        [](gpointer data){}
-    );
-
-    gtk_tree_view_append_column( (GtkTreeView*)self,column);
-    gtk_tree_view_set_tooltip_column((GtkTreeView*)self,1);
-
-    gtk_tree_view_set_model( (GtkTreeView*)self, (GtkTreeModel*)(self->treeModel) );
-
-    g_signal_connect( G_OBJECT (self), "row-expanded", G_CALLBACK(mtk_filetree_expand_row), self);
-    g_signal_connect( G_OBJECT (self), "row-activated", G_CALLBACK(mtk_filetree_on_select), self);
-
-    g_signal_connect( G_OBJECT (self), "notify::directory", G_CALLBACK(mtk_filetree_on_root_changed), self);
-
+    g_signal_connect( G_OBJECT (buffer), "changed", G_CALLBACK(on_changed), self);
 }
 
 MtkEditor* mtk_editor_new()
 {
     MtkEditor* edit;
 
-    edi = (MtkEditor*)g_object_new (MTK_EDITOR_TYPE, NULL);
+    edit = (MtkEditor*)g_object_new (MTK_EDITOR_TYPE, NULL);
     return edit;
 }
 
-
- 
 static void mtk_editor_finalize(GObject *object)
 {
     MtkEditor* self = (MtkEditor*)object;
 
     g_object_unref(self->source);
     g_object_unref(self->lang_manager);
-    g_object_unref(self->buffer);
     g_free(self->path);
+    g_free(self->lang);
 }
 
+gboolean mtk_editor_is_modified(MtkEditor* self)
+{
+    GtkSourceBuffer* buffer = (GtkSourceBuffer*) gtk_text_view_get_buffer( (GtkTextView*)self );
+    return gtk_text_buffer_get_modified( (GtkTextBuffer*)buffer);
+}
+
+void on_loaded(GObject* source_object, GAsyncResult *res,gpointer user_data)
+{
+    MtkEditor* self = (MtkEditor*) user_data;
+
+    GError* error = 0;
+    gboolean success = gtk_source_file_loader_load_finish( (GtkSourceFileLoader*)source_object,res,&error);
+    if(success)
+    {
+        
+    }
+    g_object_unref(source_object);
+}
+
+void mtk_edit_load(MtkEditor* self, const gchar* path)
+{
+    self->path = g_strdup(path);
+    GtkSourceBuffer* buffer = (GtkSourceBuffer*) gtk_text_view_get_buffer( (GtkTextView*)self );
+
+    GFile* file = g_file_new_for_path(path);
+    gtk_source_file_set_location(self->source,file);
+
+    if(self->lang)
+    {
+        GtkSourceLanguage* lang = gtk_source_language_manager_get_language(self->lang_manager,self->lang);
+        if(lang)
+        {
+            gtk_source_buffer_set_language(buffer,lang);
+        }
+    }
+
+    GtkSourceFileLoader* loader = gtk_source_file_loader_new(buffer,self->source);
+    gtk_source_file_loader_load_async( loader, 0, NULL, NULL, NULL, NULL, on_loaded, self);
+
+}
+
+void on_saved(GObject* source_object, GAsyncResult *res,gpointer user_data)
+{
+    MtkEditor* self = (MtkEditor*) user_data;
+
+    GError* error = 0;
+    gboolean success = gtk_source_file_saver_save_finish( (GtkSourceFileSaver*)source_object,res,&error);
+    if(success)
+    {
+        
+    }
+    g_object_unref(source_object);
+}
+
+void mtk_editor_save(MtkEditor* self)
+{
+    GtkSourceBuffer* buffer = (GtkSourceBuffer*) gtk_text_view_get_buffer( (GtkTextView*)self );
+
+    GtkSourceFileSaver* saver = gtk_source_file_saver_new(buffer,self->source);
+    gtk_source_file_saver_save_async( saver, 0, NULL, NULL, NULL, NULL, on_saved, self );
+
+    gtk_text_buffer_set_modified( (GtkTextBuffer*)buffer, FALSE );
+}
+
+void mtk_editor_save_as(MtkEditor* self, const gchar* path)
+{
+    GtkSourceBuffer* buffer = (GtkSourceBuffer*) gtk_text_view_get_buffer( (GtkTextView*)self );
+
+    GFile* target = g_file_new_for_path(path);
+
+    GtkSourceFileSaver* saver = gtk_source_file_saver_new_with_target(buffer,self->source, target);
+    gtk_source_file_saver_save_async( saver, 0, NULL, NULL, NULL, NULL, on_saved, self );
+
+    g_object_unref(target);
+}
+
+gchar* mtk_editor_get_text(MtkEditor* self)
+{
+    GtkTextBuffer* buffer = (GtkTextBuffer*) gtk_text_view_get_buffer( (GtkTextView*)self );
+
+    GtkTextIter start;
+    gtk_text_buffer_get_start_iter(buffer,&start);
+    GtkTextIter end;
+    gtk_text_buffer_get_end_iter(buffer,&end);
+
+    return gtk_text_buffer_get_text( buffer, &start, &end, FALSE);
+}
+
+void mtk_editor_set_text(MtkEditor* self, const gchar* txt)
+{
+    GtkTextBuffer* buffer = (GtkTextBuffer*) gtk_text_view_get_buffer( (GtkTextView*)self );
+
+    gtk_text_buffer_set_text( buffer, txt, -1 );
+}
