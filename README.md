@@ -54,17 +54,27 @@ sudo dnf install python3-devel gtk3-devel webkit2gtk3-devel gobject-introspectio
 # directory layout
 
 - examples
-- mtkext - the webkit extension library
-- mtk - custom gtk widgets
-- mtkcpp - static cpp library
-- pymtk - python directory
-- pywebkit - python native object
+    - python - GTK UI using embedded webkit from python
+    - cpp - GTK UI using embedded webkit from native C++
+- src
+    - mtkext - the webkit extension library, C++
+    - mtk - custom gtk widgets. C interface, C++ implementation
+    - mtkcpp - static cpp library - C++
+    - pywebkit - python native object - C interface, C++ implementation
+- include
+    - mtk - custom gtk widgets includes (plain C)
+    - mtkcpp - headers for the static cpp library (C++)
+    - glue - various single header "minilibraries" to ease implementation (C++)
 - lib
     - webkitext
         - webkit2_web_extension.so
     - libmtk.so
     - libmtk-0.1.gir
-    
+    - libmtk-0.1.typelib
+    - libmtkcpp.a
+- pymtk - python directory with pure and native (pywebkit.so) python modules
+- glade - galde catalog files for custom widgets
+
 
 
 - examples for the stuff
