@@ -27,3 +27,4 @@ export PYTHONPATH=$DIR:$PYTHONPATH
 # run the python script
 /usr/bin/python3 $cmd
 
+#gdb --args /usr/bin/python3 $cmd
