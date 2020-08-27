@@ -37,7 +37,7 @@ class WebView2(WebKit2.WebView):
 
 def init_ext(webContext):
 
-    d = os.path.dirname(__file__)
+    d = os.path.dirname(__file__) + "/webkitext" 
     print("init ext:" +d)
     webContext.set_web_extensions_directory(d)
     webContext.set_web_extensions_initialization_user_data( GLib.Variant.new_string("no more uid") )

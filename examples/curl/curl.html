@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", function(e)
 
             form.response.value = "";
             
-            var response = await WebKit.Python.sendRequest(request);
+            var response = await WebKit.Host.sendRequest(request);
             document.theForm.response.value = String(response);
             return false;
         }

@@ -48,9 +48,9 @@ public:
     PyObject* bound;
 };
 
-std::map<std::string,Channel*>& channels()
+std::map<WebKitWebView*,Channel*>& channels()
 {
-    static std::map<std::string,Channel*> map;
+    static std::map<WebKitWebView*,Channel*> map;
     return map;
 }
 
@@ -332,18 +332,20 @@ static PyObject* javascript_object_call(PyObject* self, PyObject* args, PyObject
     }
 
     pyobj_ref web = arguments.item(0);
-    pyobj_ref uid = pyobj(web).attr("uid");
+    //pyobj_ref uid = pyobj(web).attr("uid");
 
     //g_print (PROG " javascript_object_call uid: %s\n", pyobj(uid).str().c_str() );
 
-    const char* id = pyobj(uid).str();
+    //const char* id = pyobj(uid).str();
 
-    if(channels().count(id) == 0)
+    WebKitWebView* nativeweb = (WebKitWebView*) gobject(web);
+
+    if(channels().count( nativeweb) == 0)
     {
         Py_RETURN_NONE;
     }
 
-    Channel* channel = channels()[pyobj(uid).str()];
+    Channel* channel = channels()[nativeweb];
 
     //g_print (PROG " javascript_object_call %i\n", (void*)channel);
 
@@ -440,7 +442,7 @@ static void response_handler(GVariant* message)
 
 static void signal_handler(WebKitWebView *web, GVariant* message)
 {
-    //g_print (PROG " received signal %s %s\n", signal_name, g_variant_get_type_string (parameters));
+    g_print (PROG " received signal \n");
 
     PyGlobalInterpreterLock lock;
 
@@ -489,15 +491,14 @@ static void signal_handler(WebKitWebView *web, GVariant* message)
     }
 
     // get channel and call callback
-    PywebkitWebview* py = (PywebkitWebview*)web;
 
-    if(channels().count(py->uid) == 0)
+    if(channels().count(web) == 0) 
     {
         g_print (PROG " received signal without channel \n");
         return;
     }
 
-    Channel* channel = channels()[py->uid];
+    Channel* channel = channels()[web];
 
     pyobj_ref result = pyobj(channel->bound).invoke_with_tuple( pyobj(method).str(), params);
 
@@ -588,6 +589,8 @@ static gboolean user_msg_received(
     gpointer           user_data
     )
 {
+        printf("user_msg_received:\n");
+
     GVariant* params = webkit_user_message_get_parameters(message);
 
     std::string name = webkit_user_message_get_name(message);
@@ -606,7 +609,7 @@ static gboolean user_msg_received(
 
 static PyObject* pywebkit_bind(PyObject* self, PyObject* args)
 {
-    //g_print(PROG "pywebkit_bind ++++++++++++++++++++++++\n");
+    g_print(PROG "pywebkit_bind ++++++++++++++++++++++++\n");
 
     int len = pyobj(args).length();
 
@@ -621,9 +624,10 @@ static PyObject* pywebkit_bind(PyObject* self, PyObject* args)
     pyobj_ref uid = pyobj(web).attr("uid");
 
     Channel* channel = new Channel( web, ctrl );
-    channels().insert( std::make_pair( pyobj(uid).str(), channel ));
 
-    GObject* nativeweb = gobject(web);
+    WebKitWebView* nativeweb = (WebKitWebView*) gobject(web);
+    channels().insert( std::make_pair( nativeweb, channel ));
+
     g_signal_connect(G_OBJECT(nativeweb), "user-message-received", G_CALLBACK (user_msg_received),  NULL);
 
     Py_RETURN_NONE;
@@ -640,6 +644,9 @@ static gboolean run_async_cb(gpointer user_data)
 {
     PyGlobalInterpreterLock lock;
 
+    printf("run_async_cb:\n");
+
+
     run_async_cb_struct* data = (run_async_cb_struct*)user_data;
 
     pyobj_ref done = pyobj(data->cb).invoke("done",data->task.ref());
@@ -650,6 +657,8 @@ static gboolean run_async_cb(gpointer user_data)
 
 static PyObject* pywebkit_run_async(PyObject* self, PyObject* args)
 {
+    printf("pywebkit_run_async:\n");
+
     int len = pyobj(args).length();
 
     if(len<1)
@@ -708,6 +717,7 @@ void add_task_obj_def(pyobj_ref& m);
 
 PyMODINIT_FUNC PyInit_WebKit(void) 
 {
+    printf("PyInit_WebKit:\n");
     // ready guards
     if (PyType_Ready(&signal_objectType) < 0)
         return 0;    

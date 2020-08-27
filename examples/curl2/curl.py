@@ -4,7 +4,7 @@ gi.require_versions({
 #    'Pywebkit': '0.1'
 })
 
-from gi.repository import Gtk, GLib 
+from gi.repository import Gtk, GLib , Pywebkit
 
 from pygtk.WebView import WebView2
 #from gi.repository.Pywebkit import Webview #as Webview
@@ -113,9 +113,11 @@ win = Gtk.Window()
 win.set_default_size(550, 350)   
 win.add(vbox)
 win.connect("delete-event", controller.onExit)
-win.show_all()
 
+print("bound")
 win.show_all()
+print("show")
+
 
 # start the GUI event main loop
 Gtk.main()
