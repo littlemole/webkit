@@ -11,30 +11,30 @@ class Future(object):
 
     def __init__(self,*args,**kargs):
 
-        self.done = False
+        self.is_done = False
         self.value = None
         self.exception = None
         self._asyncio_future_blocking = True
         self.cb = None
 
     def done(self):
-        return self.done
+        return self.is_done
 
     def set_result(self,result):
         self.value = result
-        self.done = True
+        self.is_done = True
         if not self.cb is None:
             self.cb(self)
 
     def set_exception(self,ex):
         self.exception = ex
-        self.done = True
+        self.is_done = True
         if not self.cb is None:
             self.cb(self)
 
     def add_done_callback(self,cb):
         self.cb = cb
-        if self.done:
+        if self.is_done:
             self.cb(self)
 
 
@@ -43,6 +43,9 @@ class Future(object):
             raise self.exception
         return self.result 
     
+    def __await__(self):
+        return FutureIter(self)
+
 
 class FutureIter(object):
 
@@ -79,11 +82,12 @@ class Task(Future):
             super.set_result(coro)
 
     
-    def step(self):
+    def step(self,*args):
 
         GLib.idle_add(self.do_step)
 
-    def do_step(self).
+
+    def do_step(self):
 
         if super.done() :
             raise RuntimeError("task is already done")
@@ -99,7 +103,7 @@ class Task(Future):
         except StopIteration as e:
             super.set_result(e.value)
 
-        except e:
+        except BaseException as e:
             super.set_exception(e)
 
         else:
@@ -111,11 +115,11 @@ class Task(Future):
             elif res is None:
                 self.step()        
     
-    def _wakeup(self,future):
+    def _wakeup(self,f):
 
         try:
-            r = future.result()
-        except e:
+            f.result()
+        except BaseException as e:
             self.step(e)
         else:
             self.step(None)
@@ -124,5 +128,5 @@ class Task(Future):
 def run(coro):
 
     task = Task(coro)
-    return Task
+    return task
 

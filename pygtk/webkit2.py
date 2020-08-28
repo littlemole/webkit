@@ -7,7 +7,7 @@ from gi.repository import GLib
 
 import json
 import future
-import Future from future
+from future import Future
 
 
 channels = {}
@@ -33,66 +33,70 @@ class ResponseCB(object):
 
             try:
                 r = f.result()
-            except e:
+
+            except BaseException as e:
+
                 send_response(self.web,self.channel,self.uid,None,e)
             else:
+
                 send_response(self.web,self.channel,self.uid,r,None)
 
 
 class Signal(object):
 
     def __init__(self,name,web,channel,*args,**kargs):
-         self.name = name
-          self.web = web
-         self.channel = channel
+
+        self.name = name
+        self.web = web
+        self.channel = channel
+
 
     def __call__(self):
+
         uid = Gio.dbus_generate_guid()
+
         send_request(self.web,self.channel,uid,self.name,*args)
 
         f = Future()
-        #responses().add(uid,f)
         response[uid] = f
 
 
 class WebViewCtrl(object):
+
     def __init__(self,web,channel,*args,**kargs):
+
         self.web = web
         self.channel = channel
+
 
     def __getattr__(self,key):
 
         return Signal(key,self.web,self.channel)
 
-    
-class JavaScript(object):
-
-    def __init__(self,*args,**kargs):
-
-        pass
-
-    def __call__(self,web):
-
-        if not web in channels:
-            return None
-
-        channel = channels[web]
-
-        return WebViewCtrl(web,channel)
 
 
+def JavaScript(web):
 
-def response_handler(vmsg)
-{
+    if not web in channels:
+        return None
+
+    channel = channels[web]
+
+    return WebViewCtrl(web,channel)
+
+
+def response_handler(vmsg):
+
     msg = msg.get_string()
 
-    hash = json.lods(msg);
+    hash = json.loads(msg)
 
     uid = ""
     if "response" in hash:
-        uid = hash["response"
+        uid = hash["response"]
     
     result = None
+
     if "result" in hash:
         result = hash["result"]
 
@@ -110,15 +114,16 @@ def response_handler(vmsg)
 
         f.set_exception(RuntimeEx(ex))
     else:
+
         f.set_result(result)
-}
 
 
-def signal_handler(web, gmsg)
-{
+
+def signal_handler(web, gmsg): 
+
     msg = msg.get_string()
 
-    hash = json.loads(msg);
+    hash = json.loads(msg)
 
     uid = ""
     method = ""
@@ -136,29 +141,40 @@ def signal_handler(web, gmsg)
     if not web in channels:
         return
 
-    channel = channels[web];
+    channel = channels[web]
 
     fun = getattr(channel,method)
 
     try:
         result = fun(*params)
-    except e:
+
+    except BaseException as e:
+
         send_response(channel,uid,NULL,e)
+
     else:
+
         try:
             r = future.run(result)
-        except e:
+
+        except BaseException as e:
+
             send_response(channel,uid,NULL,e)
+
         else:
+
             if r is Future:
+
                 handler = ResponseCB(web,uid,channel)
                 r.add_done_callback(handler)
+
             else:
-                send_response(web,channel, uid,r);
+
+                send_response(web,channel, uid,r)
 
 
-def send_response( web,channel, uid,  value, ex = None )
-{
+def send_response( web,channel, uid,  value, ex = None ):
+
     hash = {
         "response" : uid,
         "result" : value,
@@ -172,11 +188,11 @@ def send_response( web,channel, uid,  value, ex = None )
     message = WebKit.UserMessage.new("response",msg)
 
     web.send_message_to_page(message, None, None, None)
-}
+
 
 
 def send_request( web,channel, uid,  method, params)
-{
+
     hash = {
         "request" : uid,
         "method" : method,
@@ -185,35 +201,34 @@ def send_request( web,channel, uid,  method, params)
 
     json = json.dumps(hash)
 
-    msg = GLib.Variant.new_string(json);
-    message = WebKit.UserMessage.new( "request", msg);
+    msg = GLib.Variant.new_string(json)
+    message = WebKit.UserMessage.new( "request", msg)
 
     web.send_message_to_page( message, None,None,None)
-}
 
 
-def user_msg_received( web, message)
-{
+
+def user_msg_received( web, message):
+
     params = message.get_parameters()
 
     name = message.get_name()
 
-    if( name == "request")
-    {
-        signal_handler(web,params);
-    }
-    if( name == "response")
-    {
-        response_handler(params);
-    }
+    if( name == "request"):
 
-    return True;
-}
+        signal_handler(web,params)
+
+    if( name == "response"):
+
+        response_handler(params)
+
+    return True
 
 
-def bind(web,ctrl)
-{
-    channels[web] = ctrl;
+
+def bind(web,ctrl):
+
+    channels[web] = ctrl
 
     web.connect("user-message-received",user_msg_received )
-}
+
