@@ -6,8 +6,6 @@ gi.require_versions({
 
 from gi.repository import Gtk
 
-import pygtk.WebKit as WebKit
-
 
 class MenuMaker(object):
 

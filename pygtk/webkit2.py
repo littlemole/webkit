@@ -1,13 +1,16 @@
 import gi
 gi.require_versions({
     'Gtk':  '3.0',
+    'WebKit2' : '4.0'
 })
 
-from gi.repository import GLib
+from gi.repository import GLib, WebKit2, Gio
 
 import json
-import future
-from future import Future
+import pygtk.future
+from pygtk.future import Future
+import functools
+import os
 
 
 channels = {}
@@ -32,13 +35,14 @@ class ResponseCB(object):
             f = args[0]
 
             try:
+                print("f:" + str(f))
                 r = f.result()
 
             except BaseException as e:
 
                 send_response(self.web,self.channel,self.uid,None,e)
             else:
-
+                print("r:" + str(r))
                 send_response(self.web,self.channel,self.uid,r,None)
 
 
@@ -51,7 +55,7 @@ class Signal(object):
         self.channel = channel
 
 
-    def __call__(self):
+    def __call__(self,*args):
 
         uid = Gio.dbus_generate_guid()
 
@@ -87,7 +91,7 @@ def JavaScript(web):
 
 def response_handler(vmsg):
 
-    msg = msg.get_string()
+    msg = vmsg.get_string()
 
     hash = json.loads(msg)
 
@@ -119,9 +123,9 @@ def response_handler(vmsg):
 
 
 
-def signal_handler(web, gmsg): 
+def signal_handler(web, vmsg): 
 
-    msg = msg.get_string()
+    msg = vmsg.get_string()
 
     hash = json.loads(msg)
 
@@ -150,22 +154,24 @@ def signal_handler(web, gmsg):
 
     except BaseException as e:
 
-        send_response(channel,uid,NULL,e)
+        send_response(web,channel,uid,NULL,e)
 
     else:
 
         try:
-            r = future.run(result)
+            print("RUUUUUUUUUUN")
+            r = pygtk.future.run(result)
+            print(str(r))
 
         except BaseException as e:
 
-            send_response(channel,uid,NULL,e)
+            send_response(web,channel,uid,NULL,e)
 
         else:
 
-            if r is Future:
+            if (isinstance(r,Future)) or ( isinstance(r,pygtk.future.Task)):
 
-                handler = ResponseCB(web,uid,channel)
+                handler = ResponseCB(uid,web,channel)
                 r.add_done_callback(handler)
 
             else:
@@ -181,17 +187,18 @@ def send_response( web,channel, uid,  value, ex = None ):
         "exception" : ex
     }
 
-    json = json.dumps(hash)
+    print(hash)
+    data = json.dumps(hash)
 
-    msg = GLib.Variant.new_string(json)
+    msg = GLib.Variant.new_string(data)
 
-    message = WebKit.UserMessage.new("response",msg)
+    message = WebKit2.UserMessage.new("response",msg)
 
     web.send_message_to_page(message, None, None, None)
 
 
 
-def send_request( web,channel, uid,  method, params)
+def send_request( web,channel, uid,  method, *params):
 
     hash = {
         "request" : uid,
@@ -199,10 +206,10 @@ def send_request( web,channel, uid,  method, params)
         "parameters" : params
     }
 
-    json = json.dumps(hash)
+    data = json.dumps(hash)
 
-    msg = GLib.Variant.new_string(json)
-    message = WebKit.UserMessage.new( "request", msg)
+    msg = GLib.Variant.new_string(data)
+    message = WebKit2.UserMessage.new( "request", msg)
 
     web.send_message_to_page( message, None,None,None)
 
@@ -231,4 +238,12 @@ def bind(web,ctrl):
     channels[web] = ctrl
 
     web.connect("user-message-received",user_msg_received )
+
+
+def idle_add(func):
+
+    def wrapper(*args):
+        GLib.idle_add(func,*args)
+        
+    return wrapper
 

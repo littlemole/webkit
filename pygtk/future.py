@@ -6,6 +6,8 @@ gi.require_versions({
 from gi.repository import  GLib
 
 import inspect
+import threading
+import functools
 
 class Future(object):
 
@@ -20,8 +22,8 @@ class Future(object):
     def done(self):
         return self.is_done
 
-    def set_result(self,result):
-        self.value = result
+    def set_result(self,r):
+        self.value = r
         self.is_done = True
         if not self.cb is None:
             self.cb(self)
@@ -41,7 +43,7 @@ class Future(object):
     def result(self):
         if not self.exception is None:
             raise self.exception
-        return self.result 
+        return self.value 
     
     def __await__(self):
         return FutureIter(self)
@@ -51,13 +53,17 @@ class FutureIter(object):
 
     def __init__(self,f,*args,**kargs):
 
+        print("FutureIter: __init__")
+
         self.state = 0
         self.future = f
     
     def __iter__(self):
+        print("FutureIter: __iter__")
         return self
 
     def __next__(self):
+        print("FutureIter: __next__")
         if self.state == 0:
             done = self.future.done()
             if done == False:
@@ -66,6 +72,7 @@ class FutureIter(object):
                 self.state = 1
         if self.state == 1:
             r = self.future.result()
+            print("__next__ " + str(r))
             raise StopIteration(r)
 
 
@@ -73,13 +80,15 @@ class Task(Future):
 
     def __init__(self,coro,*args,**kargs):
 
-        super().__init__() 
+        super().__init__(self) 
         self.coro = coro
 
-        if inspect.iscoroutinefunction(coro) == True:
+        if inspect.iscoroutine(coro) == True:
+            print("Task with coro" + str(coro))
             self.step()
         else:
-            super.set_result(coro)
+            print("Task no coro" + str(coro))
+            self.set_result(coro)
 
     
     def step(self,*args):
@@ -89,22 +98,23 @@ class Task(Future):
 
     def do_step(self):
 
-        if super.done() :
+        if self.done() :
             raise RuntimeError("task is already done")
 
         res = None
         try:
-            if super.exception is None:
+            if self.exception is None:
                 res = self.coro.send(None)
 
             else:
-                res = self.coro.throw(super.exception)
+                res = self.coro.throw(self.exception)
 
         except StopIteration as e:
-            super.set_result(e.value)
+            print("StopIteration: " + str(e))
+            self.set_result(e.value)
 
         except BaseException as e:
-            super.set_exception(e)
+            self.set_exception(e)
 
         else:
             blocking = getattr(res,"_asyncio_future_blocking")
@@ -130,3 +140,77 @@ def run(coro):
     task = Task(coro)
     return task
 
+
+
+class Worker(threading.Thread):
+
+    def __init__(self,f,task):
+        threading.Thread.__init__(self) 
+        self.future = f
+        self.task = task
+
+    @staticmethod
+    def schedule(task):
+
+        f = Future()
+        worker = Worker(f,task)
+        worker.start()
+        return f
+
+    def run(self):
+
+        r = self.task()
+        GLib.idle_add(self.done,r)
+
+    def done(self,r):
+        self.future.set_result(r)
+
+
+def background(func):
+
+    def decorator(*vargs):
+
+        f = Future()
+
+        def set_result(f,r):
+            f.set_result(r)
+
+        def wrapper(*args):
+
+            r = func(*args)
+            GLib.idle_add(set_result,f,r)
+
+        t = threading.Thread(target=wrapper, args=vargs )
+        t.start()
+
+        return f        
+
+    return decorator
+
+
+
+def synced(*args,**kargs):
+
+    result = None
+
+    if "result" in kargs:
+
+        result = kargs["result"]
+
+    def wrapper(func,*args):
+
+        @functools.wraps(func)
+        def wrap(*args,**kargs):
+
+            r = func(*args,**kargs)
+            run(r)
+
+            if isinstance(r,Future) or isinstance(r,Task):
+
+                return result
+
+            return r
+
+        return wrap
+
+    return wrapper
