@@ -1,0 +1,1563 @@
+<?xml version="1.0"?>
+<!-- This file was automatically generated from C sources - DO NOT EDIT!
+To affect the contents of this file, edit the original C definitions,
+and/or use gtk-doc annotations.  -->
+<repository version="1.2"
+            xmlns="http://www.gtk.org/introspection/core/1.0"
+            xmlns:c="http://www.gtk.org/introspection/c/1.0"
+            xmlns:glib="http://www.gtk.org/introspection/glib/1.0">
+  <include name="GObject" version="2.0"/>
+  <include name="Gtk" version="3.0"/>
+  <include name="GtkSource" version="4"/>
+  <include name="WebKit2" version="4.0"/>
+  <namespace name="Mtk"
+             version="0.1"
+             shared-library="libmtk.so"
+             c:identifier-prefixes="Mtk"
+             c:symbol-prefixes="mtk">
+    <function-macro name="ASYNC_BASH_CALLBACK"
+                    c:identifier="MTK_ASYNC_BASH_CALLBACK"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkfile.h" line="160"/>
+      <parameters>
+        <parameter name="f">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="ASYNC_GIT_CALLBACK"
+                    c:identifier="MTK_ASYNC_GIT_CALLBACK"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkgit.h" line="78"/>
+      <parameters>
+        <parameter name="f">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <callback name="AsyncBashCallbackFunc" c:type="MtkAsyncBashCallbackFunc">
+      <source-position filename="include/mtk/mtkfile.h" line="158"/>
+      <return-value transfer-ownership="none">
+        <type name="none" c:type="void"/>
+      </return-value>
+      <parameters>
+        <parameter name="status" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkfile.h"
+               line="152">A #gint</doc>
+          <type name="gint" c:type="int"/>
+        </parameter>
+        <parameter name="out" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkfile.h"
+               line="153">A #gchar*</doc>
+          <type name="utf8" c:type="const gchar*"/>
+        </parameter>
+        <parameter name="user_data"
+                   transfer-ownership="none"
+                   nullable="1"
+                   allow-none="1"
+                   closure="2">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkfile.h"
+               line="154">A #gpointer</doc>
+          <type name="gpointer" c:type="gpointer"/>
+        </parameter>
+      </parameters>
+    </callback>
+    <callback name="AsyncGitCallbackFunc" c:type="MtkAsyncGitCallbackFunc">
+      <source-position filename="include/mtk/mtkgit.h" line="76"/>
+      <return-value transfer-ownership="none">
+        <type name="none" c:type="void"/>
+      </return-value>
+      <parameters>
+        <parameter name="exit_code" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkgit.h"
+               line="69">A #gint</doc>
+          <type name="gint" c:type="int"/>
+        </parameter>
+        <parameter name="status" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkgit.h"
+               line="70">A #gchar*</doc>
+          <type name="utf8" c:type="const gchar*"/>
+        </parameter>
+        <parameter name="out" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkgit.h"
+               line="71">A #gchar*</doc>
+          <type name="utf8" c:type="const gchar*"/>
+        </parameter>
+        <parameter name="user_data"
+                   transfer-ownership="none"
+                   nullable="1"
+                   allow-none="1"
+                   closure="3">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkgit.h"
+               line="72">A #gpointer</doc>
+          <type name="gpointer" c:type="gpointer"/>
+        </parameter>
+      </parameters>
+    </callback>
+    <function-macro name="EDITOR" c:identifier="MTK_EDITOR" introspectable="0">
+      <source-position filename="include/mtk/mtkeditor.h" line="102"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="EDITOR_CLASS"
+                    c:identifier="MTK_EDITOR_CLASS"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkeditor.h" line="104"/>
+      <parameters>
+        <parameter name="c">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="EDITOR_GET_CLASS"
+                    c:identifier="MTK_EDITOR_GET_CLASS"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkeditor.h" line="110"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="EDITOR_IS_EDITOR"
+                    c:identifier="MTK_EDITOR_IS_EDITOR"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkeditor.h" line="106"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="EDITOR_IS_EDITOR_CLASS"
+                    c:identifier="MTK_EDITOR_IS_EDITOR_CLASS"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkeditor.h" line="108"/>
+      <parameters>
+        <parameter name="c">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <class name="Editor"
+           c:symbol-prefix="editor"
+           c:type="MtkEditor"
+           parent="GtkSource.View"
+           glib:type-name="MtkEditor"
+           glib:get-type="mtk_editor_get_type"
+           glib:type-struct="EditorClass">
+      <source-position filename="include/mtk/mtkeditor.h" line="38"/>
+      <implements name="Atk.ImplementorIface"/>
+      <implements name="Gtk.Buildable"/>
+      <implements name="Gtk.Scrollable"/>
+      <constructor name="new" c:identifier="mtk_editor_new">
+        <source-position filename="include/mtk/mtkeditor.h" line="46"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkeditor.h"
+               line="44">a #MtkEditor</doc>
+          <type name="Editor" c:type="MtkEditor*"/>
+        </return-value>
+      </constructor>
+      <method name="get_text" c:identifier="mtk_editor_get_text">
+        <source-position filename="include/mtk/mtkeditor.h" line="82"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkeditor.h"
+               line="80">a #gchar*</doc>
+          <type name="utf8" c:type="gchar*"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkeditor.h"
+                 line="78">A #MtkEditor</doc>
+            <type name="Editor" c:type="MtkEditor*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="is_modified" c:identifier="mtk_editor_is_modified">
+        <source-position filename="include/mtk/mtkeditor.h" line="54"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkeditor.h"
+               line="52">a #gboolean</doc>
+          <type name="gboolean" c:type="gboolean"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkeditor.h"
+                 line="50">A #MtkEditor</doc>
+            <type name="Editor" c:type="MtkEditor*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="load" c:identifier="mtk_editor_load">
+        <source-position filename="include/mtk/mtkeditor.h" line="61"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkeditor.h"
+                 line="58">A #MtkEditor</doc>
+            <type name="Editor" c:type="MtkEditor*"/>
+          </instance-parameter>
+          <parameter name="file" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkeditor.h"
+                 line="59">a #gchar*</doc>
+            <type name="utf8" c:type="const gchar*"/>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="save" c:identifier="mtk_editor_save">
+        <source-position filename="include/mtk/mtkeditor.h" line="67"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkeditor.h"
+                 line="65">A #MtkEditor</doc>
+            <type name="Editor" c:type="MtkEditor*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="save_as" c:identifier="mtk_editor_save_as">
+        <source-position filename="include/mtk/mtkeditor.h" line="74"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkeditor.h"
+                 line="71">A #MtkEditor</doc>
+            <type name="Editor" c:type="MtkEditor*"/>
+          </instance-parameter>
+          <parameter name="file" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkeditor.h"
+                 line="72">a #gchar*</doc>
+            <type name="utf8" c:type="const gchar*"/>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="set_text" c:identifier="mtk_editor_set_text">
+        <source-position filename="include/mtk/mtkeditor.h" line="90"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkeditor.h"
+                 line="86">A #MtkEditor</doc>
+            <type name="Editor" c:type="MtkEditor*"/>
+          </instance-parameter>
+          <parameter name="txt" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkeditor.h"
+                 line="87">a #gchar*</doc>
+            <type name="utf8" c:type="const gchar*"/>
+          </parameter>
+        </parameters>
+      </method>
+      <property name="language" writable="1" transfer-ownership="none">
+        <type name="utf8" c:type="gchar*"/>
+      </property>
+      <field name="parent">
+        <type name="GtkSource.View" c:type="GtkSourceView"/>
+      </field>
+      <field name="source">
+        <type name="GtkSource.File" c:type="GtkSourceFile*"/>
+      </field>
+      <field name="lang_manager">
+        <type name="GtkSource.LanguageManager"
+              c:type="GtkSourceLanguageManager*"/>
+      </field>
+      <field name="path">
+        <type name="utf8" c:type="gchar*"/>
+      </field>
+      <field name="lang">
+        <type name="utf8" c:type="gchar*"/>
+      </field>
+      <glib:signal name="changed" when="last" no-recurse="1" no-hooks="1">
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+      </glib:signal>
+    </class>
+    <record name="EditorClass"
+            c:type="MtkEditorClass"
+            glib:is-gtype-struct-for="Editor">
+      <source-position filename="include/mtk/mtkeditor.h" line="38"/>
+      <field name="parent">
+        <type name="GtkSource.ViewClass" c:type="GtkSourceViewClass"/>
+      </field>
+    </record>
+    <function-macro name="FILE" c:identifier="MTK_FILE" introspectable="0">
+      <source-position filename="include/mtk/mtkfile.h" line="176"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="FILE_CLASS"
+                    c:identifier="MTK_FILE_CLASS"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkfile.h" line="178"/>
+      <parameters>
+        <parameter name="c">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="FILE_GET_CLASS"
+                    c:identifier="MTK_FILE_GET_CLASS"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkfile.h" line="184"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <class name="File"
+           c:symbol-prefix="file"
+           c:type="MtkFile"
+           parent="GObject.Object"
+           glib:type-name="MtkFile"
+           glib:get-type="mtk_file_get_type"
+           glib:type-struct="FileClass">
+      <source-position filename="include/mtk/mtkfile.h" line="58"/>
+      <constructor name="new" c:identifier="mtk_file_new">
+        <source-position filename="include/mtk/mtkfile.h" line="68"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkfile.h"
+               line="66">a #MtkFile</doc>
+          <type name="File" c:type="MtkFile*"/>
+        </return-value>
+        <parameters>
+          <parameter name="fn" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="65">A #gchar*</doc>
+            <type name="utf8" c:type="const gchar*"/>
+          </parameter>
+        </parameters>
+      </constructor>
+      <virtual-method name="get_children" invoker="get_children">
+        <source-position filename="include/mtk/mtkfile.h" line="37"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkfile.h"
+               line="99">List of #MtkFile</doc>
+          <type name="GLib.List" c:type="GList*">
+            <type name="File"/>
+          </type>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="96">A #MtkFile</doc>
+            <type name="File" c:type="MtkFile*"/>
+          </instance-parameter>
+          <parameter name="iter" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="97">A #GtkTreeIter</doc>
+            <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
+          </parameter>
+        </parameters>
+      </virtual-method>
+      <virtual-method name="get_tooltip" invoker="get_tooltip">
+        <source-position filename="include/mtk/mtkfile.h" line="36"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkfile.h"
+               line="90">a #gchar*</doc>
+          <type name="utf8" c:type="gchar*"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="88">A #MtkFile</doc>
+            <type name="File" c:type="MtkFile*"/>
+          </instance-parameter>
+        </parameters>
+      </virtual-method>
+      <virtual-method name="tree_cell_render_file"
+                      invoker="tree_cell_render_file">
+        <source-position filename="include/mtk/mtkfile.h" line="39"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="105">A #GtkTreeViewColumn</doc>
+            <type name="File" c:type="MtkFile*"/>
+          </instance-parameter>
+          <parameter name="tree_column" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="106">A #GtkTreeIter</doc>
+            <type name="Gtk.TreeViewColumn" c:type="GtkTreeViewColumn*"/>
+          </parameter>
+          <parameter name="cell" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="107">A #GtkCellRenderer</doc>
+            <type name="Gtk.CellRenderer" c:type="GtkCellRenderer*"/>
+          </parameter>
+          <parameter name="tree_model" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="108">A #GtkTreeModel</doc>
+            <type name="Gtk.TreeModel" c:type="GtkTreeModel*"/>
+          </parameter>
+          <parameter name="iter" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="109">A #GtkTreeIter</doc>
+            <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
+          </parameter>
+          <parameter name="data"
+                     transfer-ownership="none"
+                     nullable="1"
+                     allow-none="1">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="110">A #gpointer</doc>
+            <type name="gpointer" c:type="gpointer"/>
+          </parameter>
+        </parameters>
+      </virtual-method>
+      <virtual-method name="tree_cell_render_pix"
+                      invoker="tree_cell_render_pix">
+        <source-position filename="include/mtk/mtkfile.h" line="48"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="124">A #GtkTreeViewColumn</doc>
+            <type name="File" c:type="MtkFile*"/>
+          </instance-parameter>
+          <parameter name="tree_column" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="125">A #GtkTreeIter</doc>
+            <type name="Gtk.TreeViewColumn" c:type="GtkTreeViewColumn*"/>
+          </parameter>
+          <parameter name="cell" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="126">A #GtkCellRenderer</doc>
+            <type name="Gtk.CellRenderer" c:type="GtkCellRenderer*"/>
+          </parameter>
+          <parameter name="tree_model" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="127">A #GtkTreeModel</doc>
+            <type name="Gtk.TreeModel" c:type="GtkTreeModel*"/>
+          </parameter>
+          <parameter name="iter" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="128">A #GtkTreeIter</doc>
+            <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
+          </parameter>
+          <parameter name="data"
+                     transfer-ownership="none"
+                     nullable="1"
+                     allow-none="1">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="129">A #gpointer</doc>
+            <type name="gpointer" c:type="gpointer"/>
+          </parameter>
+        </parameters>
+      </virtual-method>
+      <method name="get_basename" c:identifier="mtk_file_get_basename">
+        <source-position filename="include/mtk/mtkfile.h" line="84"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkfile.h"
+               line="82">a #gchar*</doc>
+          <type name="utf8" c:type="gchar*"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="80">A #MtkFile</doc>
+            <type name="File" c:type="MtkFile*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="get_children" c:identifier="mtk_file_get_children">
+        <source-position filename="include/mtk/mtkfile.h" line="101"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkfile.h"
+               line="99">List of #MtkFile</doc>
+          <type name="GLib.List" c:type="GList*">
+            <type name="File"/>
+          </type>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="96">A #MtkFile</doc>
+            <type name="File" c:type="MtkFile*"/>
+          </instance-parameter>
+          <parameter name="iter" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="97">A #GtkTreeIter</doc>
+            <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="get_parent" c:identifier="mtk_file_get_parent">
+        <source-position filename="include/mtk/mtkfile.h" line="76"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkfile.h"
+               line="74">a #gchar*</doc>
+          <type name="utf8" c:type="gchar*"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="72">A #MtkFile</doc>
+            <type name="File" c:type="MtkFile*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="get_tooltip" c:identifier="mtk_file_get_tooltip">
+        <source-position filename="include/mtk/mtkfile.h" line="92"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkfile.h"
+               line="90">a #gchar*</doc>
+          <type name="utf8" c:type="gchar*"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="88">A #MtkFile</doc>
+            <type name="File" c:type="MtkFile*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="tree_cell_render_file"
+              c:identifier="mtk_file_tree_cell_render_file">
+        <source-position filename="include/mtk/mtkfile.h" line="112"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="105">A #GtkTreeViewColumn</doc>
+            <type name="File" c:type="MtkFile*"/>
+          </instance-parameter>
+          <parameter name="tree_column" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="106">A #GtkTreeIter</doc>
+            <type name="Gtk.TreeViewColumn" c:type="GtkTreeViewColumn*"/>
+          </parameter>
+          <parameter name="cell" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="107">A #GtkCellRenderer</doc>
+            <type name="Gtk.CellRenderer" c:type="GtkCellRenderer*"/>
+          </parameter>
+          <parameter name="tree_model" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="108">A #GtkTreeModel</doc>
+            <type name="Gtk.TreeModel" c:type="GtkTreeModel*"/>
+          </parameter>
+          <parameter name="iter" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="109">A #GtkTreeIter</doc>
+            <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
+          </parameter>
+          <parameter name="data"
+                     transfer-ownership="none"
+                     nullable="1"
+                     allow-none="1">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="110">A #gpointer</doc>
+            <type name="gpointer" c:type="gpointer"/>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="tree_cell_render_pix"
+              c:identifier="mtk_file_tree_cell_render_pix">
+        <source-position filename="include/mtk/mtkfile.h" line="131"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="124">A #GtkTreeViewColumn</doc>
+            <type name="File" c:type="MtkFile*"/>
+          </instance-parameter>
+          <parameter name="tree_column" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="125">A #GtkTreeIter</doc>
+            <type name="Gtk.TreeViewColumn" c:type="GtkTreeViewColumn*"/>
+          </parameter>
+          <parameter name="cell" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="126">A #GtkCellRenderer</doc>
+            <type name="Gtk.CellRenderer" c:type="GtkCellRenderer*"/>
+          </parameter>
+          <parameter name="tree_model" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="127">A #GtkTreeModel</doc>
+            <type name="Gtk.TreeModel" c:type="GtkTreeModel*"/>
+          </parameter>
+          <parameter name="iter" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="128">A #GtkTreeIter</doc>
+            <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
+          </parameter>
+          <parameter name="data"
+                     transfer-ownership="none"
+                     nullable="1"
+                     allow-none="1">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="129">A #gpointer</doc>
+            <type name="gpointer" c:type="gpointer"/>
+          </parameter>
+        </parameters>
+      </method>
+      <property name="path" writable="1" transfer-ownership="none">
+        <type name="utf8" c:type="gchar*"/>
+      </property>
+      <field name="parent">
+        <type name="GObject.Object" c:type="GObject"/>
+      </field>
+      <field name="root">
+        <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
+      </field>
+      <field name="file_name">
+        <type name="utf8" c:type="gchar*"/>
+      </field>
+      <field name="is_place_holder">
+        <type name="gboolean" c:type="gboolean"/>
+      </field>
+      <field name="is_directory">
+        <type name="gboolean" c:type="gboolean"/>
+      </field>
+      <field name="is_empty">
+        <type name="gboolean" c:type="gboolean"/>
+      </field>
+      <field name="is_hidden">
+        <type name="gboolean" c:type="gboolean"/>
+      </field>
+    </class>
+    <record name="FileClass"
+            c:type="MtkFileClass"
+            glib:is-gtype-struct-for="File">
+      <source-position filename="include/mtk/mtkfile.h" line="58"/>
+      <field name="parent">
+        <type name="GObject.ObjectClass" c:type="GObjectClass"/>
+      </field>
+      <field name="get_tooltip">
+        <callback name="get_tooltip">
+          <source-position filename="include/mtk/mtkfile.h" line="36"/>
+          <return-value transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="90">a #gchar*</doc>
+            <type name="utf8" c:type="gchar*"/>
+          </return-value>
+          <parameters>
+            <parameter name="self" transfer-ownership="none">
+              <doc xml:space="preserve"
+                   filename="include/mtk/mtkfile.h"
+                   line="88">A #MtkFile</doc>
+              <type name="File" c:type="MtkFile*"/>
+            </parameter>
+          </parameters>
+        </callback>
+      </field>
+      <field name="get_children">
+        <callback name="get_children">
+          <source-position filename="include/mtk/mtkfile.h" line="37"/>
+          <return-value transfer-ownership="full">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfile.h"
+                 line="99">List of #MtkFile</doc>
+            <type name="GLib.List" c:type="GList*">
+              <type name="File"/>
+            </type>
+          </return-value>
+          <parameters>
+            <parameter name="self" transfer-ownership="none">
+              <doc xml:space="preserve"
+                   filename="include/mtk/mtkfile.h"
+                   line="96">A #MtkFile</doc>
+              <type name="File" c:type="MtkFile*"/>
+            </parameter>
+            <parameter name="iter" transfer-ownership="none">
+              <doc xml:space="preserve"
+                   filename="include/mtk/mtkfile.h"
+                   line="97">A #GtkTreeIter</doc>
+              <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
+            </parameter>
+          </parameters>
+        </callback>
+      </field>
+      <field name="tree_cell_render_file">
+        <callback name="tree_cell_render_file">
+          <source-position filename="include/mtk/mtkfile.h" line="39"/>
+          <return-value transfer-ownership="none">
+            <type name="none" c:type="void"/>
+          </return-value>
+          <parameters>
+            <parameter name="self" transfer-ownership="none">
+              <doc xml:space="preserve"
+                   filename="include/mtk/mtkfile.h"
+                   line="105">A #GtkTreeViewColumn</doc>
+              <type name="File" c:type="MtkFile*"/>
+            </parameter>
+            <parameter name="tree_column" transfer-ownership="none">
+              <doc xml:space="preserve"
+                   filename="include/mtk/mtkfile.h"
+                   line="106">A #GtkTreeIter</doc>
+              <type name="Gtk.TreeViewColumn" c:type="GtkTreeViewColumn*"/>
+            </parameter>
+            <parameter name="cell" transfer-ownership="none">
+              <doc xml:space="preserve"
+                   filename="include/mtk/mtkfile.h"
+                   line="107">A #GtkCellRenderer</doc>
+              <type name="Gtk.CellRenderer" c:type="GtkCellRenderer*"/>
+            </parameter>
+            <parameter name="tree_model" transfer-ownership="none">
+              <doc xml:space="preserve"
+                   filename="include/mtk/mtkfile.h"
+                   line="108">A #GtkTreeModel</doc>
+              <type name="Gtk.TreeModel" c:type="GtkTreeModel*"/>
+            </parameter>
+            <parameter name="iter" transfer-ownership="none">
+              <doc xml:space="preserve"
+                   filename="include/mtk/mtkfile.h"
+                   line="109">A #GtkTreeIter</doc>
+              <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
+            </parameter>
+            <parameter name="data"
+                       transfer-ownership="none"
+                       nullable="1"
+                       allow-none="1">
+              <doc xml:space="preserve"
+                   filename="include/mtk/mtkfile.h"
+                   line="110">A #gpointer</doc>
+              <type name="gpointer" c:type="gpointer"/>
+            </parameter>
+          </parameters>
+        </callback>
+      </field>
+      <field name="tree_cell_render_pix">
+        <callback name="tree_cell_render_pix">
+          <source-position filename="include/mtk/mtkfile.h" line="48"/>
+          <return-value transfer-ownership="none">
+            <type name="none" c:type="void"/>
+          </return-value>
+          <parameters>
+            <parameter name="self" transfer-ownership="none">
+              <doc xml:space="preserve"
+                   filename="include/mtk/mtkfile.h"
+                   line="124">A #GtkTreeViewColumn</doc>
+              <type name="File" c:type="MtkFile*"/>
+            </parameter>
+            <parameter name="tree_column" transfer-ownership="none">
+              <doc xml:space="preserve"
+                   filename="include/mtk/mtkfile.h"
+                   line="125">A #GtkTreeIter</doc>
+              <type name="Gtk.TreeViewColumn" c:type="GtkTreeViewColumn*"/>
+            </parameter>
+            <parameter name="cell" transfer-ownership="none">
+              <doc xml:space="preserve"
+                   filename="include/mtk/mtkfile.h"
+                   line="126">A #GtkCellRenderer</doc>
+              <type name="Gtk.CellRenderer" c:type="GtkCellRenderer*"/>
+            </parameter>
+            <parameter name="tree_model" transfer-ownership="none">
+              <doc xml:space="preserve"
+                   filename="include/mtk/mtkfile.h"
+                   line="127">A #GtkTreeModel</doc>
+              <type name="Gtk.TreeModel" c:type="GtkTreeModel*"/>
+            </parameter>
+            <parameter name="iter" transfer-ownership="none">
+              <doc xml:space="preserve"
+                   filename="include/mtk/mtkfile.h"
+                   line="128">A #GtkTreeIter</doc>
+              <type name="Gtk.TreeIter" c:type="GtkTreeIter*"/>
+            </parameter>
+            <parameter name="data"
+                       transfer-ownership="none"
+                       nullable="1"
+                       allow-none="1">
+              <doc xml:space="preserve"
+                   filename="include/mtk/mtkfile.h"
+                   line="129">A #gpointer</doc>
+              <type name="gpointer" c:type="gpointer"/>
+            </parameter>
+          </parameters>
+        </callback>
+      </field>
+      <field name="padding">
+        <array zero-terminated="0" fixed-size="12">
+          <type name="gpointer" c:type="gpointer"/>
+        </array>
+      </field>
+    </record>
+    <class name="Filetree"
+           c:symbol-prefix="filetree"
+           c:type="MtkFiletree"
+           parent="Gtk.TreeView"
+           glib:type-name="MtkFiletree"
+           glib:get-type="mtk_filetree_get_type"
+           glib:type-struct="FiletreeClass">
+      <source-position filename="include/mtk/mtkfiletree.h" line="43"/>
+      <implements name="Atk.ImplementorIface"/>
+      <implements name="Gtk.Buildable"/>
+      <implements name="Gtk.Scrollable"/>
+      <constructor name="new" c:identifier="mtk_filetree_new">
+        <source-position filename="include/mtk/mtkfiletree.h" line="51"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkfiletree.h"
+               line="49">a #MtkFiletree</doc>
+          <type name="Filetree" c:type="MtkFiletree*"/>
+        </return-value>
+      </constructor>
+      <method name="add_root" c:identifier="mtk_filetree_add_root">
+        <source-position filename="include/mtk/mtkfiletree.h" line="60"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfiletree.h"
+                 line="55">A #MtkFiletree</doc>
+            <type name="Filetree" c:type="MtkFiletree*"/>
+          </instance-parameter>
+          <parameter name="file" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfiletree.h"
+                 line="56">A #MtkFile</doc>
+            <type name="File" c:type="MtkFile*"/>
+          </parameter>
+          <parameter name="show_hidden" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfiletree.h"
+                 line="57">A #gboolean</doc>
+            <type name="gboolean" c:type="bool"/>
+          </parameter>
+          <parameter name="filter" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfiletree.h"
+                 line="58">A #gchar*</doc>
+            <type name="utf8" c:type="const gchar*"/>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="clear" c:identifier="mtk_filetree_clear">
+        <source-position filename="include/mtk/mtkfiletree.h" line="66"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfiletree.h"
+                 line="64">A #MtkFiletree</doc>
+            <type name="Filetree" c:type="MtkFiletree*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="file_at_pos" c:identifier="mtk_filetree_file_at_pos">
+        <source-position filename="include/mtk/mtkfiletree.h" line="83"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkfiletree.h"
+               line="81">a #MtkFile</doc>
+          <type name="File" c:type="MtkFile*"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfiletree.h"
+                 line="77">A #MtkFiletree</doc>
+            <type name="Filetree" c:type="MtkFiletree*"/>
+          </instance-parameter>
+          <parameter name="x" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfiletree.h"
+                 line="78">A #gint</doc>
+            <type name="gint" c:type="gint"/>
+          </parameter>
+          <parameter name="y" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfiletree.h"
+                 line="79">A #gint</doc>
+            <type name="gint" c:type="gint"/>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="get_selected_file"
+              c:identifier="mtk_filetree_get_selected_file">
+        <source-position filename="include/mtk/mtkfiletree.h" line="73"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkfiletree.h"
+               line="71">a #MtkFile</doc>
+          <type name="File" c:type="MtkFile*"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkfiletree.h"
+                 line="70">A #MtkFiletree</doc>
+            <type name="Filetree" c:type="MtkFiletree*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <property name="directory" writable="1" transfer-ownership="none">
+        <type name="GObject.Object"/>
+      </property>
+      <field name="parent">
+        <type name="Gtk.TreeView" c:type="GtkTreeView"/>
+      </field>
+      <field name="root">
+        <type name="File" c:type="MtkFile*"/>
+      </field>
+      <field name="treeModel">
+        <type name="Gtk.TreeStore" c:type="GtkTreeStore*"/>
+      </field>
+      <field name="place_holder">
+        <type name="File" c:type="MtkFile*"/>
+      </field>
+      <field name="empty_dir">
+        <type name="File" c:type="MtkFile*"/>
+      </field>
+      <field name="show_hidden">
+        <type name="gboolean" c:type="gboolean"/>
+      </field>
+      <field name="filter">
+        <type name="utf8" c:type="gchar*"/>
+      </field>
+      <field name="cursel">
+        <type name="utf8" c:type="gchar*"/>
+      </field>
+    </class>
+    <record name="FiletreeClass"
+            c:type="MtkFiletreeClass"
+            glib:is-gtype-struct-for="Filetree">
+      <source-position filename="include/mtk/mtkfiletree.h" line="43"/>
+      <field name="parent">
+        <type name="Gtk.TreeViewClass" c:type="GtkTreeViewClass"/>
+      </field>
+      <field name="dir">
+        <type name="utf8" c:type="gchar*"/>
+      </field>
+    </record>
+    <function-macro name="GITFILE"
+                    c:identifier="MTK_GITFILE"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkgit.h" line="146"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="GITFILE_CLASS"
+                    c:identifier="MTK_GITFILE_CLASS"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkgit.h" line="148"/>
+      <parameters>
+        <parameter name="c">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="GITFILE_GET_CLASS"
+                    c:identifier="MTK_GITFILE_GET_CLASS"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkgit.h" line="154"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <enumeration name="GitCmd" c:type="MtkGitCmd">
+      <source-position filename="include/mtk/mtkgit.h" line="50"/>
+      <member name="status" value="0" c:identifier="MTK_GIT_STATUS">
+        <doc xml:space="preserve"
+             filename="include/mtk/mtkgit.h"
+             line="20">git status</doc>
+      </member>
+      <member name="pull" value="1" c:identifier="MTK_GIT_PULL">
+      </member>
+      <member name="add" value="2" c:identifier="MTK_GIT_ADD">
+      </member>
+      <member name="commit" value="3" c:identifier="MTK_GIT_COMMIT">
+      </member>
+      <member name="push" value="4" c:identifier="MTK_GIT_PUSH">
+      </member>
+      <member name="restore" value="5" c:identifier="MTK_GIT_RESTORE">
+      </member>
+      <member name="restore_staged"
+              value="6"
+              c:identifier="MTK_GIT_RESTORE_STAGED">
+      </member>
+      <member name="restore_origin"
+              value="7"
+              c:identifier="MTK_GIT_RESTORE_ORIGIN">
+      </member>
+      <member name="diff" value="8" c:identifier="MTK_GIT_DIFF">
+        <doc xml:space="preserve"
+             filename="include/mtk/mtkgit.h"
+             line="21">git diff</doc>
+      </member>
+      <member name="diff_cached" value="9" c:identifier="MTK_GIT_DIFF_CACHED">
+      </member>
+      <member name="diff_origin" value="10" c:identifier="MTK_GIT_DIFF_ORIGIN">
+      </member>
+      <member name="default_branch"
+              value="11"
+              c:identifier="MTK_GIT_DEFAULT_BRANCH">
+      </member>
+      <member name="branches" value="12" c:identifier="MTK_GIT_BRANCHES">
+      </member>
+      <member name="switch_branch"
+              value="13"
+              c:identifier="MTK_GIT_SWITCH_BRANCH">
+      </member>
+      <member name="delete_branch"
+              value="14"
+              c:identifier="MTK_GIT_DELETE_BRANCH">
+      </member>
+      <member name="has_local_commits"
+              value="15"
+              c:identifier="MTK_GIT_HAS_LOCAL_COMMITS">
+      </member>
+      <member name="origin_status"
+              value="16"
+              c:identifier="MTK_GIT_ORIGIN_STATUS">
+      </member>
+      <member name="porcelain" value="17" c:identifier="MTK_GIT_PORCELAIN">
+      </member>
+      <member name="view_file" value="18" c:identifier="MTK_GIT_VIEW_FILE">
+      </member>
+    </enumeration>
+    <class name="GitFile"
+           c:symbol-prefix="gitfile"
+           c:type="MtkGitFile"
+           parent="File"
+           glib:type-name="MtkGitFile"
+           glib:get-type="mtk_gitfile_get_type"
+           glib:type-struct="GitFileClass">
+      <source-position filename="include/mtk/mtkgit.h" line="126"/>
+      <constructor name="new" c:identifier="mtk_gitfile_new">
+        <source-position filename="include/mtk/mtkgit.h" line="136"/>
+        <return-value transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkgit.h"
+               line="134">a #MtkGitFile</doc>
+          <type name="GitFile" c:type="MtkGitFile*"/>
+        </return-value>
+        <parameters>
+          <parameter name="fn" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkgit.h"
+                 line="133">A #gchar*</doc>
+            <type name="utf8" c:type="const gchar*"/>
+          </parameter>
+        </parameters>
+      </constructor>
+      <field name="parent">
+        <type name="File" c:type="MtkFile"/>
+      </field>
+      <field name="status">
+        <type name="utf8" c:type="gchar*"/>
+      </field>
+      <field name="gitdata" introspectable="0">
+        <type c:type="GitStatus*"/>
+      </field>
+    </class>
+    <record name="GitFileClass"
+            c:type="MtkGitFileClass"
+            glib:is-gtype-struct-for="GitFile">
+      <source-position filename="include/mtk/mtkgit.h" line="126"/>
+      <field name="parent">
+        <type name="FileClass" c:type="MtkFileClass"/>
+      </field>
+    </record>
+    <function-macro name="IS_FILETREE_FILE"
+                    c:identifier="MTK_IS_FILETREE_FILE"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkfile.h" line="180"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="IS_FILETREE_FILE_CLASS"
+                    c:identifier="MTK_IS_FILETREE_FILE_CLASS"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkfile.h" line="182"/>
+      <parameters>
+        <parameter name="c">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="IS_FILETREE_GITFILE"
+                    c:identifier="MTK_IS_FILETREE_GITFILE"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkgit.h" line="150"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="IS_FILETREE_GITFILE_CLASS"
+                    c:identifier="MTK_IS_FILETREE_GITFILE_CLASS"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkgit.h" line="152"/>
+      <parameters>
+        <parameter name="c">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="IS_WEBVIEW"
+                    c:identifier="MTK_IS_WEBVIEW"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkwebview.h" line="71"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="IS_WEBVIEW_CLASS"
+                    c:identifier="MTK_IS_WEBVIEW_CLASS"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkwebview.h" line="74"/>
+      <parameters>
+        <parameter name="c">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="TREE" c:identifier="MTK_TREE" introspectable="0">
+      <source-position filename="include/mtk/mtkfiletree.h" line="94"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="TREE_CLASS"
+                    c:identifier="MTK_TREE_CLASS"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkfiletree.h" line="96"/>
+      <parameters>
+        <parameter name="c">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="TREE_GET_CLASS"
+                    c:identifier="MTK_TREE_GET_CLASS"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkfiletree.h" line="102"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="TREE_IS_FILETREE"
+                    c:identifier="MTK_TREE_IS_FILETREE"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkfiletree.h" line="98"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="TREE_IS_FILETREE_CLASS"
+                    c:identifier="MTK_TREE_IS_FILETREE_CLASS"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkfiletree.h" line="100"/>
+      <parameters>
+        <parameter name="c">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="WEBVIEW"
+                    c:identifier="MTK_WEBVIEW"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkwebview.h" line="65"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="WEBVIEW_CLASS"
+                    c:identifier="MTK_WEBVIEW_CLASS"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkwebview.h" line="68"/>
+      <parameters>
+        <parameter name="c">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <function-macro name="WEBVIEW_GET_CLASS"
+                    c:identifier="MTK_WEBVIEW_GET_CLASS"
+                    introspectable="0">
+      <source-position filename="include/mtk/mtkwebview.h" line="77"/>
+      <parameters>
+        <parameter name="o">
+        </parameter>
+      </parameters>
+    </function-macro>
+    <class name="WebView"
+           c:symbol-prefix="webview"
+           c:type="MtkWebView"
+           parent="WebKit2.WebView"
+           glib:type-name="MtkWebView"
+           glib:get-type="mtk_webview_get_type"
+           glib:type-struct="WebViewClass">
+      <source-position filename="include/mtk/mtkwebview.h" line="29"/>
+      <implements name="Atk.ImplementorIface"/>
+      <implements name="Gtk.Buildable"/>
+      <constructor name="new" c:identifier="mtk_webview_new">
+        <doc xml:space="preserve"
+             filename="include/mtk/mtkwebview.h"
+             line="33">Allocates a new #MtkWebView.</doc>
+        <source-position filename="include/mtk/mtkwebview.h" line="41"/>
+        <return-value transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkwebview.h"
+               line="38">a new #MtkWebView.</doc>
+          <type name="WebView" c:type="MtkWebView*"/>
+        </return-value>
+      </constructor>
+      <function name="class_set_dir" c:identifier="mtk_webview_class_set_dir">
+        <source-position filename="include/mtk/mtkwebview.h" line="55"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <parameter name="clazz" transfer-ownership="none">
+            <type name="WebViewClass" c:type="MtkWebViewClass*"/>
+          </parameter>
+          <parameter name="dir" transfer-ownership="none">
+            <type name="utf8" c:type="const gchar*"/>
+          </parameter>
+        </parameters>
+      </function>
+      <method name="load_local_uri" c:identifier="mtk_webview_load_local_uri">
+        <doc xml:space="preserve"
+             filename="include/mtk/mtkwebview.h"
+             line="44">loads a new HTML document into #PyWebKit.</doc>
+        <source-position filename="include/mtk/mtkwebview.h" line="53"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="web" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkwebview.h"
+                 line="46">#MtkWebView*</doc>
+            <type name="WebView" c:type="MtkWebView*"/>
+          </instance-parameter>
+          <parameter name="localpath" transfer-ownership="none">
+            <doc xml:space="preserve"
+                 filename="include/mtk/mtkwebview.h"
+                 line="47">#gchar*</doc>
+            <type name="utf8" c:type="const gchar*"/>
+          </parameter>
+        </parameters>
+      </method>
+      <property name="local" writable="1" transfer-ownership="none">
+        <type name="utf8" c:type="gchar*"/>
+      </property>
+      <field name="parent">
+        <type name="WebKit2.WebView" c:type="WebKitWebView"/>
+      </field>
+      <field name="uid">
+        <type name="utf8" c:type="gchar*"/>
+      </field>
+      <field name="localpath">
+        <type name="utf8" c:type="gchar*"/>
+      </field>
+      <glib:signal name="changed" when="last" no-recurse="1" no-hooks="1">
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <parameter name="object" transfer-ownership="none">
+            <type name="utf8" c:type="gchar*"/>
+          </parameter>
+        </parameters>
+      </glib:signal>
+    </class>
+    <record name="WebViewClass"
+            c:type="MtkWebViewClass"
+            glib:is-gtype-struct-for="WebView">
+      <source-position filename="include/mtk/mtkwebview.h" line="29"/>
+      <field name="parent">
+        <type name="WebKit2.WebViewClass" c:type="WebKitWebViewClass"/>
+      </field>
+      <field name="dir">
+        <type name="utf8" c:type="gchar*"/>
+      </field>
+    </record>
+    <function name="bash" c:identifier="mtk_bash">
+      <source-position filename="include/mtk/mtkfile.h" line="148"/>
+      <return-value transfer-ownership="full">
+        <doc xml:space="preserve"
+             filename="include/mtk/mtkfile.h"
+             line="146">a #gchar*</doc>
+        <type name="utf8" c:type="gchar*"/>
+      </return-value>
+      <parameters>
+        <parameter name="cmd" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkfile.h"
+               line="144">A #gchar*</doc>
+          <type name="utf8" c:type="const gchar*"/>
+        </parameter>
+        <parameter name="status"
+                   direction="out"
+                   caller-allocates="1"
+                   transfer-ownership="none"
+                   optional="1"
+                   allow-none="1">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkfile.h"
+               line="145">A #gint</doc>
+          <type name="gint" c:type="gint*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="bash_async" c:identifier="mtk_bash_async">
+      <source-position filename="include/mtk/mtkfile.h" line="169"/>
+      <return-value transfer-ownership="none">
+        <type name="none" c:type="void"/>
+      </return-value>
+      <parameters>
+        <parameter name="cmd" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkfile.h"
+               line="164">A #gchar*</doc>
+          <type name="utf8" c:type="const gchar*"/>
+        </parameter>
+        <parameter name="callback"
+                   transfer-ownership="none"
+                   scope="async"
+                   closure="2">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkfile.h"
+               line="165">A #MtkAsyncBashCallbackFunc</doc>
+          <type name="AsyncBashCallbackFunc"
+                c:type="MtkAsyncBashCallbackFunc"/>
+        </parameter>
+        <parameter name="user_data"
+                   transfer-ownership="none"
+                   nullable="1"
+                   allow-none="1">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkfile.h"
+               line="166">a #gpointer</doc>
+          <type name="gpointer" c:type="gpointer"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="git_cmd" c:identifier="mtk_git_cmd">
+      <source-position filename="include/mtk/mtkgit.h" line="64"/>
+      <return-value transfer-ownership="none">
+        <doc xml:space="preserve"
+             filename="include/mtk/mtkgit.h"
+             line="62">a #gint , the exit code</doc>
+        <type name="gint" c:type="gint"/>
+      </return-value>
+      <parameters>
+        <parameter name="file" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkgit.h"
+               line="58">A #MtkFile*</doc>
+          <type name="File" c:type="MtkFile*"/>
+        </parameter>
+        <parameter name="cmd" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkgit.h"
+               line="59">A #gchar*</doc>
+          <type name="GitCmd" c:type="MtkGitCmd"/>
+        </parameter>
+        <parameter name="status"
+                   direction="out"
+                   caller-allocates="0"
+                   transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkgit.h"
+               line="60">A #char**</doc>
+          <type name="utf8" c:type="gchar**"/>
+        </parameter>
+        <parameter name="contents"
+                   direction="out"
+                   caller-allocates="0"
+                   transfer-ownership="full">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkgit.h"
+               line="61">A #char**</doc>
+          <type name="utf8" c:type="gchar**"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="git_cmd_async" c:identifier="mtk_git_cmd_async">
+      <source-position filename="include/mtk/mtkgit.h" line="87"/>
+      <return-value transfer-ownership="none">
+        <type name="none" c:type="void"/>
+      </return-value>
+      <parameters>
+        <parameter name="file" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkgit.h"
+               line="82">A #MtkFile*</doc>
+          <type name="File" c:type="MtkFile*"/>
+        </parameter>
+        <parameter name="cmd" transfer-ownership="none">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkgit.h"
+               line="83">A #gchar*</doc>
+          <type name="GitCmd" c:type="MtkGitCmd"/>
+        </parameter>
+        <parameter name="callback"
+                   transfer-ownership="none"
+                   scope="async"
+                   closure="3">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkgit.h"
+               line="84">A #MtkAsyncGitCallbackFunc</doc>
+          <type name="AsyncGitCallbackFunc" c:type="MtkAsyncGitCallbackFunc"/>
+        </parameter>
+        <parameter name="user_data"
+                   transfer-ownership="none"
+                   nullable="1"
+                   allow-none="1">
+          <doc xml:space="preserve"
+               filename="include/mtk/mtkgit.h"
+               line="85">a #gpointer</doc>
+          <type name="gpointer" c:type="gpointer"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="git_commit" c:identifier="mtk_git_commit">
+      <source-position filename="include/mtk/mtkgit.h" line="97"/>
+      <return-value transfer-ownership="none">
+        <type name="gint" c:type="gint"/>
+      </return-value>
+      <parameters>
+        <parameter name="file" transfer-ownership="none">
+          <type name="File" c:type="MtkFile*"/>
+        </parameter>
+        <parameter name="msg" transfer-ownership="none">
+          <type name="utf8" c:type="const gchar*"/>
+        </parameter>
+        <parameter name="status" transfer-ownership="none">
+          <type name="utf8" c:type="char**"/>
+        </parameter>
+        <parameter name="contents" transfer-ownership="none">
+          <type name="utf8" c:type="char**"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="git_create_branch" c:identifier="mtk_git_create_branch">
+      <source-position filename="include/mtk/mtkgit.h" line="92"/>
+      <return-value transfer-ownership="none">
+        <type name="gboolean" c:type="gboolean"/>
+      </return-value>
+      <parameters>
+        <parameter name="file" transfer-ownership="none">
+          <type name="File" c:type="MtkFile*"/>
+        </parameter>
+        <parameter name="branch" transfer-ownership="none">
+          <type name="utf8" c:type="const gchar*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="git_delete_branch" c:identifier="mtk_git_delete_branch">
+      <source-position filename="include/mtk/mtkgit.h" line="94"/>
+      <return-value transfer-ownership="none">
+        <type name="gboolean" c:type="gboolean"/>
+      </return-value>
+      <parameters>
+        <parameter name="file" transfer-ownership="none">
+          <type name="File" c:type="MtkFile*"/>
+        </parameter>
+        <parameter name="branch" transfer-ownership="none">
+          <type name="utf8" c:type="const gchar*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="git_has_local_commits"
+              c:identifier="mtk_git_has_local_commits">
+      <source-position filename="include/mtk/mtkgit.h" line="90"/>
+      <return-value transfer-ownership="none">
+        <type name="gboolean" c:type="gboolean"/>
+      </return-value>
+      <parameters>
+        <parameter name="file" transfer-ownership="none">
+          <type name="File" c:type="MtkFile*"/>
+        </parameter>
+      </parameters>
+    </function>
+    <function name="git_switch_branch" c:identifier="mtk_git_switch_branch">
+      <source-position filename="include/mtk/mtkgit.h" line="93"/>
+      <return-value transfer-ownership="none">
+        <type name="gboolean" c:type="gboolean"/>
+      </return-value>
+      <parameters>
+        <parameter name="file" transfer-ownership="none">
+          <type name="File" c:type="MtkFile*"/>
+        </parameter>
+        <parameter name="branch" transfer-ownership="none">
+          <type name="utf8" c:type="const gchar*"/>
+        </parameter>
+      </parameters>
+    </function>
+  </namespace>
+</repository>

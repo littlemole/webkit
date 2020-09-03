@@ -1,24 +1,28 @@
 all:
-	cd py && make  
-	cd ext && make
-	cd webkit && make
-	cp py/build/WebKit.so pygtk/
-	mkdir -p lib/webkitext
-	cp ext/build/webkit2_web_extension.so lib/webkitext/
-	cp webkit/build/libwebview.so lib/
-	bash -c "cd lib && ln -s libwebview.so libwebview.so.0"
-	cp webkit/build/Pywebkit-0.1.gir lib/
-	cp webkit/build/Pywebkit-0.1.typelib lib/
+	cd src/mtkext && make  
+	cd src/mtk && make
+	cd src/mtkcpp && make
+	mkdir -p lib/mtkext
+	cp src/mtkext/build/webkit2_web_extension.so lib/mtkext
+	-ln -s ../lib/mtkext pymtk/mtkext
+	cp src/mtk/build/libmtk.so lib/
+	-bash -c "cd lib && ln -s libmtk.so libmtk.so.0"
+	cp src/mtkcpp/build/libmtkcpp.a lib/
+	cp src/mtk/build/Mtk-0.1.gir lib/
+	cp src/mtk/build/Mtk-0.1.typelib lib/
 
 
 clean:
-	cd py && make clean 
-	cd ext && make clean 
-	cd webkit && make clean
-	-rm pygtk/WebKit.so
-	-rm lib/webkitext/*.so	
-	-rm lib/libwebview.so.0
-	-rm lib/libwebview.so
+	cd src/mtkext && make clean 
+	cd src/mtk && make clean 
+	cd src/mtkcpp && make clean
+	-rm pymtk/mtkext
+	-rm lib/mtkext/*.so	
+	-rm lib/libmtk.so.0
+	-rm lib/libmtk.so
+	-rm lib/libmtkcpp.a
+	-rm lib/*.gir
+	-rm lib/*.typelib
 	-find -name "__pycache__" -exec rm -rf {} \;
 	-find -name "*~" -exec rm -rf {} \;
 
