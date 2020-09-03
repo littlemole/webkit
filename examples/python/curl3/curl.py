@@ -76,8 +76,7 @@ class Controller(object):
     @synced()
     async def onRequest(self,*args):
 
-        pygtk.webkit2.JavaScript(web).onSubmit()
-        print(r)
+        pymtk.webkit2.JavaScript(web).onSubmit()
 
     @idle_add
     def onExit(self,*args):
