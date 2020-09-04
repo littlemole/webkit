@@ -64,6 +64,8 @@ class Signal(object):
         f = Future()
         responses[uid] = f
 
+        return f
+
 
 class WebViewCtrl(object):
 

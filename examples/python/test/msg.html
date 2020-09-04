@@ -6,6 +6,7 @@
 <body>
 
     <a href="../curl/curl.html">curl</a>
+    <a href="local://curl.html">local</a>
  <form name="theForm" action="#" onSubmit="return onSubmit(this);">
 
   <table>
@@ -56,7 +57,7 @@ document.addEventListener("DOMContentLoaded", function(e)
     };
 
     function onOpen(b) {
-        WebKit.Python.openFile();
+        WebKit.Host.openFile();
         return false;
     }
 
@@ -70,9 +71,11 @@ document.addEventListener("DOMContentLoaded", function(e)
         let json = JSON.parse(msg);
         form.on_signal.value = "";
 
-        let r = await WebKit.Python.sendData(json)//.then(function(m){alert(m);},function(m){alert(m);});
+        let r = await WebKit.Host.sendData(json)//.then(function(m){alert(m);},function(m){alert(m);});
         let response = JSON.stringify(r);
         form.on_signal.value = response;
+
+        return 42;
     }
 
     function onFullscreen()

@@ -1,18 +1,23 @@
 import gi
 gi.require_versions({
     'Gtk':  '3.0',
-    'Pywebkit': '0.1'
+    'Mtk': '0.1'
 })
 
-from gi.repository import Gtk, Pywebkit
+from gi.repository import Gtk, Gio, Mtk, WebKit2
 
 import os,sys,socket,json,threading,pprint
 
-from gi.repository.Pywebkit import Webview 
-import pygtk.WebKit as WebKit
-import pygtk.WebKit as WebKit
-from pygtk.bind import synced
-from pygtk.menumaker import MenuMaker
+from gi.repository.Mtk import WebView 
+
+import pymtk.webkit2
+import pymtk.future 
+
+from pymtk.future import Worker
+from pymtk.future import background
+from pymtk.future import synced
+from pymtk.webkit2 import idle_add
+from pymtk.menumaker import MenuMaker
 
 
 def onDone(f):
@@ -64,7 +69,7 @@ class Controller(object):
         try:
             if ( response == Gtk.ButtonsType.OK) :
                 print("################# dlg closed" + str(response))
-                f = WebKit.JavaScript(web).setFilename(dlg.get_filename())
+                f = pymtk.webkit2.JavaScript(web).setFilename(dlg.get_filename())
                 print("################# set done cb")
                 f.add_done_callback( onDone )
         except BaseException as ex:
@@ -78,8 +83,9 @@ class Controller(object):
         try :
             #print(event.action_target_value)
             print("\n")
-            r = await WebKit.JavaScript(web).setFilename("partytime")
+            r = pymtk.webkit2.JavaScript(web).setFilename("partytime")
             print("###############+++" + str(r))
+            f = await r
         except BaseException as ex:
             print("1111111111ex!!!!!!!!!!!")
             print(str(ex))
@@ -105,19 +111,31 @@ class Controller(object):
     def onExit(self,*args):
         Gtk.main_quit()
 
+    def on_request(self, req):
+
+        path = req.get_path()
+        print(path)
+        content = "<html><body><h1>HELLO LOCAL URL</h1></body></html>"
+        stream = Gio.MemoryInputStream.new_from_data(content.encode(),None)
+        req.finish(stream,len(content),"text/html")
+
+
 # instantiate controller and bind signals
 controller = Controller()        
 
 path2self = os.path.dirname(os.path.realpath(__file__))
 # create html widget
 # this is similar to Gtk.WebView
-web = Pywebkit.Webview() 
+web = Mtk.WebView() 
 web.connect("context-menu", controller.onContext )
 url = "file://" + path2self + "/msg.html"
 web.load_uri(url)
 print(web.uid)
 
-WebKit.bind(web,controller)
+ctx = WebKit2.WebContext.get_default()
+ctx.register_uri_scheme( "local", controller.on_request)
+
+pymtk.webkit2.bind(web,controller)
 
 # from here on just standard python gtk
 builder = Gtk.Builder()
