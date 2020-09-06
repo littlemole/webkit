@@ -731,6 +731,7 @@ gint mtk_git_commit(MtkFile* file, const gchar* msg, char** status,  char** cont
         if(status)
         {
             *status = g_strdup(content.c_str());
+            *contents = g_strdup("");
         }
         return exit_code;
     }
@@ -738,9 +739,17 @@ gint mtk_git_commit(MtkFile* file, const gchar* msg, char** status,  char** cont
     {
         *status = g_strdup(content.substr(0,pos).c_str());
     }
+    else
+    {
+        *status = g_strdup("");
+    }
     if(contents)
     {
         *contents = g_strdup(content.substr(pos+1).c_str());
+    }
+    else
+    {
+         *contents = g_strdup("");
     }
     return exit_code;
 
