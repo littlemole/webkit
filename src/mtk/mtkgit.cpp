@@ -412,6 +412,8 @@ gint git_get_branches(gint exit_code, const std::string& out, gchar** status, gc
 gint mtk_git_cmd(MtkFile* file, MtkGitCmd cmd, gchar** status, gchar** contents )
 {
     static std::map<MtkGitCmd,std::string> cmds_without_target = {
+        { MTK_GIT_PULL, "GIT_ASKPASS=true git pull" },
+        { MTK_GIT_PUSH, "GIT_ASKPASS=true git push" },
         { MTK_GIT_DEFAULT_BRANCH, "git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'" },
         { MTK_GIT_BRANCHES, "git branch --no-color"},
         { MTK_GIT_HAS_LOCAL_COMMITS, "git log \"origin/$(git branch | grep \"*\" | cut -d' ' -f2)..HEAD\" " }
