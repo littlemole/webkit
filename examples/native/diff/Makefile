@@ -35,6 +35,10 @@ BIN_SRCFILESABS = $(shell ls $(BIN_SRC)/*.cpp)
 BIN_SRCFILES =  $(notdir $(BIN_SRCFILESABS))
 BIN_OBJFILES = $(BIN_SRCFILES:%.cpp=$(BIN_BUILD)/%.o)
 
+RES_SRC=./resources
+RES_SRCFILESREL = $(shell ls $(RES_SRC)/*.*)
+RES_SRCFILES =  $(notdir $(RES_SRCFILESREL))
+RES_BUILD =$(RES_SRC)/build
 #################################################
 # usually no need to change anything below
 #################################################
@@ -45,7 +49,7 @@ BIN_OBJFILES = $(BIN_SRCFILES:%.cpp=$(BIN_BUILD)/%.o)
 # rule to compile all (default rule)
 #################################################
 
-all: $(BIN) 
+all: res $(BIN) 
 
 #################################################
 # release rule 
@@ -70,7 +74,7 @@ $(BIN_BUILD)/%.o: $(BIN_SRC)/%.cpp
 #################################################
 
 $(BIN): $(BIN_OBJFILES)
-	$(CXX)  -o $(BIN) $(BIN_OBJFILES) $(LIBS) $(CPPFLAGS) $(PKG_LIB)
+	$(CXX)  -o $(BIN) $(BIN_OBJFILES)  $(RES_BUILD)/index.o $(RES_BUILD)/res.o $(LIBS) $(CPPFLAGS) $(PKG_LIB)
 
 		
 #################################################
@@ -81,4 +85,16 @@ clean:
 	-find -name "*~" -exec rm {} \;
 	-rm -f $(BIN)
 	-rm -f $(BIN_BUILD)/*.o
+	-rm -f $(RES_BUILD)/*.o
+	-rm -f $(RES_BUILD)/index.cpp
+	
+
+res: raw 	
+	bash -c './index.sh > $(RES_BUILD)/index.cpp'
+	$(CXX) $(CPPFLAGS) -c -o $(RES_BUILD)/index.o $(RES_BUILD)/index.cpp
+
+		
+raw:
+	cd resources && ld -r -b binary -o ../$(RES_BUILD)/res.o $(RES_SRCFILES)
+	
 	

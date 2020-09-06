@@ -141,6 +141,15 @@ document.addEventListener("DOMContentLoaded", function(e)
               .width(width)
               .fit(true)
               .onerror(function(e){})
+              .attributer(function(d) {
+                if(this.href)
+                {
+                  this.onclick = function() { 
+                    WebKit.Host.onClickGraph(this.href.baseVal); 
+                    return false; 
+                  }
+                }
+              })
               .renderDot(self.dot)
               .zoom(true);
         },
@@ -224,7 +233,7 @@ document.addEventListener("DOMContentLoaded", function(e)
           document.querySelectorAll("a.branch").forEach( function(branch) {
               branch.onclick = function(e) {
                 e.preventDefault();
-                WebKit.Python.onSelectBranch( e.target.getAttribute("data-branch") );
+                WebKit.Host.onSelectBranch( e.target.getAttribute("data-branch") );
               };
           });
         },
@@ -237,7 +246,7 @@ document.addEventListener("DOMContentLoaded", function(e)
             self.text.innerHTML = "commit in progress ...";
             self.commit.style.display = "none";
 
-            WebKit.Python.onSubmitCommit(msg);
+            WebKit.Host.onSubmitCommit(msg);
           } catch(e) {
             alert(e);
           }
@@ -271,7 +280,7 @@ document.addEventListener("DOMContentLoaded", function(e)
 
               canvasdata = decodeURIComponent(canvasdata);
 
-              WebKit.Python.onSaveImage(canvasdata);
+              WebKit.Host.onSaveImage(canvasdata);
             };
         },
 
@@ -304,7 +313,7 @@ document.addEventListener("DOMContentLoaded", function(e)
 
     WebKit.bind(View);
 
-    WebKit.Python.onDocumentLoad();
+    WebKit.Host.onDocumentLoad();
     document.getElementById("commitButton").onclick=View.onCommit;
 
     window.onresize = View.onResize;

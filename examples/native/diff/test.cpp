@@ -2,20 +2,35 @@
 #include "mtk/mtkgit.h"
 #include "mtkcpp/ui.h"
 
-// main UI controller
-
 int main (int argc, char **argv);
 
+extern std::map<std::string,std::string> resources;
+
+// main UI controller
 
 class Controller
 {
 public:
 
+    static void webKitURISchemeReqquestCB(WebKitURISchemeRequest *request, gpointer user_data)
+    {
+        Controller* controller = (Controller*)user_data;
+        controller->onRequest(request);
+    }
+
     Controller()
     {
+        webkit_web_context_register_uri_scheme(
+            webkit_web_context_get_default(),
+            "local",
+            &Controller::webKitURISchemeReqquestCB,
+            this,
+            NULL
+        );
+
         ui
         .register_widgets( mtk_filetree_get_type, mtk_webview_get_type )
-        .load("test.ui.xml")
+        .load_string( resources["test.ui.xml"].c_str() )
         .bind(this)
         .show();
 
@@ -33,6 +48,38 @@ public:
         ui.status_bar( cwd().c_str() );      
     }
 
+    void onRequest(WebKitURISchemeRequest *request)
+    {
+        std::string uri = webkit_uri_scheme_request_get_uri(request);
+        std::string path = webkit_uri_scheme_request_get_path(request);
+
+        std::cout << "URI: " << uri << std::endl << "PATH: " << path << std::endl;
+
+        if ( path[0] == '/' )
+        {
+            path = path.substr(1);
+        }
+
+        if ( resources.count(path) != 0)
+        {
+            std::string& data = resources[path];
+
+            GInputStream* stream = g_memory_input_stream_new_from_data( data.c_str(), data.size(), NULL );
+        
+            webkit_uri_scheme_request_finish(request,stream,data.size(),"text/html");
+
+            return;
+        }
+
+        std::string data = "<html><body><h1>HELLO LOCAL URL</h1></body></html>";
+
+        gchar* d = g_strdup(data.c_str());
+
+        GInputStream* stream = g_memory_input_stream_new_from_data( d, data.size(), g_free );
+        
+        webkit_uri_scheme_request_finish(request,stream,data.size(),"text/html");
+    }
+
     // JavaScript handlers
     void onDocumentLoad()
     {
@@ -45,7 +92,7 @@ public:
 
         gchar* status = 0;
         gchar* content = 0;
-        gboolean b = mtk_git_commit(file,msg.c_str(),&status,&content);
+        mtk_git_commit(file,msg.c_str(),&status,&content);
 
         send_request( web, "setPlainText", status, content );      
 
@@ -58,7 +105,7 @@ public:
     void onCreateBranch(std::string branch)
     {
         MtkFile* file = mtk_filetree_get_selected_file(tree);
-        gboolean b = mtk_git_create_branch(file,branch.c_str());
+        mtk_git_create_branch(file,branch.c_str());
 
         g_object_unref(file);       
 
@@ -69,7 +116,7 @@ public:
     void onSelectBranch(std::string branch)
     {
         MtkFile* file = mtk_filetree_get_selected_file(tree);
-        gboolean b = mtk_git_switch_branch(file,branch.c_str());
+        mtk_git_switch_branch(file,branch.c_str());
 
         g_object_unref(file);       
 
@@ -83,14 +130,14 @@ public:
 
         gchar* status = 0;
         gchar* content = 0;
-        int exit_code = mtk_git_cmd(file,MTK_GIT_DEFAULT_BRANCH,&status,&content);
+        mtk_git_cmd(file,MTK_GIT_DEFAULT_BRANCH,&status,&content);
 
         if( strncmp(branch.c_str(),content,branch.size()) == 0 )
         {
             return;
         }
 
-        gboolean b = mtk_git_delete_branch(file,branch.c_str());
+        mtk_git_delete_branch(file,branch.c_str());
 
         g_object_unref(file);       
         g_free(status);
@@ -166,7 +213,7 @@ public:
 
         gchar* status = 0;
         gchar* content = 0;
-        int exit_code = mtk_git_cmd(file,MTK_GIT_BRANCHES,&status,&content);
+        mtk_git_cmd(file,MTK_GIT_BRANCHES,&status,&content);
 
         send_request( web, "setBranches", status, content );      
 
@@ -223,6 +270,8 @@ public:
     void onHelp(GtkWidget*)
     {
         ui.alert("HELLO WRLD!");
+        webkit_web_view_load_uri(ui.get<WebKitWebView>("web"),"local:///index.html");
+
     }
 
     // context Menues
@@ -297,7 +346,7 @@ private:
 
         gchar* status = 0;
         gchar* content = 0;
-        int exit_code = mtk_git_cmd(file,cmd,&status,&content);
+        mtk_git_cmd(file,cmd,&status,&content);
 
         send_request( web, mode, status, content );      
 

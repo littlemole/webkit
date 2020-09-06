@@ -1,10 +1,11 @@
 all:
 	cd src/mtkext && make  
-	cd src/mtk && make
+	cd src/mtk && make && make static
 	cd src/mtkcpp && make
 	mkdir -p lib/mtkext
 	cp src/mtkext/build/webkit2_web_extension.so lib/mtkext
 	-ln -s ../lib/mtkext pymtk/mtkext
+	cp src/mtk/build/libmtk.a lib/
 	cp src/mtk/build/libmtk.so lib/
 	-bash -c "cd lib && ln -s libmtk.so libmtk.so.0"
 	cp src/mtkcpp/build/libmtkcpp.a lib/

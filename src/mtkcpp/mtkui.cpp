@@ -227,6 +227,17 @@ Gui& Gui::load(const char* file)
     return *this;
 }
 
+Gui& Gui::load_string(const char* file)
+{
+    std::string xml = file;
+
+    //builder = gtk_builder_new();
+
+    builder = gtk_builder_new_from_string( file, -1);
+
+    return *this;
+}
+
 GObject* Gui::get_object(const char* name)
 {
     return gtk_builder_get_object(builder,name);

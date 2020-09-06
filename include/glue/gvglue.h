@@ -9,7 +9,94 @@
 #include <map>
 #include <functional>
 
+class gstring 
+{
+public:
 
+    gstring()
+    {}
+
+    gstring(gchar* c)
+        : str_(c)
+    {}
+
+    gstring(const gstring& rhs)
+    {
+        str_ = g_strdup(rhs.str_);
+    }
+
+    gstring(gstring&& rhs)
+    {
+        str_ = rhs.str_;
+        rhs.str_ = 0;
+    }
+
+    gstring& operator=(const gstring& rhs)
+    {
+        if( &(this->str_) == &(rhs.str_) )
+        {
+            return *this;
+        }
+
+        if(str_)
+        {
+            g_free(str_);
+        }
+        str_ = g_strdup(rhs.str_);
+
+        return *this;
+    }
+
+    gstring& operator=(gstring&& rhs)
+    {
+        if( &(this->str_) == &(rhs.str_) )
+        {
+            return *this;
+        }
+
+        if(str_)
+        {
+            g_free(str_);
+        }
+        str_ = rhs.str_;
+        rhs.str_ = 0;
+
+        return *this;
+    }
+
+    gstring(const gchar* c)
+        : str_( g_strdup(c) )
+    {}
+
+    ~gstring()
+    {
+        if(str_)
+        {
+            g_free(str_);
+            str_ = 0;
+        }
+    }
+
+    const gchar* str()
+    {
+        return str_;
+    }
+
+    const gchar* operator*()
+    {
+        return str_;
+    }
+
+    gchar** operator&()
+    {
+        return &str_;
+    }
+
+private:
+    gchar* str_ = 0;
+};
+
+template<class T = GObject>
 class gobj
 {
 public:
@@ -18,7 +105,12 @@ public:
     {}
 
     gobj(GObject* o)
-        : obj_(o)
+        : obj_((T*)o)
+    {}
+
+    template<class P>
+    gobj(P* o)
+        : obj_( (T*)o)
     {}
 
     gobj(const gobj& rhs)
@@ -28,6 +120,12 @@ public:
 
         obj_ = rhs.obj_;
         g_object_ref(obj_);
+    }
+
+    template<class P>
+    P* as()
+    {
+        return (P*)obj_;
     }
 
     gobj& operator=(const gobj& rhs)
@@ -46,7 +144,7 @@ public:
 
     gobj& operator=(GObject* rhs)
     {
-        if( this->obj_ == rhs)
+        if( this->obj_ == (T*)rhs)
             return * this;
         
         if(obj_)
@@ -66,12 +164,12 @@ public:
         }
     }
 
-    GObject* operator->()
+    T* operator->()
     {
         return obj_;
     }
 
-    GObject* operator*()
+    T* operator*()
     {
         return obj_;
     }
@@ -79,17 +177,17 @@ public:
     GObject* ref()
     {
         g_object_ref(obj_);
-        return obj_;
+        return (GObject*)obj_;
     }
 
     GObject* unref()
     {
         g_object_unref(obj_);
-        return obj_;
+        return (GObject*)obj_;
     }
 
 private:
-    GObject* obj_;    
+    T* obj_;    
 };
 
 

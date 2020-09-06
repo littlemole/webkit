@@ -101,7 +101,7 @@ void on_loaded(GObject* source_object, GAsyncResult *res,gpointer user_data)
     g_object_unref(source_object);
 }
 
-void mtk_edit_load(MtkEditor* self, const gchar* path)
+void mtk_editor_load(MtkEditor* self, const gchar* path)
 {
     self->path = g_strdup(path);
     GtkSourceBuffer* buffer = (GtkSourceBuffer*) gtk_text_view_get_buffer( (GtkTextView*)self );

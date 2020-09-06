@@ -114,7 +114,8 @@ class Controller(object):
     def on_request(self, req):
 
         path = req.get_path()
-        print(path)
+        print("PATH:" + path)
+        print("URI:" + req.get_uri())
         content = "<html><body><h1>HELLO LOCAL URL</h1></body></html>"
         stream = Gio.MemoryInputStream.new_from_data(content.encode(),None)
         req.finish(stream,len(content),"text/html")

@@ -452,7 +452,7 @@
                       <object class="MtkWebView" id="web">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
-                        <property name="local">index.html</property>
+                        <property name="local">local:///index.html</property>
                         <signal name="context-menu" handler="onWebContext" swapped="no"/>
                         <child>
                           <placeholder/>

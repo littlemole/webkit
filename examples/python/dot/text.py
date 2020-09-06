@@ -6,24 +6,24 @@ from pathlib import Path
 import gi
 gi.require_versions({
     'Gtk':  '3.0',
-    'Pywebkit': '0.1',
+    'Mtk': '0.1',
     'GtkSource': '4'
 })
-from gi.repository import Gio, Gtk, Gdk, GObject, GLib, Pywebkit, GtkSource
+from gi.repository import Gio, Gtk, Gdk, GObject, GLib, Mtk, GtkSource
 
 # import custom Gtk types explicitely to allow loading from xml
-from gi.repository.Pywebkit import Webview 
+from gi.repository.Mtk import WebView 
 
 # pygtk mini framework specific imports
-from pygtk.ui import UI,DirectoryTree,accelerator
-from pygtk.git import Git, GitFile
-from pygtk.editor import Editor
-from pygtk import WebKit
-
+from pymtk.ui import UI,DirectoryTree,accelerator
+from pymtk.git import Git, GitFile
+from pymtk.editor import Editor
+from pymtk import webkit2
+import pymtk
 
 # set base path for local resource files
 UI.set_directory(__file__)
-
+WebView.class_set_dir( WebView, os.path.dirname(os.path.realpath(__file__)) )
 
 class Controller(object):
 
@@ -46,11 +46,13 @@ class Controller(object):
         # bind event handlers 
         self.ui.bind(self)
 
+        pymtk.webkit2.bind(self.ui.web,self)
+
         # show the UI
         self.ui.show()
 
         # IPC channel
-        self.JavaScript = WebKit.JavaScript(self.ui.web)
+        self.JavaScript = pymtk.webkit2.JavaScript(self.ui.web)
 
 
     # UI helper
@@ -136,10 +138,21 @@ class Controller(object):
             newfile.write(bytes)
             newfile.close()
     
+    def onClickGraph(self,uri):
+
+        if not self.scrape_if_modified():
+
+            self.onViewFile()
+            return
+
+        f = self.selected_file()
+        p = os.path.join(os.path.dirname(f.file_name),uri)
+        print("GRPAH: " + p)
+        self.ui.editor.load(p)
 
     # track User Input
 
-    def onSelect(self,*args):
+    def scrape_if_modified(self):
 
         if self.ui.editor.is_modified():
 
@@ -150,9 +163,19 @@ class Controller(object):
             )
             if r == Gtk.ButtonsType.CANCEL:
 
-                self.onViewFile()
-                return
+                return False
 
+        return True
+
+
+
+    def onSelect(self,*args):
+
+        if not self.scrape_if_modified():
+
+            self.onViewFile()
+            return
+        
         f = self.selected_file()
         self.ui.status_bar( f.file_name )
 
@@ -274,6 +297,11 @@ class Controller(object):
     @accelerator("<Control>d")
     def onFileOpenDir(self,*args):
 
+        if not self.scrape_if_modified():
+
+            self.onViewFile()
+            return
+
         dir = self.ui.showFileDialog(
             Gtk.FileChooserAction.SELECT_FOLDER,
             "Please choose a folder", 
@@ -293,6 +321,11 @@ class Controller(object):
 
     def onNewDotfile(self,*args):
 
+        if not self.scrape_if_modified():
+
+            self.onViewFile()
+            return
+
         f = self.selected_file()
         d = f.filename if f.directory else os.path.dirname(f.file_name)
 
@@ -307,6 +340,11 @@ class Controller(object):
 
     @accelerator("<Control>o")
     def onFileOpen(self,*args):
+
+        if not self.scrape_if_modified():
+
+            self.onViewFile()
+            return
 
         f = self.ui.showFileDialog(
             Gtk.FileChooserAction.OPEN,

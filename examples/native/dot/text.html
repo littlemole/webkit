@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script src="js/diff2html.min.js"></script> 
+  <script src="js/d3.v5.min.js"></script>
+<!--  <script src="js/wasm.min.js" type="javascript/worker"></script>
+  -->
+
+  <script src="https://unpkg.com/@hpcc-js/wasm@0.3.11/dist/index.min.js"></script>
+  <script src="js/viz.js"></script>
+  <script src="js/d3-graphviz.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/diff2html.min.css">
+  <style type="text/css">
+
+    .scale
+    {
+        width: calc(100% - 4px);
+        height: calc(100% - 6px);
+    }
+
+    body {
+        background-color: white;
+        padding:0px;
+        margin:0px;
+        height:100%;
+    }
+
+    html {
+      height:100%;
+    }
+
+    div.html {
+      border: 1px solid rgb(192, 190, 190);
+      margin:2px;
+      background-color: white;
+    }
+
+    div.main {
+      display: flex;
+      flex-direction: column;
+      width:100%;
+      height:calc(100% - 36px);
+      padding:0px;
+    }
+
+    h5 {
+      height:36px;
+      line-height:36px;
+      background-color:#FAFAFA;
+      margin:0px;
+      padding: 0px 3px;
+      vertical-align:bottom;
+    }
+  </style>
+</head>
+<body>
+
+  <h5 id="status"></h5>
+  <div class="main ">
+   <div id="commit">
+     commit message:<br>
+     <textarea id="commitMsg" rows=5 cols=80></textarea>
+     <button id="commitButton">commit</button>
+   </div>
+   <div id="html" class="html scale">
+     <div id="text"></div>
+     <div id="graph"></div>
+   </div>
+  </div>
+
+  <canvas id="canvas" width="960" height="500" style="display:none"></canvas>
+
+<script type="text/javascript">
+
+
+window.onerror = function(e) {
+    document.getElementById("status").innerHTML = escapeHTML( JSON.stringify(e) );
+}
+
+function escapeHtml(unsafe) {
+    return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
+ }
+
+
+document.addEventListener("DOMContentLoaded", function(e)
+{
+
+    let self = {
+      dot : "",
+      headline : "",
+      timeout : null,
+      graphviz : null,
+      html : document.getElementById("html"),
+      text : document.getElementById("text"),
+      graph : document.getElementById("graph"),
+      commit : document.getElementById("commit"),
+      status : document.getElementById("status"),
+      canvas : document.getElementById("canvas"),
+      commitMsg : document.getElementById("commitMsg")
+    };
+
+    let View = {
+
+        setPlainText : function( gitdir,output) {
+            if(!output) {
+                output = "";
+            }
+            self.headline = gitdir;
+            self.commit.style.display = "none";
+            self.graph.style.display = "none";
+            self.text.style.display = "block";
+            self.text.innerHTML = "<pre>"  + escapeHtml(output) + "</pre>";
+            self.status.innerHTML = gitdir;
+        },
+
+        render : function() {
+
+              let height = document.getElementById("html").clientHeight;
+              let width = document.getElementById("html").clientWidth;
+
+              self.graph.style.display = "block";
+              self.text.style.display = "none";
+
+              //self.html.innerHTML = "";
+
+              self.graphviz = d3.select("#graph").graphviz();
+
+              self.graphviz
+              //.resetZoom()
+              .transition(function() {
+                return d3.transition().duration(1000);
+              })              
+              .height(height)
+              .width(width)
+              .fit(true)
+              .onerror(function(e){})
+              .attributer(function(d) {
+                if(this.href)
+                {
+                  this.onclick = function() { 
+                    WebKit.Host.onClickGraph(this.href.baseVal); 
+                    return false; 
+                  }
+                }
+              })
+              .renderDot(self.dot)
+              .zoom(true);
+        },
+
+        setDot : function(headline, dot ) {
+
+          try {            
+              self.dot = dot;
+              self.headline = headline;
+
+              //self.html.innerHTML = "";
+              self.commit.style.display = "none";
+              self.status.innerHTML = escapeHtml(headline);
+
+              if ( self.timeout ) {
+                clearTimeout(self.timeout);
+                self.timeout = setTimeout(function(){ View.render(); self.timeout = null; }, 500);
+              }
+              else {
+                View.render();
+                self.timeout = setTimeout(function(){ self.timeout = null; }, 1000);
+              }
+          }
+          catch(e) {
+            //alert(e);
+          }
+        },
+
+        setDiff : function( gitdir, output) {
+
+          self.headline = gitdir;
+
+            var diffHtml = window.Diff2Html.html( output, {
+                drawFileList: true,
+                matching: 'lines',
+                // outputFormat: 'side-by-side',
+            });
+
+            self.graph.style.display = "none";
+            self.text.style.display = "block";
+            self.text.innerHTML = diffHtml;
+            self.commit.style.display = "none";
+            self.status.innerHTML = escapeHtml(gitdir);
+        },
+
+        setCommit : function( gitdir, output) {
+
+          self.headline = gitdir;
+
+          var diffHtml = window.Diff2Html.html( output, {
+            drawFileList: true,
+            matching: 'lines'
+          });
+
+          self.graph.style.display = "none";
+          self.text.style.display = "block";
+          self.text.innerHTML = diffHtml;
+          self.commit.style.display = "block";
+          self.status.innerHTML = escapeHtml(gitdir);
+        },
+
+        setBranches : function( gitdir, output) {
+
+          self.headline = gitdir;
+          output = output.split("\n");
+
+          let html = "<ul>";
+          output.forEach(function(branch)
+          {
+              branch = branch.trim();
+              if(branch=="")
+                return;
+
+              html += "<li><a class='branch' href='#' data-branch='"+branch+"'>";
+              html += escapeHtml(branch);
+              html += "</a></li>"
+          });
+          html += "</ul>";
+
+          self.graph.style.display = "none";
+          self.text.style.display = "block";
+          self.text.innerHTML = html;
+          self.commit.style.display = "none";
+          self.status.innerHTML = escapeHtml(gitdir);
+
+          document.querySelectorAll("a.branch").forEach( function(branch) {
+              branch.onclick = function(e) {
+                e.preventDefault();
+                WebKit.Host.onSelectBranch( e.target.getAttribute("data-branch") );
+              };
+          });
+        },
+
+        onCommit : function() {
+
+          try {
+            let msg = self.commitMsg.value;
+
+            self.text.innerHTML = "commit in progress ...";
+            self.commit.style.display = "none";
+
+            WebKit.Host.onSubmitCommit(msg);
+          } catch(e) {
+            alert(e);
+          }
+        },
+
+        onGetGraphImage : function() {
+
+          let html = d3.select("svg")
+            .attr("version", 1.1)
+            .attr("xmlns", "http://www.w3.org/2000/svg")
+            .node().parentNode.innerHTML;
+
+            let imgsrc = 'data:image/svg+xml;base64,'+ btoa(html);
+            let img = '<img src="'+imgsrc+'">'; 
+
+            let height = document.getElementById("html").clientHeight;
+            let width = document.getElementById("html").clientWidth;
+
+            let canvas = document.querySelector("canvas");
+            canvas.height=height;
+            canvas.width=width;
+
+            let context = canvas.getContext("2d");
+
+            let image = new Image;
+            image.src = imgsrc;
+            image.onload = function() {
+              context.drawImage(image, 0, 0);
+
+              let canvasdata = canvas.toDataURL("image/png");
+
+              canvasdata = decodeURIComponent(canvasdata);
+
+              WebKit.Host.onSaveImage(canvasdata);
+            };
+        },
+
+        resetZoom: function() {
+
+          self.graphviz.resetZoom();
+
+        },
+
+        onResize : function() {
+
+          //View.setDot(self.headline, self.dot);
+
+          if (self.graph.style.display != "block")
+          {
+            return;
+          }
+
+          if ( self.timeout ) {
+            clearTimeout(self.timeout);
+            self.timeout = setTimeout(function(){ View.render(); }, 500);
+          }
+          else {
+            View.render();
+            self.timeout = setTimeout(function(){ }, 1000);
+          }
+        }
+
+    };
+
+    WebKit.bind(View);
+
+    WebKit.Host.onDocumentLoad();
+    document.getElementById("commitButton").onclick=View.onCommit;
+
+    window.onresize = View.onResize;
+});
+
+</script>
+</body>
+</html>
+

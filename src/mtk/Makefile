@@ -2,8 +2,13 @@
 PWD = $(shell pwd)
 DEBUG = -g 
 release : override DEBUG = -O3
+static-release : override DEBUG = -O3
 
-DEFAULT_OPTS = -std=c++17 $(PG) -fPIC -shared 
+SHARED = -shared
+static: override SHARED = 
+static-release : SHARED = 
+
+DEFAULT_OPTS = -std=c++17 $(PG) -fPIC $(SHARED)
 
 ifneq ($(CXX),g++)
 DEFAULT_OPTS = $(TS) -std=c++17 -stdlib=libc++ -fcoroutines-ts -D_RESUMABLE_FUNCTIONS_SUPPORTED 
@@ -21,10 +26,13 @@ CPPFLAGS = -Wall -I ../../include $(DEBUG) $(INCLUDE) $(OPTIONS) $(PKG_INC)
 # source and build path information
 #################################################
 
+# the static lib
+STATIC_NAME = libmtk.a
+STATIC_LIB = ./build/$(STATIC_NAME)
+
 # the shared lib
-NAME = libmtk.so
-LIB = ./build/$(NAME)
-release : override LIB = ./build/$(NAME)
+SHARED_NAME = libmtk.so
+SHARED_LIB = ./build/$(SHARED_NAME)
 
 LIB_SRC = .
 LIB_BUILD = ./build
@@ -58,13 +66,20 @@ GIR_SOURCES= mtkfile.cpp mtkfiletree.cpp mtkgit.cpp mtkwebview.cpp mtkeditor.cpp
 # rule to compile all (default rule)
 #################################################
 
-all: $(LIB) $(LIB_BUILD)/$(TYPELIB_FILE)
+all: $(SHARED_LIB) $(LIB_BUILD)/$(TYPELIB_FILE)
 
 #################################################
 # release rule 
 #################################################
 
 release: all
+
+static: make-static
+
+static-release: make-static
+
+make-static: $(STATIC_LIB)
+# $(LIB_BUILD)/$(TYPELIB_FILE)
 
 #################################################
 # actual build rules
@@ -78,20 +93,30 @@ $(LIB_BUILD)/%.o: $(LIB_SRC)/%.cpp
 	-mkdir -p $(LIB_BUILD)
 	$(CXX) -c $^ -o $@ $(CPPFLAGS)
 
-#################################################
-# rule to compile the lib file from .o files
-#################################################
+####################################################
+# rule to compile the static lib file from .o files
+####################################################
 
-$(LIB): $(LIB_OBJFILES) 
-	$(CXX)  -o $(LIB) $(LIB_OBJFILES)  $(CPPFLAGS) $(PKG_LIB)
-	-bash -c "cd build && ln -s $(NAME) $(NAME).0"
+$(STATIC_LIB): $(LIB_OBJFILES)
+	ar rcs $(STATIC_LIB) $(LIB_OBJFILES)
+	ranlib $(STATIC_LIB)
+
+####################################################
+# rule to compile the shared lib file from .o files
+####################################################
+
+$(SHARED_LIB): $(LIB_OBJFILES) 
+	$(CXX)  -o $(SHARED_LIB) $(LIB_OBJFILES)  $(CPPFLAGS) $(PKG_LIB)
+	-bash -c "cd build && ln -s $(SHARED_NAME) $(SHARED_NAME).0"
+
+####################################################
+# rules to compile the typelib
+####################################################
 
 
 $(LIB_BUILD)/$(TYPELIB_FILE): $(LIB_BUILD)/$(GIR_FILE)
 	g-ir-compiler $(LIB_BUILD)/$(GIR_FILE) --output=$(LIB_BUILD)/$(TYPELIB_FILE)
 
-# ../include/mtkwebview.h
-# mtkwebview.cpp
 
 $(LIB_BUILD)/$(GIR_FILE): $(GIR_HEADERS) $(GIR_SOURCES)
 	libtool exec g-ir-scanner $^ -L $(LIB_BUILD) --library=mtk --warn-all --include=GtkSource-4 --include=WebKit2-4.0 --include=Gtk-3.0 --include=GObject-2.0  --namespace=$(NAMESPACE) --nsversion=$(NSVERSION) --output=$@

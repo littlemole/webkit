@@ -166,15 +166,24 @@ void mtk_webview_load_local_uri(MtkWebView *web, const gchar* localpath)
     MtkWebViewClass* clazz = MTK_WEBVIEW_GET_CLASS(web) ;
     gchar* dir = clazz->dir;
 
-    std::string fp;
+    std::string fp = lp;
 
+    // has protocol?
+    size_t pos = fp.find("://");
+    if( pos != std::string::npos)
+    {
+        webkit_web_view_load_uri( (WebKitWebView*)web, fp.c_str() );
+        return;
+    }
+
+    // is absolute?
     if(lp && lp[0] == '/')
     {
         std::ostringstream oss;
         oss << "file://" << lp;
         fp = oss.str();
     }
-    else
+    else // treat as local relative path
     {
         std::ostringstream oss;
         if(dir)

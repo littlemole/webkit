@@ -437,6 +437,7 @@ public:
     ~Gui();
 
     Gui& load(const char* file);
+    Gui& load_string(const char* file);
     Gui& show(const char* mainWindow);
     Gui& show();
 
