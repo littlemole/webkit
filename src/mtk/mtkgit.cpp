@@ -1,6 +1,7 @@
 #include "glue/common.h"
 #include "mtk/mtkfiletree.h"
 #include "mtk/mtkgit.h"
+#include <iostream>
 
 #define PROG "[MktGitFile] "
 
@@ -721,9 +722,13 @@ gint mtk_git_commit(MtkFile* file, const gchar* msg, char** status,  char** cont
     cmd += "'";
     std::string c = make_cmd(cd,cmd.c_str());
 
+    std::cout << "GIT: " << c << std::endl;
+
     gchar* tmp = mtk_bash(c.c_str(),&exit_code);
     std::string content = tmp;
     g_free(tmp);
+
+    std::cout << exit_code << " " << content << std::endl;
 
     size_t pos = content.find("\n");
     if ( pos == std::string::npos )
@@ -731,6 +736,9 @@ gint mtk_git_commit(MtkFile* file, const gchar* msg, char** status,  char** cont
         if(status)
         {
             *status = g_strdup(content.c_str());
+        }
+        if(contents)
+        {
             *contents = g_strdup("");
         }
         return exit_code;
@@ -739,17 +747,9 @@ gint mtk_git_commit(MtkFile* file, const gchar* msg, char** status,  char** cont
     {
         *status = g_strdup(content.substr(0,pos).c_str());
     }
-    else
-    {
-        *status = g_strdup("");
-    }
     if(contents)
     {
         *contents = g_strdup(content.substr(pos+1).c_str());
-    }
-    else
-    {
-         *contents = g_strdup("");
     }
     return exit_code;
 
