@@ -348,6 +348,8 @@ private:
         gchar* content = 0;
         mtk_git_cmd(file,cmd,&status,&content);
 
+        std::cout << "status: " << status << " content: " << content << std::endl;
+
         send_request( web, mode, status, content );      
 
         if(refresh)
