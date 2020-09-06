@@ -396,6 +396,21 @@ private:
     }
 };
 
+
+// main application entry point
+
+int main (int argc, char **argv)
+{
+    gtk_init (&argc, &argv);
+
+    Controller controller;
+
+    gtk_main();
+
+    return 0;
+}
+
+
 // metadata used for mapping both glade and JavaScript event handlers
 
 template<>
@@ -433,16 +448,3 @@ struct meta::Data<Controller>
     }
 };
 
-
-// main application entry point
-
-int main (int argc, char **argv)
-{
-    gtk_init (&argc, &argv);
-
-    Controller controller;
-
-    gtk_main();
-
-    return 0;
-}
