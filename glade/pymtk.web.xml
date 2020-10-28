@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glade-catalog name="pymkt.WebView2" library="webview" depends="webkit2gtk">
+
+  <glade-widget-classes>
+    <glade-widget-class  name="mtkWebView" generic-name="webview" title="Web View" >
+    </glade-widget-class>
+  </glade-widget-classes>
+  
+  <glade-widget-group name="mtkWebView" title="WebView">
+    <glade-widget-class-ref name="mtkWebView"/>
+  </glade-widget-group>  
+
+</glade-catalog>

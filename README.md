@@ -48,7 +48,7 @@ sudo dnf install python3-devel gtk3-devel webkit2gtk3-devel gobject-introspectio
 - pymtk - a python library with Gtk helpers
 - mtkglue - header only cpp library to implement gobject/gtk objects
 - mtk gtk shared library - extensions to WebView, SourceView and TreeView Gtk widgets plus some Git support
-- mtkcpp static library - cpp glue to build native gtk apps using mtk
+- mtkcpp static library - cpp glue to build native gtk apps using mtk in c++
 
 # directory layout
 
@@ -76,3 +76,17 @@ sudo dnf install python3-devel gtk3-devel webkit2gtk3-devel gobject-introspectio
 - glade - glade catalog files for libmtk.so widgets
 
 
+# install
+```
+git clone https://github.com/littlemole/webkit.git
+cd webkit
+make
+``` 
+
+# run example GUI apps
+
+git diff viewer:
+``` ./run.sh examples/python/diff/diff.py ```
+
+git dot graph builder:
+``` ./run.sh examples/python/dot/dot.py ```

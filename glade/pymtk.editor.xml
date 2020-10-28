@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<glade-catalog name="pygtk.editor" depends="gtksourceview" library="gladepython">
+<glade-catalog name="pymtk.editor" depends="gtksourceview" library="gladepython">
 
   <init-function>glade_python_init</init-function>
 
@@ -7,7 +7,7 @@
     <glade-widget-class name="Editor" generic-name="editor" title="Source Editor" />
   </glade-widget-classes>
   
-  <glade-widget-group name="pygtk" title="Editor">
+  <glade-widget-group name="pymtk" title="Editor">
     <glade-widget-class-ref name="Editor"/>
   </glade-widget-group>  
 

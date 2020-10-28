@@ -327,7 +327,7 @@ class Controller(object):
             return
 
         f = self.selected_file()
-        d = f.filename if f.directory else os.path.dirname(f.file_name)
+        d = f.file_name if f.directory else os.path.dirname(f.file_name)
 
         r = self.ui.showFileDialog(Gtk.FileChooserAction.SAVE,"path to new .dot file",dir=d)
 
@@ -473,7 +473,9 @@ class Controller(object):
 
     def onHelp(self,*args):
 
-        self.ui.alert("This is the simple python dotfile viewer using webkit2 based HTML rendering.")
+        self.ui.alert(
+            "Simple python dotfile viewer using webkit2 based HTML rendering.\r\n\r\n"
+            + "This example is dedicated to Alan Milford for the inspiration.")
 
 
 
