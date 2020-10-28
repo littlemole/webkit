@@ -10,23 +10,9 @@ back into the python controller. in other words this is an example for Javascrip
 
 Implementing the Marshaling glue was great fun.
 
-build:
-
-```make clean && make```
-
-afterwards:
-
-```run.sh examples/curl/curl.py```
-  
-to launch any of the examples in the examples directory.
-
-to install:
-
-```sudo make install```
-
-which will install into system directories and allows to run without run.sh, eg:
-
-```python3 examples/diff/diff.py ```
+Then came the update of webkit now using the (more secure) process based model, where all 
+the HTML related processing happens in a dedicated browser (per webview). That changes our
+challenge from in-process to out of process. yummy.
 
 
 # pre-requisites
@@ -73,7 +59,7 @@ sudo dnf install python3-devel gtk3-devel webkit2gtk3-devel gobject-introspectio
 - pymtk - python directory with pure and native (pywebkit.so) python modules
     - webkitext -- symlink to lib/wekbitext
     - glade - glade catalog files for python based widgets
-- glade - glade catalog files for libmtk.so widgets
+- glade - glade UI builder catalog files for widgets
 
 
 # install
@@ -83,6 +69,7 @@ cd webkit
 make
 ``` 
 
+
 # run example GUI apps
 
 git diff viewer:
@@ -90,3 +77,12 @@ git diff viewer:
 
 git dot graph builder:
 ``` ./run.sh examples/python/dot/dot.py ```
+
+
+optional: install into system default lib folders (allows to avoid run.sh)
+
+```
+make install
+```
+
+use ```make uninstall``` to remove an installation
