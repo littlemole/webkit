@@ -14,6 +14,8 @@ Then came the update of webkit now using the (more secure) process based model, 
 the HTML related processing happens in a dedicated browser (per webview). That changes our
 challenge from in-process to out of process. yummy.
 
+![](examples.png)
+
 
 # pre-requisites
 
